@@ -1,0 +1,337 @@
+/* ===== WhamBible Challenge Screen ===== */
+
+/* ── Screens ─────────────────────────────────────────── */
+.screen {
+  display: none;
+  min-height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+.screen.active { display: block; }
+
+.screen-inner {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 24px 16px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* ── Lobby ───────────────────────────────────────────── */
+.lobby-logo {
+  font-size: 52px;
+  text-align: center;
+  animation: float 4s ease-in-out infinite;
+  margin-top: 16px;
+}
+
+.lobby-title {
+  font-family: 'Cinzel', serif;
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--gold);
+  text-align: center;
+  line-height: 1.15;
+  text-shadow: 0 0 30px rgba(201,162,39,0.4);
+}
+
+.lobby-sub {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(201,162,39,0.5);
+  text-align: center;
+  margin-top: -6px;
+}
+
+.lobby-card {
+  background: rgba(40,25,5,0.95);
+  border: 1px solid rgba(201,162,39,0.25);
+  border-radius: 10px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: rgba(201,162,39,0.5);
+  text-transform: uppercase;
+}
+
+.field-input {
+  background: rgba(201,162,39,0.06);
+  border: 1px solid rgba(201,162,39,0.25);
+  border-radius: 6px;
+  padding: 10px 14px;
+  color: var(--text-warm);
+  font-family: 'Crimson Text', serif;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+  width: 100%;
+}
+.field-input:focus { border-color: rgba(201,162,39,0.7); }
+.field-input::placeholder { color: rgba(201,162,39,0.25); }
+
+/* ── Turn Banner ─────────────────────────────────────── */
+.turn-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: linear-gradient(135deg, rgba(201,162,39,0.12) 0%, rgba(201,162,39,0.04) 100%);
+  border: 1px solid rgba(201,162,39,0.35);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 4px;
+}
+
+.turn-avatar {
+  font-size: 30px;
+  flex-shrink: 0;
+}
+
+.turn-name {
+  font-family: 'Cinzel', serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--gold);
+}
+
+.turn-sub {
+  font-family: 'Crimson Text', serif;
+  font-size: 13px;
+  color: rgba(201,162,39,0.6);
+  margin-top: 2px;
+  font-style: italic;
+}
+
+/* ── VS Strip ────────────────────────────────────────── */
+.vs-strip {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  background: rgba(20,12,2,0.9);
+  border: 1px solid rgba(201,162,39,0.2);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.vs-player {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 8px;
+  gap: 1px;
+}
+
+.vs-player.active-turn {
+  background: rgba(201,162,39,0.1);
+}
+
+.vs-name {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  color: rgba(201,162,39,0.7);
+  letter-spacing: 1px;
+  text-align: center;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vs-score {
+  font-family: 'Cinzel', serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--gold);
+  line-height: 1;
+}
+
+.vs-label {
+  font-family: 'Cinzel', serif;
+  font-size: 8px;
+  letter-spacing: 2px;
+  color: rgba(201,162,39,0.4);
+  text-transform: uppercase;
+}
+
+.vs-divider {
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  font-weight: 900;
+  color: rgba(201,162,39,0.3);
+  padding: 0 8px;
+  letter-spacing: 2px;
+}
+
+/* ── Challenge Header ────────────────────────────────── */
+.challenge-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0 4px;
+}
+
+.challenge-from {
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 1px;
+}
+
+.challenge-pts-badge {
+  background: linear-gradient(135deg, #c9a227, #a07818);
+  color: #1a0f02;
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 20px;
+  letter-spacing: 1px;
+}
+
+/* ── Pick Instruction ────────────────────────────────── */
+.pick-instruction {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: rgba(201,162,39,0.5);
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.round-label {
+  text-align: center;
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: rgba(201,162,39,0.3);
+  text-transform: uppercase;
+  margin-top: -6px;
+}
+
+/* ── Round Result ────────────────────────────────────── */
+.round-result-card {
+  background: linear-gradient(160deg, rgba(40,25,5,0.98) 0%, rgba(20,12,2,0.98) 100%);
+  border: 1px solid rgba(201,162,39,0.4);
+  border-radius: 16px;
+  padding: 28px 20px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.6), 0 0 30px rgba(201,162,39,0.1);
+  animation: cardPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.rr-scores {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  width: 100%;
+  margin: 8px 0;
+  background: rgba(201,162,39,0.05);
+  border: 1px solid rgba(201,162,39,0.15);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.rr-player {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px;
+  gap: 3px;
+}
+
+.rr-player.winner {
+  background: rgba(76,175,125,0.12);
+}
+
+.rr-player.loser {
+  background: rgba(201,48,48,0.08);
+  opacity: 0.75;
+}
+
+.rr-name {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  color: rgba(201,162,39,0.6);
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+.rr-delta {
+  font-family: 'Cinzel', serif;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--gold);
+}
+.rr-delta.gained { color: #4caf7d; }
+.rr-delta.lost   { color: #c93030; }
+
+.rr-total {
+  font-family: 'Crimson Text', serif;
+  font-size: 11px;
+  color: rgba(201,162,39,0.4);
+}
+
+.rr-vs {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  font-weight: 900;
+  color: rgba(201,162,39,0.2);
+  padding: 0 8px;
+  letter-spacing: 2px;
+}
+
+/* ── Share Code ──────────────────────────────────────── */
+.share-code-wrap {
+  width: 100%;
+  background: rgba(201,162,39,0.06);
+  border: 1px solid rgba(201,162,39,0.25);
+  border-radius: 10px;
+  padding: 14px 16px;
+  text-align: center;
+}
+
+.share-label {
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: rgba(201,162,39,0.4);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.share-code {
+  font-family: 'Cinzel', serif;
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--gold);
+  letter-spacing: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-shadow: 0 0 20px rgba(201,162,39,0.5);
+}
+.share-code:hover { transform: scale(1.05); }
+
+.share-hint {
+  font-family: 'Crimson Text', serif;
+  font-size: 11px;
+  color: rgba(201,162,39,0.3);
+  margin-top: 4px;
+  font-style: italic;
+}
