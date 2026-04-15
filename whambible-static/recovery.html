@@ -14,38 +14,28 @@
 <body>
   <div class="bg-overlay"></div>
 
-  <!-- ── WHAM SLAM OVERLAY ─────────────────────────────── -->
-  <div class="wham-slam-overlay" id="wham-slam" style="display:none">
-    <div class="wham-slam-bg"></div>
-    <div class="wham-slam-content">
-      <div class="wham-slam-word" id="slam-word">WRONG!</div>
-      <div class="wham-slam-sub" id="slam-sub">Scroll Recovery Unlocked</div>
-      <div class="wham-slam-pts" id="slam-pts">−10 pts</div>
-    </div>
-    <canvas class="wham-particles" id="wham-particles"></canvas>
+  <!-- ── WHAM SLAM OVERLAY ─────────────────────────────────────
+       Exact Whamgame.base44.app spec:
+       Phase 0 (0ms):    bg=#fff, WHAM! 60px, audio fires
+       Phase 1 (300ms):  bg=#020617, WHAM! 96px, ref appears green
+       Phase 2 (1120ms): everything fades
+       Done   (1620ms):  onDone fires
+       Only fires on CORRECT / RECOVERY SUCCESS
+  ──────────────────────────────────────────────────────────── -->
+  <div class="wham-slam-overlay phase-0" id="wham-slam" style="display:none">
+    <div class="wham-slam-word">WHAM!</div>
+    <div class="wham-slam-ref">✅ —</div>
+    <div class="wham-slam-sub">Correct!</div>
   </div>
 
-  <!-- ── CORRECT SLAM OVERLAY ──────────────────────────── -->
-  <div class="wham-slam-overlay correct-slam" id="correct-slam" style="display:none">
-    <div class="wham-slam-bg correct-bg"></div>
-    <div class="wham-slam-content">
-      <div class="wham-slam-word" id="correct-slam-word">WHAM!</div>
-      <div class="wham-slam-sub" id="correct-slam-sub">Correct!</div>
-      <div class="wham-slam-pts" id="correct-slam-pts">+10 pts</div>
-    </div>
-    <canvas class="wham-particles" id="correct-particles"></canvas>
-  </div>
-
-  <!-- ── MAIN RECOVERY SCREEN ──────────────────────────── -->
+  <!-- ── SCROLL RECOVERY SCREEN ───────────────────────────── -->
   <main class="recovery-main" id="recovery-main">
 
-    <!-- Header -->
     <div class="recovery-header">
       <div class="recovery-badge">📜 SCROLL RECOVERY</div>
       <div class="recovery-pts-at-stake" id="pts-at-stake">10 pts at stake</div>
     </div>
 
-    <!-- Verse reminder -->
     <section class="verse-display-card recovery-verse-card" id="recovery-verse-card">
       <div class="verse-ornament">✦ ✦ ✦</div>
       <p class="verse-body" id="recovery-verse-body">"Loading verse..."</p>
@@ -53,13 +43,11 @@
       <div class="verse-challenge-label" id="recovery-verse-ref">—</div>
     </section>
 
-    <!-- Scroll Recovery UI -->
     <section class="scroll-section">
       <p class="scroll-instruction">Spin the scrolls to find the correct<br><strong>Book · Chapter · Verse</strong></p>
 
       <div class="scroll-container" id="scroll-container">
 
-        <!-- Book Wheel -->
         <div class="scroll-wheel-wrap">
           <div class="scroll-label">BOOK</div>
           <div class="scroll-wheel-outer">
@@ -72,7 +60,6 @@
           </div>
         </div>
 
-        <!-- Chapter Wheel -->
         <div class="scroll-wheel-wrap">
           <div class="scroll-label">CH</div>
           <div class="scroll-wheel-outer">
@@ -85,7 +72,6 @@
           </div>
         </div>
 
-        <!-- Verse Wheel -->
         <div class="scroll-wheel-wrap">
           <div class="scroll-label">VS</div>
           <div class="scroll-wheel-outer">
@@ -100,7 +86,6 @@
 
       </div>
 
-      <!-- Timer -->
       <div class="recovery-timer-wrap">
         <div class="recovery-timer-ring">
           <svg viewBox="0 0 60 60" class="timer-svg">
@@ -112,20 +97,12 @@
         <span class="timer-label">seconds</span>
       </div>
 
-      <!-- Submit -->
       <button class="btn-primary recovery-submit-btn" id="submit-btn" onclick="submitRecovery()">
         📜 Claim Recovery
       </button>
 
     </section>
-
   </main>
-
-  <!-- Audio elements (placeholders — swap src when audio ready) -->
-  <audio id="audio-wham-wrong" src="" preload="auto"></audio>
-  <audio id="audio-wham-correct" src="" preload="auto"></audio>
-  <audio id="audio-scroll-spin" src="" preload="auto"></audio>
-  <audio id="audio-recovery-win" src="" preload="auto"></audio>
 
   <script src="verses.js"></script>
   <script src="recovery.js"></script>
