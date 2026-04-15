@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WhamBible — Know the Word. Win the Battle.</title>
+  <meta name="description" content="WhamBible is a multiplayer, multilingual Bible verse trivia adventure game. Test your knowledge of Scripture — Book, Chapter, and Verse." />
+  <meta name="theme-color" content="#c9a227" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="bg-overlay"></div>
+
+  <!-- Language Bar -->
+  <nav class="lang-bar">
+    <button class="lang-btn active" data-lang="en">🇺🇸 EN</button>
+    <button class="lang-btn" data-lang="es" title="Coming soon">🇪🇸 ES</button>
+    <button class="lang-btn" data-lang="fr" title="Coming soon">🇫🇷 FR</button>
+    <button class="lang-btn" data-lang="de" title="Coming soon">🇩🇪 DE</button>
+    <button class="lang-btn" data-lang="pt" title="Coming soon">🇵🇹 PT</button>
+    <button class="lang-btn" data-lang="it" title="Coming soon">🇮🇹 IT</button>
+    <button class="lang-btn" data-lang="zh" title="Coming soon">🇨🇳 ZH</button>
+    <button class="lang-btn" data-lang="ru" title="Coming soon">🇷🇺 RU</button>
+    <button class="lang-btn" data-lang="ja" title="Coming soon">🇯🇵 JA</button>
+    <button class="lang-btn" data-lang="ar" title="Coming soon">🇸🇦 AR</button>
+  </nav>
+
+  <main class="content">
+
+    <!-- Logo Section -->
+    <section class="logo-section">
+      <img src="https://media.base44.com/images/public/69df9a909b33058a5ce47831/cad023820_generated_image.png" alt="WhamBible" class="logo-img" />
+      <p class="tagline">⚔️ Know the Word. Win the Battle. ⚔️</p>
+    </section>
+
+    <div class="divider"></div>
+
+    <!-- Daily Verse Card -->
+    <section class="verse-card">
+      <div class="verse-label">📜 Today's Challenge Verse</div>
+      <p class="verse-text">
+        "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life."
+      </p>
+      <p class="verse-ref">— John 3:16</p>
+    </section>
+
+    <!-- Level Selector -->
+    <section class="level-section">
+      <p class="level-title">⚔️ Choose Your Battle ⚔️</p>
+      <div class="level-row">
+        <div class="level-card" onclick="showComingSoon('Squire — 5pts')">
+          <span class="level-icon">🗡️</span>
+          <span class="level-points">5</span>
+          <span class="level-pt-label">pts</span>
+          <span class="level-name">Squire</span>
+        </div>
+        <div class="level-card" onclick="showComingSoon('Warrior — 10pts')">
+          <span class="level-icon">⚔️</span>
+          <span class="level-points">10</span>
+          <span class="level-pt-label">pts</span>
+          <span class="level-name">Warrior</span>
+        </div>
+        <div class="level-card" onclick="showComingSoon('Knight — 15pts')">
+          <span class="level-icon">🛡️</span>
+          <span class="level-points">15</span>
+          <span class="level-pt-label">pts</span>
+          <span class="level-name">Knight</span>
+        </div>
+        <div class="level-card" onclick="showComingSoon('Champion — 20pts')">
+          <span class="level-icon">👑</span>
+          <span class="level-points">20</span>
+          <span class="level-pt-label">pts</span>
+          <span class="level-name">Champion</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- CTA Buttons -->
+    <div class="btn-row">
+      <button class="btn-primary" onclick="showComingSoon('Solo Guest Mode')">⚔️ Play Solo (Guest)</button>
+      <button class="btn-secondary" onclick="showComingSoon('Multiplayer Login')">🏆 Multiplayer — Login / Sign Up</button>
+      <button class="btn-ghost" onclick="showComingSoon('World Leaderboard')">📜 World Leaderboard</button>
+    </div>
+
+    <!-- Donate -->
+    <a href="https://whambible.org" target="_blank" rel="noopener" class="btn-donate">
+      ❤️ Support WhamBible.org — Donate
+    </a>
+
+    <div class="divider"></div>
+
+    <footer class="footer">
+      <p>© 2026 WhamBible · A WhamWorld Production · whambible.com</p>
+      <p>🌍 Multilingual support coming soon</p>
+    </footer>
+
+  </main>
+
+  <!-- Toast notification -->
+  <div class="toast" id="toast"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
