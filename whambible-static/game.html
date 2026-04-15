@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WhamBible — Battle!</title>
+  <meta name="theme-color" content="#c9a227" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="game.css" />
+</head>
+<body>
+  <div class="bg-overlay"></div>
+
+  <!-- HUD -->
+  <header class="game-hud">
+    <button class="hud-back" onclick="confirmExit()">← Exit</button>
+    <div class="hud-center">
+      <span class="hud-level" id="hud-level">⚔️ Warrior · 10pts</span>
+    </div>
+    <div class="hud-score-wrap">
+      <span class="hud-score-label">SCORE</span>
+      <span class="hud-score" id="hud-score">0</span>
+    </div>
+  </header>
+
+  <!-- Timer Bar -->
+  <div class="timer-bar-wrap">
+    <div class="timer-bar" id="timer-bar"></div>
+  </div>
+
+  <!-- Progress -->
+  <div class="progress-wrap">
+    <span class="progress-text" id="progress-text">Verse 1 of 5</span>
+    <div class="progress-dots" id="progress-dots"></div>
+  </div>
+
+  <main class="game-content">
+
+    <!-- Verse Display Card -->
+    <section class="verse-display-card" id="verse-card">
+      <div class="verse-ornament">✦ ✦ ✦</div>
+      <p class="verse-body" id="verse-body">Loading...</p>
+      <div class="verse-ornament">✦ ✦ ✦</div>
+      <div class="verse-challenge-label" id="challenge-label">Where is this verse found?</div>
+    </section>
+
+    <!-- Multiple Choice Grid -->
+    <section class="choices-section">
+      <p class="choices-label">Select the correct Book · Chapter · Verse</p>
+      <div class="choices-grid" id="choices-grid">
+        <!-- Injected by JS -->
+      </div>
+    </section>
+
+    <!-- Streak / Feedback -->
+    <div class="feedback-bar" id="feedback-bar"></div>
+
+  </main>
+
+  <!-- Result Overlay -->
+  <div class="result-overlay" id="result-overlay" style="display:none">
+    <div class="result-card">
+      <div class="result-icon" id="result-icon">✅</div>
+      <h2 class="result-title" id="result-title">Correct!</h2>
+      <p class="result-verse" id="result-verse-ref"></p>
+      <p class="result-body" id="result-body"></p>
+      <button class="btn-primary result-next" id="result-next-btn" onclick="nextVerse()">Next Verse ⚔️</button>
+    </div>
+  </div>
+
+  <!-- Game Over Overlay -->
+  <div class="result-overlay" id="gameover-overlay" style="display:none">
+    <div class="result-card">
+      <div class="result-icon">🏆</div>
+      <h2 class="result-title" id="final-title">Battle Complete!</h2>
+      <p class="result-body" id="final-score-display"></p>
+      <div class="final-stats" id="final-stats"></div>
+      <button class="btn-primary result-next" onclick="restartGame()">Play Again ⚔️</button>
+      <button class="btn-secondary result-next" style="margin-top:10px" onclick="window.location.href='index.html'">← Home</button>
+    </div>
+  </div>
+
+  <script src="verses.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
