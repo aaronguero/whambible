@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WhamBible — Scroll Recovery</title>
+  <meta name="theme-color" content="#c9a227" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="game.css" />
+  <link rel="stylesheet" href="recovery.css" />
+</head>
+<body>
+  <div class="bg-overlay"></div>
+
+  <!-- ── WHAM SLAM OVERLAY ─────────────────────────────── -->
+  <div class="wham-slam-overlay" id="wham-slam" style="display:none">
+    <div class="wham-slam-bg"></div>
+    <div class="wham-slam-content">
+      <div class="wham-slam-word" id="slam-word">WRONG!</div>
+      <div class="wham-slam-sub" id="slam-sub">Scroll Recovery Unlocked</div>
+      <div class="wham-slam-pts" id="slam-pts">−10 pts</div>
+    </div>
+    <canvas class="wham-particles" id="wham-particles"></canvas>
+  </div>
+
+  <!-- ── CORRECT SLAM OVERLAY ──────────────────────────── -->
+  <div class="wham-slam-overlay correct-slam" id="correct-slam" style="display:none">
+    <div class="wham-slam-bg correct-bg"></div>
+    <div class="wham-slam-content">
+      <div class="wham-slam-word" id="correct-slam-word">WHAM!</div>
+      <div class="wham-slam-sub" id="correct-slam-sub">Correct!</div>
+      <div class="wham-slam-pts" id="correct-slam-pts">+10 pts</div>
+    </div>
+    <canvas class="wham-particles" id="correct-particles"></canvas>
+  </div>
+
+  <!-- ── MAIN RECOVERY SCREEN ──────────────────────────── -->
+  <main class="recovery-main" id="recovery-main">
+
+    <!-- Header -->
+    <div class="recovery-header">
+      <div class="recovery-badge">📜 SCROLL RECOVERY</div>
+      <div class="recovery-pts-at-stake" id="pts-at-stake">10 pts at stake</div>
+    </div>
+
+    <!-- Verse reminder -->
+    <section class="verse-display-card recovery-verse-card" id="recovery-verse-card">
+      <div class="verse-ornament">✦ ✦ ✦</div>
+      <p class="verse-body" id="recovery-verse-body">"Loading verse..."</p>
+      <div class="verse-ornament">✦ ✦ ✦</div>
+      <div class="verse-challenge-label" id="recovery-verse-ref">—</div>
+    </section>
+
+    <!-- Scroll Recovery UI -->
+    <section class="scroll-section">
+      <p class="scroll-instruction">Spin the scrolls to find the correct<br><strong>Book · Chapter · Verse</strong></p>
+
+      <div class="scroll-container" id="scroll-container">
+
+        <!-- Book Wheel -->
+        <div class="scroll-wheel-wrap">
+          <div class="scroll-label">BOOK</div>
+          <div class="scroll-wheel-outer">
+            <div class="scroll-wheel" id="wheel-book">
+              <div class="scroll-wheel-inner" id="wheel-book-inner"></div>
+            </div>
+            <div class="scroll-selector-line top"></div>
+            <div class="scroll-selector-line bottom"></div>
+            <div class="scroll-highlight-band"></div>
+          </div>
+        </div>
+
+        <!-- Chapter Wheel -->
+        <div class="scroll-wheel-wrap">
+          <div class="scroll-label">CH</div>
+          <div class="scroll-wheel-outer">
+            <div class="scroll-wheel" id="wheel-chapter">
+              <div class="scroll-wheel-inner" id="wheel-chapter-inner"></div>
+            </div>
+            <div class="scroll-selector-line top"></div>
+            <div class="scroll-selector-line bottom"></div>
+            <div class="scroll-highlight-band"></div>
+          </div>
+        </div>
+
+        <!-- Verse Wheel -->
+        <div class="scroll-wheel-wrap">
+          <div class="scroll-label">VS</div>
+          <div class="scroll-wheel-outer">
+            <div class="scroll-wheel" id="wheel-verse">
+              <div class="scroll-wheel-inner" id="wheel-verse-inner"></div>
+            </div>
+            <div class="scroll-selector-line top"></div>
+            <div class="scroll-selector-line bottom"></div>
+            <div class="scroll-highlight-band"></div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Timer -->
+      <div class="recovery-timer-wrap">
+        <div class="recovery-timer-ring">
+          <svg viewBox="0 0 60 60" class="timer-svg">
+            <circle cx="30" cy="30" r="26" class="timer-track"/>
+            <circle cx="30" cy="30" r="26" class="timer-progress" id="timer-circle"/>
+          </svg>
+          <span class="timer-number" id="timer-number">7</span>
+        </div>
+        <span class="timer-label">seconds</span>
+      </div>
+
+      <!-- Submit -->
+      <button class="btn-primary recovery-submit-btn" id="submit-btn" onclick="submitRecovery()">
+        📜 Claim Recovery
+      </button>
+
+    </section>
+
+  </main>
+
+  <!-- Audio elements (placeholders — swap src when audio ready) -->
+  <audio id="audio-wham-wrong" src="" preload="auto"></audio>
+  <audio id="audio-wham-correct" src="" preload="auto"></audio>
+  <audio id="audio-scroll-spin" src="" preload="auto"></audio>
+  <audio id="audio-recovery-win" src="" preload="auto"></audio>
+
+  <script src="verses.js"></script>
+  <script src="recovery.js"></script>
+</body>
+</html>
