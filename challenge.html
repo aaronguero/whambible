@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WhamBible — Challenge</title>
+  <meta name="theme-color" content="#c9a227" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="game.css" />
+  <link rel="stylesheet" href="challenge.css" />
+</head>
+<body>
+  <div class="bg-overlay"></div>
+
+  <!-- ── SCREEN: LOBBY (find/create game) ─────────────────── -->
+  <div id="screen-lobby" class="screen active">
+    <div class="screen-inner">
+      <div class="lobby-logo">⚔️</div>
+      <h1 class="lobby-title">Challenge a<br>Warrior</h1>
+      <p class="lobby-sub">Async multiplayer · Take turns · Win glory</p>
+
+      <div class="lobby-card">
+        <label class="field-label">Your Warrior Name</label>
+        <input type="text" id="my-name" class="field-input" placeholder="Enter your name" maxlength="20" />
+      </div>
+
+      <div class="lobby-card">
+        <label class="field-label">Opponent's Name</label>
+        <input type="text" id="opp-name" class="field-input" placeholder="Opponent's warrior name" maxlength="20" />
+      </div>
+
+      <button class="btn-primary" onclick="startNewGame()">⚔️ Issue Challenge</button>
+      <div class="divider"></div>
+
+      <div class="lobby-card">
+        <label class="field-label">Or resume a battle</label>
+        <input type="text" id="game-code" class="field-input" placeholder="Enter Game Code" maxlength="8" style="text-transform:uppercase;letter-spacing:4px" />
+      </div>
+      <button class="btn-secondary" onclick="resumeGame()">🛡️ Resume Battle</button>
+
+      <button class="btn-ghost" style="margin-top:12px" onclick="window.location.href='index.html'">← Back to Home</button>
+    </div>
+  </div>
+
+  <!-- ── SCREEN: PICK LEVEL (active player picks challenge) ── -->
+  <div id="screen-pick-level" class="screen">
+    <div class="screen-inner">
+
+      <div class="turn-banner" id="pick-turn-banner">
+        <span class="turn-avatar" id="pick-avatar">⚔️</span>
+        <div>
+          <div class="turn-name" id="pick-turn-name">Aaron</div>
+          <div class="turn-sub">Choose your challenge for the opponent</div>
+        </div>
+      </div>
+
+      <div class="vs-strip" id="vs-strip">
+        <div class="vs-player" id="vs-p1">
+          <span class="vs-name" id="vs-p1-name">Aaron</span>
+          <span class="vs-score" id="vs-p1-score">0</span>
+          <span class="vs-label">pts</span>
+        </div>
+        <div class="vs-divider">VS</div>
+        <div class="vs-player" id="vs-p2">
+          <span class="vs-name" id="vs-p2-name">Opponent</span>
+          <span class="vs-score" id="vs-p2-score">0</span>
+          <span class="vs-label">pts</span>
+        </div>
+      </div>
+
+      <p class="pick-instruction">⚔️ Select a difficulty to challenge your opponent</p>
+
+      <div class="level-row" style="margin-bottom:20px">
+        <div class="level-card" onclick="pickLevel(5,'Squire','🗡️')">
+          <span class="level-icon">🗡️</span>
+          <span class="level-points">5</span>
+          <span class="level-pt-label">pts</span>
+          <span class="level-name">Squire</span>
+        </div>
+        <div class="level-card" onclick="pickLevel(10,'Warrior','⚔️')">
+          <span class="level-icon">⚔️</span>
+          <span class="level-points">10</span>
+          <span class="level-pt-label">pts</span>
+          <span class="level-name">Warrior</span>
+        </div>
+        <div class="level-card" onclick="pickLevel(15,'Knight','🛡️')">
+          <span class="level-icon">🛡️</span>
+          <span class="level-points">15</span>
+          <span class="level-pt-label">pts</span>
+          <span class="level-name">Knight</span>
+        </div>
+        <div class="level-card" onclick="pickLevel(20,'Champion','👑')">
+          <span class="level-icon">👑</span>
+          <span class="level-points">20</span>
+          <span class="level-pt-label">pts</span>
+          <span class="level-name">Champion</span>
+        </div>
+      </div>
+
+      <div class="round-label" id="round-label">Round 1</div>
+    </div>
+  </div>
+
+  <!-- ── SCREEN: ANSWER (opponent answers the challenge) ───── -->
+  <div id="screen-answer" class="screen">
+    <div class="screen-inner">
+
+      <div class="challenge-header">
+        <div class="challenge-from" id="challenge-from-label">⚔️ Aaron challenged you!</div>
+        <div class="challenge-pts-badge" id="challenge-pts-badge">10 pts</div>
+      </div>
+
+      <!-- Timer Bar -->
+      <div class="timer-bar-wrap" style="border-radius:4px;margin-bottom:16px">
+        <div class="timer-bar" id="ans-timer-bar"></div>
+      </div>
+
+      <!-- Verse Card -->
+      <section class="verse-display-card" id="ans-verse-card">
+        <div class="verse-ornament">✦ ✦ ✦</div>
+        <p class="verse-body" id="ans-verse-body">Loading verse...</p>
+        <div class="verse-ornament">✦ ✦ ✦</div>
+        <div class="verse-challenge-label">Where is this verse found?</div>
+      </section>
+
+      <!-- Choices -->
+      <section class="choices-section">
+        <p class="choices-label">Select the correct Book · Chapter · Verse</p>
+        <div class="choices-grid" id="ans-choices-grid"></div>
+      </section>
+
+      <div class="feedback-bar" id="ans-feedback"></div>
+    </div>
+  </div>
+
+  <!-- ── SCREEN: ROUND RESULT ──────────────────────────────── -->
+  <div id="screen-round-result" class="screen">
+    <div class="screen-inner">
+
+      <div class="round-result-card" id="round-result-card">
+        <div class="result-icon" id="rr-icon">⚔️</div>
+        <h2 class="result-title" id="rr-title">Round Result</h2>
+        <p class="result-verse" id="rr-verse-ref"></p>
+        <p class="result-body" id="rr-verse-text"></p>
+
+        <div class="rr-scores">
+          <div class="rr-player" id="rr-p1-block">
+            <span class="rr-name" id="rr-p1-name"></span>
+            <span class="rr-delta" id="rr-p1-delta"></span>
+            <span class="rr-total" id="rr-p1-total"></span>
+          </div>
+          <div class="rr-vs">VS</div>
+          <div class="rr-player" id="rr-p2-block">
+            <span class="rr-name" id="rr-p2-name"></span>
+            <span class="rr-delta" id="rr-p2-delta"></span>
+            <span class="rr-total" id="rr-p2-total"></span>
+          </div>
+        </div>
+
+        <div class="share-code-wrap">
+          <div class="share-label">📋 Game Code — Share with opponent</div>
+          <div class="share-code" id="share-code" onclick="copyCode()">——</div>
+          <div class="share-hint" id="copy-hint">Tap to copy</div>
+        </div>
+
+        <button class="btn-primary" id="rr-next-btn" onclick="nextTurn()">Next Turn ⚔️</button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── SCREEN: GAME OVER ─────────────────────────────────── -->
+  <div id="screen-gameover" class="screen">
+    <div class="screen-inner">
+      <div class="result-icon" id="go-icon">🏆</div>
+      <h2 class="result-title" id="go-title">Battle Complete!</h2>
+      <p class="result-body" id="go-subtitle"></p>
+
+      <div class="final-stats" id="go-stats"></div>
+
+      <div class="share-code-wrap" style="margin:16px 0">
+        <div class="share-label">📋 Game Code</div>
+        <div class="share-code" id="go-code" onclick="copyCode()"></div>
+      </div>
+
+      <button class="btn-primary" onclick="newGame()">⚔️ New Battle</button>
+      <button class="btn-secondary" style="margin-top:12px" onclick="window.location.href='index.html'">← Home</button>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script src="verses.js"></script>
+  <script src="challenge.js"></script>
+</body>
+</html>
