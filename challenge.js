@@ -460,3 +460,32 @@ window.addEventListener('DOMContentLoaded', () => {
     showScreen('lobby');
   }
 });
+
+// ============================================================
+// Push Notification Hooks — wired into challenge flow
+// Calls sendPushNotification() from notifications.js
+// ============================================================
+
+// Called after pickLevel() saves game state
+async function notifyChallengeSent(opponentToken, challengerName, gameCode) {
+  if (!opponentToken) return;
+  await sendPushNotification('challenge_received', opponentToken, challengerName, gameCode);
+}
+
+// Called after handleChallengeAnswer() saves result
+async function notifyChallengeAnswered(pickerToken, answererName, gameCode) {
+  if (!pickerToken) return;
+  await sendPushNotification('challenge_answered', pickerToken, answererName, gameCode);
+}
+
+// Called when final round completes
+async function notifyGameComplete(opponentToken, playerName, gameCode) {
+  if (!opponentToken) return;
+  await sendPushNotification('game_completed', opponentToken, playerName, gameCode);
+}
+
+// Called when new game is created
+async function notifyGameInvite(opponentToken, challengerName, gameCode) {
+  if (!opponentToken) return;
+  await sendPushNotification('game_invite', opponentToken, challengerName, gameCode);
+}
