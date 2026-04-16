@@ -484,107 +484,240 @@
 <script>
 
 // ============================================================
-// WHAM MENU — exact Whamgame tab structure
+// WHAM MENU + BIBLE VERSES — live lookup via bible-api.com
 // ============================================================
 (function() {
-  let menuOpen = false;
-  let themeOpen = false;
 
+  const BV_BOOKS    = ['Genesis', 'Exodus', 'Leviticus', 'Numbers', 'Deuteronomy', 'Joshua', 'Judges', 'Ruth', '1 Samuel', '2 Samuel', '1 Kings', '2 Kings', '1 Chronicles', '2 Chronicles', 'Ezra', 'Nehemiah', 'Esther', 'Job', 'Psalms', 'Proverbs', 'Ecclesiastes', 'Song of Solomon', 'Isaiah', 'Jeremiah', 'Lamentations', 'Ezekiel', 'Daniel', 'Hosea', 'Joel', 'Amos', 'Obadiah', 'Jonah', 'Micah', 'Nahum', 'Habakkuk', 'Zephaniah', 'Haggai', 'Zechariah', 'Malachi', 'Matthew', 'Mark', 'Luke', 'John', 'Acts', 'Romans', '1 Corinthians', '2 Corinthians', 'Galatians', 'Ephesians', 'Philippians', 'Colossians', '1 Thessalonians', '2 Thessalonians', '1 Timothy', '2 Timothy', 'Titus', 'Philemon', 'Hebrews', 'James', '1 Peter', '2 Peter', '1 John', '2 John', '3 John', 'Jude', 'Revelation'];
+  const BV_CHAPTERS = {'Genesis': 50, 'Exodus': 40, 'Leviticus': 27, 'Numbers': 36, 'Deuteronomy': 34, 'Joshua': 24, 'Judges': 21, 'Ruth': 4, '1 Samuel': 31, '2 Samuel': 24, '1 Kings': 22, '2 Kings': 25, '1 Chronicles': 29, '2 Chronicles': 36, 'Ezra': 10, 'Nehemiah': 13, 'Esther': 10, 'Job': 42, 'Psalms': 150, 'Proverbs': 31, 'Ecclesiastes': 12, 'Song of Solomon': 8, 'Isaiah': 66, 'Jeremiah': 52, 'Lamentations': 5, 'Ezekiel': 48, 'Daniel': 12, 'Hosea': 14, 'Joel': 3, 'Amos': 9, 'Obadiah': 1, 'Jonah': 4, 'Micah': 7, 'Nahum': 3, 'Habakkuk': 3, 'Zephaniah': 3, 'Haggai': 2, 'Zechariah': 14, 'Malachi': 4, 'Matthew': 28, 'Mark': 16, 'Luke': 24, 'John': 21, 'Acts': 28, 'Romans': 16, '1 Corinthians': 16, '2 Corinthians': 13, 'Galatians': 6, 'Ephesians': 6, 'Philippians': 4, 'Colossians': 4, '1 Thessalonians': 5, '2 Thessalonians': 3, '1 Timothy': 6, '2 Timothy': 4, 'Titus': 3, 'Philemon': 1, 'Hebrews': 13, 'James': 5, '1 Peter': 5, '2 Peter': 3, '1 John': 5, '2 John': 1, '3 John': 1, 'Jude': 1, 'Revelation': 22};
+  const CELL_H      = 40;
+  const bvW         = {};
+  let menuOpen      = false;
+
+  // ── Menu toggle ────────────────────────────────────────────
   window.whamMenuToggle = function() {
     menuOpen = !menuOpen;
     const btn   = document.getElementById('menuToggleBtn');
     const panel = document.getElementById('menuPanel');
-    btn.classList.toggle('open', menuOpen);
-    panel.style.display = menuOpen ? 'block' : 'none';
-    if (!menuOpen) {
-      // close theme submenu too
-      themeOpen = false;
-      document.getElementById('themeSubmenu').classList.remove('open');
-      document.getElementById('themeToggleBtn').classList.remove('sub-open');
-    }
+    if (btn)   btn.classList.toggle('open', menuOpen);
+    if (panel) panel.style.display = menuOpen ? 'block' : 'none';
   };
 
-  window.whamMenuThemeToggle = function() {
-    themeOpen = !themeOpen;
-    document.getElementById('themeSubmenu').classList.toggle('open', themeOpen);
-    document.getElementById('themeToggleBtn').classList.toggle('sub-open', themeOpen);
-  };
-
-  window.whamMenuGo = function(screen, sub) {
+  window.whamMenuGo = function(screen) {
     menuOpen = false;
-    themeOpen = false;
-    document.getElementById('menuToggleBtn').classList.remove('open');
-    document.getElementById('menuPanel').style.display = 'none';
-    document.getElementById('themeSubmenu').classList.remove('open');
-    document.getElementById('themeToggleBtn').classList.remove('sub-open');
-
-    // ── Route each tab ──────────────────────────────────────
+    const btn   = document.getElementById('menuToggleBtn');
+    const panel = document.getElementById('menuPanel');
+    if (btn)   btn.classList.remove('open');
+    if (panel) panel.style.display = 'none';
     switch(screen) {
-      case 'leaderboard':
-        // PLACEHOLDER: navigate to leaderboard page / open modal
-        whamPlaceholder('🏆 Leaderboard — coming soon');
-        break;
-      case 'learning':
-        // PLACEHOLDER: open missed-verse review mode
-        whamPlaceholder('🎓 Learning Center — coming soon');
-        break;
-      case 'versePack':
-        // PLACEHOLDER: custom verse pack builder
-        whamPlaceholder('📦 Custom Verse Pack — coming soon');
-        break;
-      case 'myScores':
-        // PLACEHOLDER: personal match history screen
-        whamPlaceholder('📊 My Scores — coming soon');
-        break;
-      case 'playerList':
-        // PLACEHOLDER: friends roster + matchmaking
-        whamPlaceholder('👥 Player List — coming soon');
-        break;
-      case 'howToPlay':
-        // PLACEHOLDER: tutorial overlay
-        whamPlaceholder('❓ How to Play — coming soon');
-        break;
-      case 'invite':
-        // PLACEHOLDER: share deep link
-        whamPlaceholder('🎉 Invite Friends — coming soon');
-        break;
-      case 'theme':
-        // PLACEHOLDER: theme purchase / unlock (sub = theme key)
-        whamPlaceholder('🎨 Theme: ' + (sub||'') + ' — purchase coming soon');
-        break;
-      case 'profile':
-        // PLACEHOLDER: profile screen (avatar, username, stats)
-        whamPlaceholder('👤 My Profile — coming soon');
-        break;
-      case 'signout':
-        // PLACEHOLDER: Firebase sign-out + redirect to home
-        whamPlaceholder('🚪 Sign Out — coming soon');
-        break;
+      case 'bibleVerses': bvOpen(); break;
+      case 'leaderboard':  whamPlaceholder('🏆 Leaderboard — coming soon'); break;
+      case 'learning':     whamPlaceholder('🎓 Learning Center — coming soon'); break;
+      case 'versePack':    whamPlaceholder('📦 Custom Verse Pack — coming soon'); break;
+      case 'myScores':     whamPlaceholder('📊 My Scores — coming soon'); break;
+      case 'playerList':   whamPlaceholder('👥 Player List — coming soon'); break;
+      case 'howToPlay':    whamPlaceholder('❓ How to Play — coming soon'); break;
+      case 'invite':       whamPlaceholder('🎉 Invite Friends — coming soon'); break;
+      case 'profile':      whamPlaceholder('👤 My Profile — coming soon'); break;
+      case 'signout':      whamPlaceholder('🚪 Sign Out — coming soon'); break;
     }
   };
 
-  // Show toast for placeholders
   function whamPlaceholder(msg) {
-    let toast = document.getElementById('toast') || document.getElementById('menu-toast');
-    if (!toast) {
-      toast = document.createElement('div');
-      toast.id = 'menu-toast';
-      toast.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1e293b;color:#c9a227;border:1px solid #c9a227;padding:10px 22px;border-radius:30px;font-size:14px;font-weight:600;z-index:9999;pointer-events:none;opacity:0;transition:opacity 0.2s;';
-      document.body.appendChild(toast);
+    let t = document.getElementById('toast') || document.getElementById('menu-toast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'menu-toast';
+      t.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1e293b;color:#c9a227;border:1px solid #c9a227;padding:10px 22px;border-radius:30px;font-size:14px;font-weight:600;z-index:9999;pointer-events:none;opacity:0;transition:opacity 0.2s;';
+      document.body.appendChild(t);
     }
-    toast.textContent = msg;
-    toast.style.opacity = '1';
-    clearTimeout(toast._t);
-    toast._t = setTimeout(() => { toast.style.opacity = '0'; }, 2200);
+    t.textContent = msg; t.style.opacity = '1';
+    clearTimeout(t._t); t._t = setTimeout(() => { t.style.opacity = '0'; }, 2400);
   }
 
-  // Close menu when clicking outside
   document.addEventListener('mousedown', function(e) {
     const wrap = document.getElementById('whamMenu');
-    if (wrap && !wrap.contains(e.target) && menuOpen) {
-      whamMenuToggle();
-    }
+    if (wrap && !wrap.contains(e.target) && menuOpen) whamMenuToggle();
   });
+
+  // ── Bible Verses modal ─────────────────────────────────────
+  function bvOpen() {
+    const overlay = document.getElementById('bv-modal-overlay');
+    if (!overlay) return;
+    overlay.style.display = 'flex';
+    document.getElementById('bv-reading-pane').style.display = 'none';
+    if (!bvW.book) {
+      bvInitWheel('book', BV_BOOKS, 0);
+      const maxCh = BV_CHAPTERS[BV_BOOKS[0]] || 50;
+      bvInitWheel('ch', bvRange(1, maxCh), 0);
+      bvInitWheel('vs', bvRange(1, 50), 0);
+    }
+  }
+
+  window.bvClose = function() {
+    const overlay = document.getElementById('bv-modal-overlay');
+    if (overlay) overlay.style.display = 'none';
+  };
+
+  window.bvOverlayClick = function(e) {
+    if (e.target === document.getElementById('bv-modal-overlay')) bvClose();
+  };
+
+  function bvRange(from, to) {
+    return Array.from({length: to - from + 1}, (_, i) => String(from + i));
+  }
+
+  // ── Wheel ──────────────────────────────────────────────────
+  function bvInitWheel(id, items, startIdx) {
+    const inner = document.getElementById('bv-inner-' + id);
+    const outer = document.getElementById('bv-outer-' + id);
+    if (!inner || !outer) return;
+    const state = { items, index: startIdx, dragging: false, startY: 0, dragOffset: 0, velocity: 0, lastY: 0, lastT: 0 };
+    bvW[id] = state;
+    bvRenderCells(id);
+    bvSetOffset(id, 0, false);
+    outer.addEventListener('touchstart',  e => bvDragStart(id, e.touches[0].clientY), {passive:true});
+    outer.addEventListener('touchmove',   e => { e.preventDefault(); bvDragMove(id, e.touches[0].clientY); }, {passive:false});
+    outer.addEventListener('touchend',    () => bvDragEnd(id));
+    outer.addEventListener('mousedown',   e => bvDragStart(id, e.clientY));
+    window.addEventListener('mousemove',  e => { if (bvW[id] && bvW[id].dragging) bvDragMove(id, e.clientY); });
+    window.addEventListener('mouseup',    () => { if (bvW[id] && bvW[id].dragging) bvDragEnd(id); });
+  }
+
+  function bvRenderCells(id) {
+    const state = bvW[id];
+    const inner = document.getElementById('bv-inner-' + id);
+    inner.innerHTML = '';
+    const items = state.items;
+    const reps  = Math.max(3, Math.ceil(90 / items.length));
+    state._totalCells = items.length * reps;
+    state._startPad   = Math.floor(reps / 2) * items.length;
+    for (let r = 0; r < reps; r++) {
+      items.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'bv-wheel-cell';
+        div.textContent = item;
+        inner.appendChild(div);
+      });
+    }
+    bvHighlight(id);
+  }
+
+  function bvSetOffset(id, pxOffset, animate) {
+    const state = bvW[id];
+    const inner = document.getElementById('bv-inner-' + id);
+    if (!inner) return;
+    const px = -state.index * CELL_H + state._startPad * CELL_H + 60 - pxOffset;
+    inner.style.transition = animate ? 'transform 0.22s cubic-bezier(.22,.68,0,1.2)' : 'none';
+    inner.style.transform  = `translateY(${px}px)`;
+    bvHighlight(id);
+  }
+
+  function bvHighlight(id) {
+    const state = bvW[id];
+    const inner = document.getElementById('bv-inner-' + id);
+    if (!inner) return;
+    const selI = state._startPad + state.index;
+    inner.querySelectorAll('.bv-wheel-cell').forEach((c, i) => c.classList.toggle('selected', i === selI));
+  }
+
+  function bvDragStart(id, y) {
+    const s = bvW[id];
+    s.dragging = true; s.startY = y; s.dragOffset = 0;
+    s.lastY = y; s.lastT = Date.now(); s.velocity = 0;
+  }
+
+  function bvDragMove(id, y) {
+    const s = bvW[id];
+    if (!s.dragging) return;
+    const now = Date.now();
+    s.velocity   = (y - s.lastY) / Math.max(1, now - s.lastT) * 16;
+    s.lastY = y; s.lastT = now;
+    s.dragOffset = -(y - s.startY);
+    bvSetOffset(id, s.dragOffset, false);
+  }
+
+  function bvDragEnd(id) {
+    const s = bvW[id];
+    if (!s.dragging) return;
+    s.dragging = false;
+    let delta = Math.round(s.dragOffset / CELL_H) + (-Math.round(s.velocity * 2 / CELL_H));
+    s.index = Math.max(0, Math.min(s.items.length - 1, s.index + delta));
+    s.dragOffset = 0;
+    bvSetOffset(id, 0, true);
+    if (id === 'book') bvOnBookChange();
+  }
+
+  function bvOnBookChange() {
+    const book  = BV_BOOKS[bvW.book.index];
+    const maxCh = BV_CHAPTERS[book] || 50;
+    bvW.ch.items = bvRange(1, maxCh);
+    bvW.ch.index = 0;
+    bvRenderCells('ch');
+    bvSetOffset('ch', 0, true);
+    // Reset verse wheel too
+    bvW.vs.items = bvRange(1, 50);
+    bvW.vs.index = 0;
+    bvRenderCells('vs');
+    bvSetOffset('vs', 0, true);
+  }
+
+  // ── Read Verse — live fetch from bible-api.com ─────────────
+  window.bvReadVerse = function() {
+    if (!bvW.book) return;
+    const book    = BV_BOOKS[bvW.book.index];
+    const chapter = bvW.ch.items[bvW.ch.index];
+    const verse   = bvW.vs.items[bvW.vs.index];
+    const ref     = `${book} ${chapter}:${verse}`;
+
+    const pane   = document.getElementById('bv-reading-pane');
+    const refEl  = document.getElementById('bv-reading-ref');
+    const textEl = document.getElementById('bv-reading-text');
+
+    // Show loading state
+    refEl.textContent  = ref;
+    textEl.innerHTML   = '<span style="color:#64748b;font-style:italic;">Loading...</span>';
+    pane.style.display = 'block';
+    pane.scrollIntoView({behavior:'smooth', block:'nearest'});
+
+    // 1. Check local VERSES dataset first (instant)
+    if (typeof VERSES !== 'undefined') {
+      const local = VERSES.find(v =>
+        v.book === book &&
+        v.chapter === parseInt(chapter) &&
+        v.verse   === parseInt(verse)
+      );
+      if (local) {
+        textEl.innerHTML = `"${local.text}"`;
+        return;
+      }
+    }
+
+    // 2. Fetch from bible-api.com (KJV, no key required)
+    // Encode spaces as + for URL
+    const query = encodeURIComponent(`${book} ${chapter}:${verse}`);
+    const url   = `https://bible-api.com/${query}?translation=kjv`;
+
+    fetch(url)
+      .then(r => {
+        if (!r.ok) throw new Error('Not found');
+        return r.json();
+      })
+      .then(data => {
+        if (data.text) {
+          const text = data.text.trim().replace(/
+/g, ' ');
+          textEl.innerHTML = `"${text}"
+            <div style="font-size:11px;color:#64748b;margin-top:8px;font-style:normal;">KJV · bible-api.com</div>`;
+        } else {
+          textEl.innerHTML = '<span style="color:#64748b;font-style:italic;">Verse not found.</span>';
+        }
+      })
+      .catch(() => {
+        textEl.innerHTML = '<span style="color:#64748b;font-style:italic;">Could not load verse. Check connection.</span>';
+      });
+  };
+
 })();
 
 </script>
