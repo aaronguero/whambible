@@ -43,7 +43,7 @@ window.addEventListener('DOMContentLoaded', () => {
     restoreScoreFromStorage();
 
     if (recovered === '1') {
-      state.score += lvl;
+      state.score += 5; // Recovery success = flat +5 (exact Whamgame: Le(Y=>Y+5))
       updateScoreDisplay();
       updateDot(retIndex, 'recovered');
       state.results[retIndex] = { correct: true, recovered: true };
@@ -187,8 +187,8 @@ function handleAnswer(choiceIndex, isCorrect) {
   document.getElementById(`choice-${choiceIndex}`).classList.add(isCorrect ? 'correct' : 'wrong');
 
   if (isCorrect) {
-    awardPoints();
-    showFeedback(true);
+    const bonus = awardPoints();
+    showFeedback(true, bonus);
     state.results.push({ correct: true });
     updateDot(state.currentIndex, 'correct');
     // WHAM SLAM fires on correct — exact Whamgame spec
@@ -272,23 +272,34 @@ function launchRecovery() {
 }
 
 // ── Points ────────────────────────────────────────────────
+// Exact Whamgame scoring:
+// Correct = level points + streak bonus (every 5th correct in row = +5 bonus)
+// Wrong   = 0 points, streak resets to 0
+// Recovery success = flat +5 points (always, regardless of level)
+const STREAK_EVERY = 5;   // every Nth correct gets bonus (Jx=5)
+const STREAK_BONUS = 5;   // bonus points awarded        (Zx=5)
+
 function awardPoints() {
   state.streak++;
   let pts = state.pointsPerVerse;
-  if (state.streak >= 3) pts = Math.round(pts * 1.5);
-  if (state.streak >= 5) pts = Math.round(pts * 2);
-  state.score += pts;
+  let bonus = 0;
+  if (state.streak % STREAK_EVERY === 0) bonus = STREAK_BONUS;
+  state.score += pts + bonus;
   updateScoreDisplay();
+  return bonus; // return so feedback can show streak bonus
 }
 
 // ── Feedback ──────────────────────────────────────────────
-function showFeedback(correct) {
+function showFeedback(correct, bonus) {
   const fb = document.getElementById('feedback-bar');
   if (correct) {
     const msgs = ['⚔️ Correct!', '🔥 Nailed it!', '✨ Excellent!', '👑 Outstanding!', '💎 Flawless!'];
-    fb.textContent = state.streak >= 3
-      ? `🔥 ${state.streak}x Streak! ${msgs[Math.floor(Math.random()*msgs.length)]}`
-      : msgs[Math.floor(Math.random()*msgs.length)];
+    const base = msgs[Math.floor(Math.random() * msgs.length)];
+    if (bonus > 0) {
+      fb.textContent = `🔥 ${state.streak}x Streak! +${STREAK_BONUS} Bonus! ${base}`;
+    } else {
+      fb.textContent = base;
+    }
     fb.className = 'feedback-bar correct';
   } else {
     fb.textContent = '📜 Wrong — Scroll Recovery incoming!';
