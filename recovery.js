@@ -118,7 +118,7 @@ function initRecoveryScreen() {
 
   document.getElementById('recovery-verse-body').textContent = `"${v.text}"`;
   document.getElementById('recovery-verse-ref').textContent  = `${v.book} ${v.chapter}:${v.verse}`;
-  document.getElementById('pts-at-stake').textContent        = `${R.pts} pts at stake`;
+  document.getElementById('pts-at-stake').textContent        = `${R.pts} pts missed · recover for +5`;
 
   R.bookItems    = [...ALL_BOOKS];
   R.chapterItems = CHAPTERS;
@@ -279,7 +279,7 @@ window.submitRecovery = function() {
   const gameCode = new URLSearchParams(window.location.search).get('game') || '';
   if (gameCode) {
     const saved = JSON.parse(localStorage.getItem('wb_game_' + gameCode) || '{}');
-    saved.last_recovered_points = correct ? R.pts : 0;
+    saved.last_recovered_points = correct ? 5 : 0; // Recovery = flat +5 (exact Whamgame: Le(Y=>Y+5))
     saved.recovery_result       = correct ? 'recovered' : 'failed';
     localStorage.setItem('wb_game_' + gameCode, JSON.stringify(saved));
   }
