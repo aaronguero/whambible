@@ -312,6 +312,157 @@
   font-size: 15px; color: #64748b; font-style: italic;
 }
 
+
+/* ── Login Modal ─────────────────────────────────────────── */
+#login-modal-overlay {
+  position: fixed; inset: 0; z-index: 2000;
+  background: rgba(0,0,0,0.78);
+  display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+  animation: fadeIn .2s ease;
+}
+#login-modal {
+  background: linear-gradient(160deg, #1e1408 0%, #2a1c0a 100%);
+  border: 1px solid rgba(201,162,39,0.35);
+  border-radius: 20px;
+  width: min(88vw, 360px);
+  padding: 32px 28px 28px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(201,162,39,0.1);
+  position: relative;
+  animation: slideUp .25s ease;
+}
+@keyframes slideUp { from { transform: translateY(24px); opacity:0; } to { transform: none; opacity:1; } }
+#login-modal .lm-logo {
+  text-align: center; font-size: 36px; margin-bottom: 4px;
+}
+#login-modal .lm-title {
+  text-align: center;
+  font-family: 'Georgia', serif;
+  font-size: 22px; font-weight: 700;
+  color: #c9a227; letter-spacing: .5px;
+  margin-bottom: 4px;
+}
+#login-modal .lm-sub {
+  text-align: center; font-size: 12px;
+  color: rgba(255,255,255,0.45); margin-bottom: 24px;
+}
+#login-modal .lm-tabs {
+  display: flex; gap: 0; margin-bottom: 20px;
+  border-radius: 10px; overflow: hidden;
+  border: 1px solid rgba(201,162,39,0.25);
+}
+#login-modal .lm-tab {
+  flex: 1; padding: 9px 0; font-size: 13px; font-weight: 600;
+  background: transparent; color: rgba(255,255,255,0.45);
+  border: none; cursor: pointer; transition: all .2s;
+  letter-spacing: .3px;
+}
+#login-modal .lm-tab.active {
+  background: rgba(201,162,39,0.18); color: #c9a227;
+}
+#login-modal .lm-input {
+  width: 100%; box-sizing: border-box;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(201,162,39,0.2);
+  border-radius: 10px; padding: 11px 14px;
+  color: #fff; font-size: 14px; margin-bottom: 10px;
+  outline: none; transition: border .2s;
+}
+#login-modal .lm-input:focus { border-color: rgba(201,162,39,0.6); }
+#login-modal .lm-input::placeholder { color: rgba(255,255,255,0.3); }
+#login-modal .lm-btn-primary {
+  width: 100%; padding: 13px; border-radius: 10px; border: none;
+  background: linear-gradient(135deg, #c9a227, #a07820);
+  color: #1a1008; font-size: 15px; font-weight: 700;
+  cursor: pointer; margin-top: 4px; margin-bottom: 16px;
+  letter-spacing: .3px; transition: opacity .2s;
+}
+#login-modal .lm-btn-primary:hover { opacity: .88; }
+#login-modal .lm-divider {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 14px;
+}
+#login-modal .lm-divider span {
+  font-size: 11px; color: rgba(255,255,255,0.3); white-space: nowrap;
+}
+#login-modal .lm-divider::before,
+#login-modal .lm-divider::after {
+  content: ''; flex: 1; height: 1px;
+  background: rgba(255,255,255,0.1);
+}
+#login-modal .lm-btn-google {
+  width: 100%; padding: 11px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.06);
+  color: #fff; font-size: 14px; font-weight: 600;
+  cursor: pointer; display: flex; align-items: center;
+  justify-content: center; gap: 10px; margin-bottom: 10px;
+  transition: background .2s;
+}
+#login-modal .lm-btn-google:hover { background: rgba(255,255,255,0.11); }
+#login-modal .lm-btn-guest {
+  width: 100%; padding: 10px; border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.08);
+  background: transparent;
+  color: rgba(255,255,255,0.4); font-size: 13px;
+  cursor: pointer; transition: color .2s;
+}
+#login-modal .lm-btn-guest:hover { color: rgba(255,255,255,0.7); }
+#login-modal .lm-close {
+  position: absolute; top: 14px; right: 16px;
+  background: none; border: none; color: rgba(255,255,255,0.35);
+  font-size: 20px; cursor: pointer; line-height: 1;
+}
+#login-modal .lm-close:hover { color: rgba(255,255,255,0.7); }
+#login-modal .lm-err {
+  color: #f87171; font-size: 12px; text-align: center;
+  min-height: 16px; margin-bottom: 8px; margin-top: -4px;
+}
+/* Profile card (shown when logged in) */
+#login-modal .lm-profile {
+  text-align: center;
+}
+#login-modal .lm-avatar {
+  width: 72px; height: 72px; border-radius: 50%;
+  border: 2px solid #c9a227; margin: 0 auto 12px;
+  object-fit: cover; display: block;
+  background: rgba(201,162,39,0.15);
+}
+#login-modal .lm-avatar-placeholder {
+  width: 72px; height: 72px; border-radius: 50%;
+  border: 2px solid #c9a227; margin: 0 auto 12px;
+  background: rgba(201,162,39,0.15);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 30px;
+}
+#login-modal .lm-profile-name {
+  font-family: 'Georgia', serif; font-size: 18px;
+  color: #c9a227; font-weight: 700; margin-bottom: 4px;
+}
+#login-modal .lm-profile-email {
+  font-size: 12px; color: rgba(255,255,255,0.4); margin-bottom: 6px;
+}
+#login-modal .lm-profile-stats {
+  display: flex; justify-content: center; gap: 24px;
+  margin: 16px 0 20px;
+}
+#login-modal .lm-stat { text-align: center; }
+#login-modal .lm-stat-val {
+  font-size: 22px; font-weight: 700; color: #c9a227;
+}
+#login-modal .lm-stat-lbl {
+  font-size: 10px; color: rgba(255,255,255,0.4); letter-spacing: .5px;
+  text-transform: uppercase;
+}
+#login-modal .lm-btn-signout {
+  width: 100%; padding: 11px; border-radius: 10px;
+  border: 1px solid rgba(248,113,113,0.3);
+  background: rgba(248,113,113,0.08);
+  color: #f87171; font-size: 14px; font-weight: 600;
+  cursor: pointer; transition: background .2s;
+}
+#login-modal .lm-btn-signout:hover { background: rgba(248,113,113,0.15); }
+
 </style>
 <style>
 /* == LANG WHEEL == */
@@ -1115,8 +1266,8 @@
       case 'playerList':   whamPlaceholder('👥 Player List — coming soon'); break;
       case 'howToPlay':       htpOpen(); break;
       case 'invite':       inviteOpen(); break;
-      case 'profile':      whamPlaceholder('👤 My Profile — coming soon'); break;
-      case 'signout':      whamPlaceholder('🚪 Sign Out — coming soon'); break;
+      case 'profile':      lmOpen(); break;
+      case 'signout':      lmSignOut(); break;
     }
   };
 
@@ -1802,6 +1953,185 @@ document.addEventListener('whamAuthChange', e => {
   if (photoEl)  photoEl.src         = user ? (user.photoURL || '') : '';
   if (loginBtn)  loginBtn.style.display  = user ? 'none' : 'flex';
   if (logoutBtn) logoutBtn.style.display = user ? 'flex' : 'none';
+});
+</script>
+
+
+<!-- == LOGIN / PROFILE MODAL ================================ -->
+<div id="login-modal-overlay" style="display:none;" onclick="lmOverlayClick(event)">
+  <div id="login-modal">
+    <button class="lm-close" onclick="lmClose()">✕</button>
+
+    <!-- ── Logged-out view ─────────────────────────────── -->
+    <div id="lm-auth-view">
+      <div class="lm-logo">✝️</div>
+      <div class="lm-title">WhamBible</div>
+      <div class="lm-sub">Sign in to challenge friends & sync your progress</div>
+
+      <div class="lm-tabs">
+        <button class="lm-tab active" id="lm-tab-signin" onclick="lmTab('signin')">Sign In</button>
+        <button class="lm-tab"        id="lm-tab-signup" onclick="lmTab('signup')">Create Account</button>
+      </div>
+
+      <div id="lm-err" class="lm-err"></div>
+
+      <input class="lm-input" id="lm-email"    type="email"    placeholder="Email address"  autocomplete="email"/>
+      <input class="lm-input" id="lm-password" type="password" placeholder="Password"       autocomplete="current-password"/>
+      <button class="lm-btn-primary" id="lm-submit-btn" onclick="lmSubmit()">Sign In</button>
+
+      <div class="lm-divider"><span>or</span></div>
+
+      <button class="lm-btn-google" onclick="lmGoogle()">
+        <svg width="18" height="18" viewBox="0 0 48 48">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+          <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+        Continue with Google
+      </button>
+
+      <button class="lm-btn-guest" onclick="lmGuest()">Play as Guest (single player only)</button>
+    </div>
+
+    <!-- ── Logged-in / Profile view ────────────────────── -->
+    <div id="lm-profile-view" style="display:none;">
+      <div class="lm-profile">
+        <div id="lm-avatar-wrap"></div>
+        <div class="lm-profile-name"  id="lm-profile-name"></div>
+        <div class="lm-profile-email" id="lm-profile-email"></div>
+        <div class="lm-profile-stats">
+          <div class="lm-stat">
+            <div class="lm-stat-val" id="lm-stat-score">—</div>
+            <div class="lm-stat-lbl">Score</div>
+          </div>
+          <div class="lm-stat">
+            <div class="lm-stat-val" id="lm-stat-games">—</div>
+            <div class="lm-stat-lbl">Games</div>
+          </div>
+          <div class="lm-stat">
+            <div class="lm-stat-val" id="lm-stat-streak">—</div>
+            <div class="lm-stat-lbl">Streak</div>
+          </div>
+        </div>
+        <button class="lm-btn-signout" onclick="lmSignOut()">Sign Out</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+<script>
+// ── Login Modal ─────────────────────────────────────────────
+let _lmMode = 'signin';
+
+function lmOpen() {
+  const overlay = document.getElementById('login-modal-overlay');
+  overlay.style.display = 'flex';
+  // Show correct view based on auth state
+  if (window._fbUser && !window._fbUser.isAnonymous) {
+    lmShowProfile(window._fbUser);
+  } else {
+    document.getElementById('lm-auth-view').style.display    = '';
+    document.getElementById('lm-profile-view').style.display = 'none';
+  }
+}
+
+function lmClose() {
+  document.getElementById('login-modal-overlay').style.display = 'none';
+}
+
+function lmOverlayClick(e) {
+  if (e.target.id === 'login-modal-overlay') lmClose();
+}
+
+function lmTab(mode) {
+  _lmMode = mode;
+  document.getElementById('lm-tab-signin').classList.toggle('active', mode === 'signin');
+  document.getElementById('lm-tab-signup').classList.toggle('active', mode === 'signup');
+  document.getElementById('lm-submit-btn').textContent = mode === 'signin' ? 'Sign In' : 'Create Account';
+  document.getElementById('lm-err').textContent = '';
+  const pwInput = document.getElementById('lm-password');
+  pwInput.autocomplete = mode === 'signin' ? 'current-password' : 'new-password';
+}
+
+async function lmSubmit() {
+  const email    = document.getElementById('lm-email').value.trim();
+  const password = document.getElementById('lm-password').value;
+  const errEl    = document.getElementById('lm-err');
+  errEl.textContent = '';
+  if (!email || !password) { errEl.textContent = 'Please enter email and password.'; return; }
+  try {
+    if (_lmMode === 'signin') {
+      await whamSignInEmail(email, password);
+    } else {
+      await whamSignUpEmail(email, password);
+    }
+  } catch(e) {
+    errEl.textContent = e.message || 'Something went wrong.';
+  }
+}
+
+async function lmGoogle() {
+  document.getElementById('lm-err').textContent = '';
+  try { await whamSignInGoogle(); }
+  catch(e) { document.getElementById('lm-err').textContent = e.message || 'Google sign-in failed.'; }
+}
+
+async function lmGuest() {
+  await whamSignInGuest();
+  lmClose();
+}
+
+async function lmSignOut() {
+  await whamSignOut();
+  lmClose();
+}
+
+async function lmShowProfile(user) {
+  document.getElementById('lm-auth-view').style.display    = 'none';
+  document.getElementById('lm-profile-view').style.display = '';
+  document.getElementById('lm-profile-name').textContent   = user.displayName || user.email || 'Player';
+  document.getElementById('lm-profile-email').textContent  = user.isAnonymous ? 'Guest account' : (user.email || '');
+
+  // Avatar
+  const wrap = document.getElementById('lm-avatar-wrap');
+  if (user.photoURL) {
+    wrap.innerHTML = `<img class="lm-avatar" src="${user.photoURL}" onerror="this.style.display='none'"/>`;
+  } else {
+    wrap.innerHTML = `<div class="lm-avatar-placeholder">👤</div>`;
+  }
+
+  // Load stats from Firestore
+  try {
+    const { db, doc, getDoc } = window._fb;
+    const snap = await getDoc(doc(db, 'players', user.uid));
+    if (snap.exists()) {
+      const d = snap.data();
+      document.getElementById('lm-stat-score').textContent  = d.score  ?? 0;
+      document.getElementById('lm-stat-games').textContent  = d.gamesPlayed ?? 0;
+      document.getElementById('lm-stat-streak').textContent = d.streak ?? 0;
+    }
+  } catch(e) { console.warn('profile load:', e); }
+}
+
+// Auth state → auto-update modal if open
+document.addEventListener('whamAuthChange', e => {
+  const user = e.detail;
+  const overlay = document.getElementById('login-modal-overlay');
+  // Update menu sign-out button visibility
+  const soBtn = document.getElementById('menuSignOut');
+  if (soBtn) soBtn.style.display = (user && !user.isAnonymous) ? 'flex' : 'none';
+  // If modal is open, flip to correct view
+  if (overlay && overlay.style.display !== 'none') {
+    if (user && !user.isAnonymous) {
+      lmShowProfile(user);
+    } else {
+      document.getElementById('lm-auth-view').style.display    = '';
+      document.getElementById('lm-profile-view').style.display = 'none';
+    }
+  }
 });
 </script>
 
