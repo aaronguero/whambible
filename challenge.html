@@ -10,7 +10,9 @@
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="game.css" />
   <link rel="stylesheet" href="challenge.css" />
+
 <style>
+/* == WHAM MENU + BIBLE VERSES == */
 
 /* ============================================================
    DROPDOWN MENU — exact Whamgame structure
@@ -170,9 +172,243 @@
 .wham-menu-item.signout { color: #f87171; }
 .wham-menu-item.signout:hover { background: rgba(248,113,113,0.08); }
 
+/* ── Bible Verses modal ── */
+#bv-modal-overlay {
+  position: fixed; inset: 0; z-index: 4000;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(4px);
+  display: flex; align-items: center; justify-content: center;
+  animation: menuFade 0.18s ease;
+}
+#bv-modal {
+  background: #0f172a;
+  border: 1px solid #c9a227;
+  border-radius: 20px;
+  width: min(92vw, 480px);
+  max-height: 88vh;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 12px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(201,162,39,0.2);
+}
+#bv-header {
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid #1e293b;
+  display: flex; align-items: center; gap: 10px;
+}
+#bv-header h2 {
+  flex: 1; margin: 0;
+  font-family: 'Cinzel', serif;
+  font-size: 17px; font-weight: 700;
+  color: #c9a227; letter-spacing: 0.5px;
+}
+#bv-close {
+  background: transparent; border: none;
+  color: #64748b; font-size: 22px; cursor: pointer;
+  line-height: 1; padding: 2px 6px; border-radius: 6px;
+  transition: color 0.15s;
+}
+#bv-close:hover { color: #f87171; }
+
+/* Wheels row */
+#bv-wheels {
+  display: flex; gap: 8px;
+  padding: 18px 20px 10px;
+  justify-content: center;
+}
+.bv-wheel-wrap {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+.bv-wheel-label {
+  font-size: 10px; font-weight: 800; letter-spacing: 1px;
+  color: #64748b; text-transform: uppercase;
+}
+.bv-wheel-outer {
+  position: relative;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #020617;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+.bv-wheel-outer:active { cursor: grabbing; }
+/* Book wider, ch/vs narrower */
+#bv-wheel-book   .bv-wheel-outer { width: 148px; height: 160px; }
+#bv-wheel-ch     .bv-wheel-outer { width: 64px;  height: 160px; }
+#bv-wheel-vs     .bv-wheel-outer { width: 64px;  height: 160px; }
+
+.bv-wheel-inner {
+  position: absolute; left: 0; right: 0; top: 0;
+  transition: transform 0.12s cubic-bezier(.22,.68,0,1.2);
+}
+.bv-wheel-cell {
+  display: flex; align-items: center; justify-content: center;
+  height: 40px;
+  font-family: 'Crimson Text', serif;
+  font-size: 14px; font-weight: 600;
+  color: #94a3b8;
+  transition: color 0.15s, font-size 0.15s;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  padding: 0 8px;
+}
+.bv-wheel-cell.selected {
+  color: #c9a227; font-size: 15px; font-weight: 700;
+}
+/* Gradient masks top/bottom */
+.bv-wheel-outer::before,
+.bv-wheel-outer::after {
+  content: ''; position: absolute; left: 0; right: 0; z-index: 2; pointer-events: none;
+  height: 52px;
+}
+.bv-wheel-outer::before { top: 0;    background: linear-gradient(to bottom, #020617 0%, transparent 100%); }
+.bv-wheel-outer::after  { bottom: 0; background: linear-gradient(to top,    #020617 0%, transparent 100%); }
+/* Selector band */
+.bv-selector-band {
+  position: absolute; left: 6px; right: 6px;
+  top: 60px; height: 40px;
+  border-top: 1px solid rgba(201,162,39,0.5);
+  border-bottom: 1px solid rgba(201,162,39,0.5);
+  background: rgba(201,162,39,0.07);
+  border-radius: 6px;
+  pointer-events: none; z-index: 3;
+}
+
+/* Read Verse button */
+#bv-read-btn {
+  margin: 10px 20px 0;
+  padding: 13px;
+  background: linear-gradient(135deg, #c9a227, #a07720);
+  border: none; border-radius: 12px;
+  color: #0f172a; font-size: 15px; font-weight: 800;
+  font-family: 'Cinzel', serif; letter-spacing: 0.5px;
+  cursor: pointer; transition: opacity 0.15s, transform 0.1s;
+  width: calc(100% - 40px);
+}
+#bv-read-btn:hover  { opacity: 0.9; }
+#bv-read-btn:active { transform: scale(0.98); }
+
+/* Reading pane */
+#bv-reading-pane {
+  margin: 12px 20px 20px;
+  padding: 18px;
+  background: rgba(201,162,39,0.06);
+  border: 1px solid rgba(201,162,39,0.2);
+  border-radius: 14px;
+  display: none;
+  animation: menuFade 0.2s ease;
+}
+#bv-reading-ref {
+  font-family: 'Cinzel', serif;
+  font-size: 13px; font-weight: 700;
+  color: #c9a227; margin-bottom: 10px; letter-spacing: 0.5px;
+}
+#bv-reading-text {
+  font-family: 'Crimson Text', serif;
+  font-size: 17px; line-height: 1.65;
+  color: #e2e8f0; font-style: italic;
+}
+#bv-reading-not-found {
+  font-family: 'Crimson Text', serif;
+  font-size: 15px; color: #64748b; font-style: italic;
+}
+
 </style>
 </head>
 <body>
+
+  <!-- == WHAM MENU WRAP ======================================= -->
+  <div class="wham-menu-wrap" id="whamMenu">
+    <button class="wham-menu-btn" id="menuToggleBtn" onclick="whamMenuToggle()" aria-label="Menu">
+      <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+    </button>
+    <div class="wham-menu-panel" id="menuPanel" style="display:none;">
+
+      <button class="wham-menu-item" onclick="whamMenuGo('leaderboard')">
+        <span class="m-icon">🏆</span><span class="m-label">Leaderboard</span>
+      </button>
+      <button class="wham-menu-item" onclick="whamMenuGo('learning')">
+        <span class="m-icon">🎓</span><span class="m-label">Learning Center</span>
+      </button>
+      <button class="wham-menu-item" onclick="whamMenuGo('versePack')">
+        <span class="m-icon">📦</span><span class="m-label">Custom Verse Pack</span>
+      </button>
+      <button class="wham-menu-item" onclick="whamMenuGo('myScores')">
+        <span class="m-icon">📊</span><span class="m-label">My Scores</span>
+      </button>
+      <button class="wham-menu-item" onclick="whamMenuGo('playerList')">
+        <span class="m-icon">👥</span><span class="m-label">Player List</span>
+      </button>
+
+      <!-- Bible Verses — replaces Theme Store -->
+      <button class="wham-menu-item" onclick="whamMenuGo('bibleVerses')">
+        <span class="m-icon">📖</span><span class="m-label">Bible Verses</span>
+      </button>
+
+      <button class="wham-menu-item" onclick="whamMenuGo('howToPlay')">
+        <span class="m-icon">❓</span><span class="m-label">How to Play</span>
+      </button>
+      <button class="wham-menu-item" onclick="whamMenuGo('invite')">
+        <span class="m-icon">🎉</span><span class="m-label">Invite Friends</span>
+      </button>
+      <button class="wham-menu-item" onclick="whamMenuGo('profile')">
+        <span class="m-icon">👤</span><span class="m-label">My Profile</span>
+      </button>
+      <a class="wham-menu-item" href="https://whambible.org" target="_blank" rel="noopener">
+        <span class="m-icon">❤️</span><span class="m-label">Donate — whambible.org</span>
+      </a>
+      <button class="wham-menu-item signout" id="menuSignOut" onclick="whamMenuGo('signout')" style="display:none;">
+        <span class="m-icon">🚪</span><span class="m-label">Sign Out</span>
+      </button>
+
+    </div><!-- /panel -->
+  </div><!-- /wrap -->
+
+  <!-- == BIBLE VERSES MODAL =================================== -->
+  <div id="bv-modal-overlay" style="display:none;" onclick="bvOverlayClick(event)">
+    <div id="bv-modal">
+      <div id="bv-header">
+        <span style="font-size:20px;">📖</span>
+        <h2>Bible Verses</h2>
+        <button id="bv-close" onclick="bvClose()">✕</button>
+      </div>
+
+      <!-- Scroll Wheels -->
+      <div id="bv-wheels">
+        <div class="bv-wheel-wrap" id="bv-wheel-book">
+          <div class="bv-wheel-label">Book</div>
+          <div class="bv-wheel-outer" id="bv-outer-book">
+            <div class="bv-wheel-inner" id="bv-inner-book"></div>
+            <div class="bv-selector-band"></div>
+          </div>
+        </div>
+        <div class="bv-wheel-wrap" id="bv-wheel-ch">
+          <div class="bv-wheel-label">Ch</div>
+          <div class="bv-wheel-outer" id="bv-outer-ch">
+            <div class="bv-wheel-inner" id="bv-inner-ch"></div>
+            <div class="bv-selector-band"></div>
+          </div>
+        </div>
+        <div class="bv-wheel-wrap" id="bv-wheel-vs">
+          <div class="bv-wheel-label">Vs</div>
+          <div class="bv-wheel-outer" id="bv-outer-vs">
+            <div class="bv-wheel-inner" id="bv-inner-vs"></div>
+            <div class="bv-selector-band"></div>
+          </div>
+        </div>
+      </div><!-- /wheels -->
+
+      <button id="bv-read-btn" onclick="bvReadVerse()">📜 Read Verse</button>
+
+      <!-- Reading Pane -->
+      <div id="bv-reading-pane">
+        <div id="bv-reading-ref"></div>
+        <div id="bv-reading-text"></div>
+      </div>
+
+    </div><!-- /modal -->
+  </div><!-- /overlay -->
+
   <div class="bg-overlay"></div>
 
   <!-- ── SCREEN: LOBBY (find/create game) ─────────────────── -->
