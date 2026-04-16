@@ -118,7 +118,9 @@ function initRecoveryScreen() {
 
   document.getElementById('recovery-verse-body').textContent = `"${v.text}"`;
   document.getElementById('recovery-verse-ref').textContent  = `${v.book} ${v.chapter}:${v.verse}`;
-  document.getElementById('pts-at-stake').textContent        = `${R.pts} pts missed · recover for +5`;
+  const levelNames = { 5: '🗡️ Squire', 10: '⚔️ Warrior', 15: '🛡️ Knight', 20: '👑 Champion' };
+  const lvlLabel = levelNames[R.pts] || `${R.pts}pt`;
+  document.getElementById('pts-at-stake').textContent = `${lvlLabel} · ${R.pts}pts missed · recover +5`;
 
   R.bookItems    = [...ALL_BOOKS];
   R.chapterItems = CHAPTERS;
