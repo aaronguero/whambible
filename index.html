@@ -313,6 +313,125 @@
 }
 
 </style>
+<style>
+/* == LANG WHEEL == */
+
+/* ── Language Scroll Wheel ─────────────────────────────────── */
+.wham-lang-wheel-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0 0;
+}
+
+.wham-lang-outer {
+  position: relative;
+  width: min(92vw, 420px);
+  height: 44px;
+  overflow: hidden;
+  border: 1px solid rgba(201,162,39,0.35);
+  border-radius: 30px;
+  background: rgba(201,162,39,0.06);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.wham-lang-outer:active { cursor: grabbing; }
+
+/* Fade edges */
+.wham-lang-outer::before,
+.wham-lang-outer::after {
+  content: '';
+  position: absolute;
+  top: 0; bottom: 0;
+  width: 52px;
+  z-index: 2;
+  pointer-events: none;
+}
+.wham-lang-outer::before {
+  left: 0;
+  background: linear-gradient(to right, #0f172a 0%, transparent 100%);
+}
+.wham-lang-outer::after {
+  right: 0;
+  background: linear-gradient(to left, #0f172a 0%, transparent 100%);
+}
+
+/* Center selector band */
+.wham-lang-selector-band {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 4px; bottom: 4px;
+  width: 64px;
+  border-left:  1px solid rgba(201,162,39,0.5);
+  border-right: 1px solid rgba(201,162,39,0.5);
+  background: rgba(201,162,39,0.07);
+  border-radius: 6px;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.wham-lang-inner {
+  display: flex;
+  flex-direction: row;
+  position: absolute;
+  top: 0; left: 0;
+  height: 44px;
+  will-change: transform;
+}
+
+.wham-lang-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  opacity: 0.35;
+  transition: opacity 0.15s;
+}
+.wham-lang-cell.selected {
+  opacity: 1;
+}
+.wham-lang-cell .lang-flag {
+  font-size: 16px;
+  line-height: 1;
+}
+.wham-lang-cell .lang-code {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #c9a227;
+  margin-top: 1px;
+}
+
+/* Select button */
+.wham-lang-select-btn {
+  padding: 8px 28px;
+  background: linear-gradient(135deg, #c9a227, #a07720);
+  border: none;
+  border-radius: 20px;
+  color: #0f172a;
+  font-size: 13px;
+  font-weight: 800;
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.wham-lang-select-btn:hover  { opacity: 0.9; }
+.wham-lang-select-btn:active { transform: scale(0.97); }
+
+/* i18n loading shimmer */
+[data-i18n-loading] {
+  opacity: 0.4;
+  transition: opacity 0.2s;
+}
+
+</style>
 </head>
 <body>
 
@@ -411,32 +530,20 @@
   <div class="bg-overlay"></div>
 
   <!-- Language Bar -->
-  <nav class="lang-bar">
-    <button class="lang-btn active" data-lang="en">🇺🇸 EN</button>
-    <button class="lang-btn" data-lang="es" title="Coming soon">🇪🇸 ES</button>
-    <button class="lang-btn" data-lang="fr" title="Coming soon">🇫🇷 FR</button>
-    <button class="lang-btn" data-lang="de" title="Coming soon">🇩🇪 DE</button>
-    <button class="lang-btn" data-lang="pt" title="Coming soon">🇵🇹 PT</button>
-    <button class="lang-btn" data-lang="it" title="Coming soon">🇮🇹 IT</button>
-    <button class="lang-btn" data-lang="zh" title="Coming soon">🇨🇳 ZH</button>
-    <button class="lang-btn" data-lang="ru" title="Coming soon">🇷🇺 RU</button>
-    <button class="lang-btn" data-lang="ja" title="Coming soon">🇯🇵 JA</button>
-    <button class="lang-btn" data-lang="ar" title="Coming soon">🇸🇦 AR</button>
-  </nav>
 
   <main class="content">
 
     <!-- Logo Section -->
     <section class="logo-section">
       <img src="https://media.base44.com/images/public/69df9a909b33058a5ce47831/cad023820_generated_image.png" alt="WhamBible" class="logo-img" />
-      <p class="tagline">⚔️ Know the Word. Win the Battle. ⚔️</p>
+      <p data-i18n="tagline">⚔️ Know the Word. Win the Battle. ⚔️</p>
     </section>
 
     <div class="divider"></div>
 
     <!-- Daily Verse Card -->
     <section class="verse-card">
-      <div class="verse-label">📜 Today's Challenge Verse</div>
+      <div data-i18n="verse-label">📜 Today's Challenge Verse</div>
       <p class="verse-text">
         "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life."
       </p>
@@ -445,31 +552,31 @@
 
     <!-- Level Selector -->
     <section class="level-section">
-      <p class="level-title">⚔️ Choose Your Battle ⚔️</p>
+      <p data-i18n="level-title">⚔️ Choose Your Battle ⚔️</p>
       <div class="level-row">
         <div class="level-card" onclick="window.location.href='game.html?level=5'">
           <span class="level-icon">🗡️</span>
           <span class="level-points">5</span>
           <span class="level-pt-label">pts</span>
-          <span class="level-name">Squire</span>
+          <span data-i18n="level-squire">Squire</span>
         </div>
         <div class="level-card" onclick="window.location.href='game.html?level=10'">
           <span class="level-icon">⚔️</span>
           <span class="level-points">10</span>
           <span class="level-pt-label">pts</span>
-          <span class="level-name">Warrior</span>
+          <span data-i18n="level-warrior">Warrior</span>
         </div>
         <div class="level-card" onclick="window.location.href='game.html?level=15'">
           <span class="level-icon">🛡️</span>
           <span class="level-points">15</span>
           <span class="level-pt-label">pts</span>
-          <span class="level-name">Knight</span>
+          <span data-i18n="level-knight">Knight</span>
         </div>
         <div class="level-card" onclick="window.location.href='game.html?level=20'">
           <span class="level-icon">👑</span>
           <span class="level-points">20</span>
           <span class="level-pt-label">pts</span>
-          <span class="level-name">Champion</span>
+          <span data-i18n="level-champion">Champion</span>
         </div>
       </div>
     </section>
@@ -740,5 +847,6 @@
 
 </script>
 <script src="verses.js"></script>
+<script src="lang.js"></script>
 </body>
 </html>
