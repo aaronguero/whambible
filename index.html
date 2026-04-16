@@ -826,6 +826,85 @@
 </style>
 </head>
 <body>
+<!-- ── Firebase SDK ──────────────────────────────────────── -->
+<script type="module">
+  import { initializeApp }        from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js';
+  import { getAuth, onAuthStateChanged, signInWithPopup, signInAnonymously,
+           GoogleAuthProvider, createUserWithEmailAndPassword,
+           signInWithEmailAndPassword, signOut }
+                                    from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js';
+  import { getFirestore, doc, setDoc, getDoc, collection,
+           addDoc, updateDoc, onSnapshot, serverTimestamp, query, where, orderBy, limit }
+                                    from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js';
+  import { getMessaging, getToken, onMessage }
+                                    from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-messaging.js';
+
+  const firebaseConfig = {
+  apiKey: "AIzaSyBx5A9pWYf4RRGqBK9UL7YMEs_s5qwiSeQ",
+  authDomain: "wham-bible.firebaseapp.com",
+  projectId: "wham-bible",
+  storageBucket: "wham-bible.firebasestorage.app",
+  messagingSenderId: "207184555743",
+  appId: "1:207184555743:web:0bd4b8350701d02f79836a",
+  measurementId: "G-HLCH54DQPN"
+};
+  const fbApp  = initializeApp(firebaseConfig);
+  const auth   = getAuth(fbApp);
+  const db     = getFirestore(fbApp);
+  const messaging = getMessaging(fbApp);
+
+  // ── Expose globals ──────────────────────────────────────
+  window._fb = { fbApp, auth, db, messaging,
+    signInWithPopup, signInAnonymously, GoogleAuthProvider,
+    createUserWithEmailAndPassword, signInWithEmailAndPassword,
+    signOut, onAuthStateChanged,
+    doc, setDoc, getDoc, collection, addDoc, updateDoc,
+    onSnapshot, serverTimestamp, query, where, orderBy, limit };
+
+  // ── Auth state listener ─────────────────────────────────
+  onAuthStateChanged(auth, async user => {
+    window._fbUser = user;
+    if (user) {
+      // Upsert player profile in Firestore
+      const ref = doc(db, 'players', user.uid);
+      const snap = await getDoc(ref);
+      if (!snap.exists()) {
+        await setDoc(ref, {
+          uid:         user.uid,
+          displayName: user.displayName || user.email || 'Anonymous',
+          email:       user.email || '',
+          photoURL:    user.photoURL || '',
+          isAnonymous: user.isAnonymous,
+          createdAt:   serverTimestamp(),
+          score:       0,
+          gamesPlayed: 0,
+          streak:      0
+        });
+      }
+      // Register FCM token
+      try {
+        const fcmToken = await getToken(messaging, { vapidKey: 'BKfAsLFqwK3E_eUGVRqbk27nO-PA5jONM6ekOop3Vp2U3vXH384dtK5WZnlWVtThnkdn37rvQQuxiHjTnYwEPDI' });
+        if (fcmToken) {
+          await updateDoc(ref, { fcmToken, lastSeen: serverTimestamp() });
+          window._fcmToken = fcmToken;
+        }
+      } catch(e) { console.warn('FCM token:', e); }
+      // Sync verse pack to Firestore
+      whamSyncVersePack && whamSyncVersePack(user.uid);
+    }
+    // Dispatch event so UI can react
+    document.dispatchEvent(new CustomEvent('whamAuthChange', { detail: user }));
+  });
+
+  // ── FCM foreground messages ─────────────────────────────
+  onMessage(messaging, payload => {
+    const n = payload.notification || {};
+    whamPlaceholder && whamPlaceholder('🔔 ' + (n.title || '') + ': ' + (n.body || ''));
+  });
+
+  console.log('🔥 Firebase wired — wham-bible');
+</script>
+
 
   <!-- == WHAM MENU WRAP ======================================= -->
   <div class="wham-menu-wrap" id="whamMenu">
@@ -1650,5 +1729,81 @@ window.BV_CHAPTERS_SHARED = {'Genesis': 50, 'Exodus': 40, 'Leviticus': 27, 'Numb
       <div id="cvp-pack-list"></div>
     </div>
   </div>
+
+<script>
+// ── Auth helpers ────────────────────────────────────────────
+window.whamSignInGoogle = async function() {
+  const { auth, signInWithPopup, GoogleAuthProvider } = window._fb;
+  try {
+    await signInWithPopup(auth, new GoogleAuthProvider());
+  } catch(e) { whamPlaceholder('Sign-in cancelled'); }
+};
+
+window.whamSignInEmail = async function(email, password) {
+  const { auth, signInWithEmailAndPassword } = window._fb;
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+  } catch(e) { whamPlaceholder('⚠️ ' + e.message); }
+};
+
+window.whamSignUpEmail = async function(email, password) {
+  const { auth, createUserWithEmailAndPassword } = window._fb;
+  try {
+    await createUserWithEmailAndPassword(auth, email, password);
+  } catch(e) { whamPlaceholder('⚠️ ' + e.message); }
+};
+
+window.whamSignInGuest = async function() {
+  const { auth, signInAnonymously } = window._fb;
+  try { await signInAnonymously(auth); }
+  catch(e) { whamPlaceholder('⚠️ ' + e.message); }
+};
+
+window.whamSignOut = async function() {
+  const { auth, signOut } = window._fb;
+  await signOut(auth);
+  window._fbUser = null;
+  whamPlaceholder('👋 Signed out');
+};
+
+// ── Verse pack cloud sync ───────────────────────────────────
+window.whamSyncVersePack = async function(uid) {
+  if (!window._fb || !uid) return;
+  const { db, doc, setDoc, getDoc } = window._fb;
+  const local = JSON.parse(localStorage.getItem('whamVersePack') || 'null');
+  const ref   = doc(db, 'versePacks', uid);
+  const snap  = await getDoc(ref);
+  if (snap.exists()) {
+    // Merge: cloud wins for filled slots, local fills the rest
+    const cloud = snap.data().slots || [];
+    const merged = cloud.map((s, i) => s || (local && local[i]) || null);
+    localStorage.setItem('whamVersePack', JSON.stringify(merged));
+  } else if (local) {
+    await setDoc(ref, { uid, slots: local, updatedAt: window._fb.serverTimestamp() });
+  }
+};
+
+window.whamPushVersePack = async function() {
+  if (!window._fb || !window._fbUser) return;
+  const { db, doc, setDoc, serverTimestamp } = window._fb;
+  const local = JSON.parse(localStorage.getItem('whamVersePack') || '[]');
+  await setDoc(doc(db, 'versePacks', window._fbUser.uid),
+    { uid: window._fbUser.uid, slots: local, updatedAt: serverTimestamp() });
+};
+
+// ── Auth change → update profile UI ────────────────────────
+document.addEventListener('whamAuthChange', e => {
+  const user = e.detail;
+  const nameEl  = document.getElementById('profile-name');
+  const photoEl = document.getElementById('profile-photo');
+  const loginBtn = document.getElementById('btn-login');
+  const logoutBtn = document.getElementById('btn-logout');
+  if (nameEl)   nameEl.textContent  = user ? (user.displayName || user.email || 'Guest') : '';
+  if (photoEl)  photoEl.src         = user ? (user.photoURL || '') : '';
+  if (loginBtn)  loginBtn.style.display  = user ? 'none' : 'flex';
+  if (logoutBtn) logoutBtn.style.display = user ? 'flex' : 'none';
+});
+</script>
+
 </body>
 </html>
