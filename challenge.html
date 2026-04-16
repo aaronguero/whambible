@@ -10,6 +10,167 @@
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="game.css" />
   <link rel="stylesheet" href="challenge.css" />
+<style>
+
+/* ============================================================
+   DROPDOWN MENU — exact Whamgame structure
+   ============================================================ */
+@keyframes menuFade {
+  from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);     }
+}
+
+.wham-menu-wrap {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 3000;
+}
+
+/* Hamburger toggle button */
+.wham-menu-btn {
+  width: 44px;
+  height: 44px;
+  background: rgba(15, 23, 42, 0.90);
+  border: 1px solid #334155;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s;
+}
+.wham-menu-btn.open {
+  background: rgba(201, 162, 39, 0.15);
+  border-color: #c9a227;
+}
+.wham-menu-btn .bar {
+  width: 18px;
+  height: 2px;
+  background: #94a3b8;
+  border-radius: 2px;
+  transition: all 0.22s ease;
+}
+.wham-menu-btn.open .bar { background: #c9a227; }
+.wham-menu-btn.open .bar:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+.wham-menu-btn.open .bar:nth-child(2) { opacity: 0; }
+.wham-menu-btn.open .bar:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+/* Dropdown panel */
+.wham-menu-panel {
+  position: absolute;
+  top: 52px;
+  right: 0;
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+  min-width: 220px;
+  animation: menuFade 0.15s ease;
+}
+
+/* Each menu row */
+.wham-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 18px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid #1e293b;
+  color: #e2e8f0;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+  text-decoration: none;
+}
+.wham-menu-item:last-child { border-bottom: none; }
+.wham-menu-item:hover { background: rgba(201, 162, 39, 0.10); }
+.wham-menu-item .m-icon { font-size: 18px; }
+.wham-menu-item .m-label { flex: 1; }
+
+/* PRO badge (locked items) */
+.wham-menu-badge-pro {
+  font-size: 10px;
+  background: linear-gradient(135deg, #c9a227, #a07720);
+  color: #fff;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+/* Theme sub-menu toggle */
+.wham-menu-item.theme-toggle .m-arrow {
+  font-size: 12px;
+  color: #64748b;
+  transition: transform 0.2s;
+}
+.wham-menu-item.theme-toggle.sub-open .m-arrow { transform: rotate(180deg); }
+
+/* Theme submenu rows */
+.wham-submenu {
+  background: rgba(15, 23, 42, 0.95);
+  border-top: 1px solid #1e293b;
+  display: none;
+}
+.wham-submenu.open { display: block; }
+.wham-submenu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 18px 11px 32px;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(30, 41, 59, 0.6);
+  color: #e2e8f0;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s;
+}
+.wham-submenu-item:last-child { border-bottom: none; }
+.wham-submenu-item:hover { background: rgba(201,162,39,0.08); }
+.wham-submenu-badge {
+  font-size: 10px;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-weight: 800;
+}
+.wham-submenu-badge.owned {
+  background: rgba(74,222,128,0.15);
+  color: #4ade80;
+  border: 1px solid #4ade80;
+}
+.wham-submenu-badge.price {
+  background: rgba(201,162,39,0.15);
+  color: #c9a227;
+  border: 1px solid #c9a227;
+}
+
+/* Divider inside menu */
+.wham-menu-divider {
+  height: 1px;
+  background: #1e293b;
+  margin: 0;
+}
+
+/* Sign out row — red tint */
+.wham-menu-item.signout { color: #f87171; }
+.wham-menu-item.signout:hover { background: rgba(248,113,113,0.08); }
+
+</style>
 </head>
 <body>
   <div class="bg-overlay"></div>
@@ -195,5 +356,112 @@
 
   <script src="verses.js"></script>
   <script src="challenge.js"></script>
+<script>
+
+// ============================================================
+// WHAM MENU — exact Whamgame tab structure
+// ============================================================
+(function() {
+  let menuOpen = false;
+  let themeOpen = false;
+
+  window.whamMenuToggle = function() {
+    menuOpen = !menuOpen;
+    const btn   = document.getElementById('menuToggleBtn');
+    const panel = document.getElementById('menuPanel');
+    btn.classList.toggle('open', menuOpen);
+    panel.style.display = menuOpen ? 'block' : 'none';
+    if (!menuOpen) {
+      // close theme submenu too
+      themeOpen = false;
+      document.getElementById('themeSubmenu').classList.remove('open');
+      document.getElementById('themeToggleBtn').classList.remove('sub-open');
+    }
+  };
+
+  window.whamMenuThemeToggle = function() {
+    themeOpen = !themeOpen;
+    document.getElementById('themeSubmenu').classList.toggle('open', themeOpen);
+    document.getElementById('themeToggleBtn').classList.toggle('sub-open', themeOpen);
+  };
+
+  window.whamMenuGo = function(screen, sub) {
+    menuOpen = false;
+    themeOpen = false;
+    document.getElementById('menuToggleBtn').classList.remove('open');
+    document.getElementById('menuPanel').style.display = 'none';
+    document.getElementById('themeSubmenu').classList.remove('open');
+    document.getElementById('themeToggleBtn').classList.remove('sub-open');
+
+    // ── Route each tab ──────────────────────────────────────
+    switch(screen) {
+      case 'leaderboard':
+        // PLACEHOLDER: navigate to leaderboard page / open modal
+        whamPlaceholder('🏆 Leaderboard — coming soon');
+        break;
+      case 'learning':
+        // PLACEHOLDER: open missed-verse review mode
+        whamPlaceholder('🎓 Learning Center — coming soon');
+        break;
+      case 'versePack':
+        // PLACEHOLDER: custom verse pack builder
+        whamPlaceholder('📦 Custom Verse Pack — coming soon');
+        break;
+      case 'myScores':
+        // PLACEHOLDER: personal match history screen
+        whamPlaceholder('📊 My Scores — coming soon');
+        break;
+      case 'playerList':
+        // PLACEHOLDER: friends roster + matchmaking
+        whamPlaceholder('👥 Player List — coming soon');
+        break;
+      case 'howToPlay':
+        // PLACEHOLDER: tutorial overlay
+        whamPlaceholder('❓ How to Play — coming soon');
+        break;
+      case 'invite':
+        // PLACEHOLDER: share deep link
+        whamPlaceholder('🎉 Invite Friends — coming soon');
+        break;
+      case 'theme':
+        // PLACEHOLDER: theme purchase / unlock (sub = theme key)
+        whamPlaceholder('🎨 Theme: ' + (sub||'') + ' — purchase coming soon');
+        break;
+      case 'profile':
+        // PLACEHOLDER: profile screen (avatar, username, stats)
+        whamPlaceholder('👤 My Profile — coming soon');
+        break;
+      case 'signout':
+        // PLACEHOLDER: Firebase sign-out + redirect to home
+        whamPlaceholder('🚪 Sign Out — coming soon');
+        break;
+    }
+  };
+
+  // Show toast for placeholders
+  function whamPlaceholder(msg) {
+    let toast = document.getElementById('toast') || document.getElementById('menu-toast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'menu-toast';
+      toast.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#1e293b;color:#c9a227;border:1px solid #c9a227;padding:10px 22px;border-radius:30px;font-size:14px;font-weight:600;z-index:9999;pointer-events:none;opacity:0;transition:opacity 0.2s;';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.style.opacity = '1';
+    clearTimeout(toast._t);
+    toast._t = setTimeout(() => { toast.style.opacity = '0'; }, 2200);
+  }
+
+  // Close menu when clicking outside
+  document.addEventListener('mousedown', function(e) {
+    const wrap = document.getElementById('whamMenu');
+    if (wrap && !wrap.contains(e.target) && menuOpen) {
+      whamMenuToggle();
+    }
+  });
+})();
+
+</script>
 </body>
 </html>
