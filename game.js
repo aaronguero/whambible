@@ -426,6 +426,13 @@ function showGameOver() {
     <div class="stat-item"><span class="stat-num" style="color:#c93030">${total-correct}</span><span class="stat-label">Wrong</span></div>
     <div class="stat-item"><span class="stat-num">${pct}%</span><span class="stat-label">Accuracy</span></div>`;
   document.getElementById('gameover-overlay').style.display = 'flex';
+  // Record solo score for My Scores history
+  try {
+    if (typeof msRecordSolo === 'function') {
+      const levelLabel = document.getElementById('hud-level')?.textContent || '—';
+      msRecordSolo(state.score, levelLabel.replace(/[^0-9a-zA-Z ·]/g,'').trim());
+    }
+  } catch(e) {}
 }
 
 window.restartGame = function () {
