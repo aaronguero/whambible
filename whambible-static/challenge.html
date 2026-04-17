@@ -1677,7 +1677,16 @@
 
 <style>
 /* ── Game Complete Screen ─────────────────────────────────── */
-#screen-complete .gc-trophy { font-size: 64px; margin-bottom: 8px; animation: gcBounce 0.6s ease; }
+#screen-complete .gc-trophy {
+  font-size: 64px; margin-bottom: 8px; animation: gcBounce 0.6s ease;
+  position: relative; display: inline-block;
+}
+/* TODO badge — remove when video is implemented */
+#screen-complete .gc-trophy::after {
+  content: '🎬';
+  position: absolute; top: -6px; right: -14px;
+  font-size: 14px; opacity: 0.45;
+}
 @keyframes gcBounce { 0%{transform:scale(0.5);opacity:0} 70%{transform:scale(1.15)} 100%{transform:scale(1);opacity:1} }
 .gc-title { font-family:'Cinzel',serif; font-size:22px; color:#c9a227; margin:0 0 4px; }
 .gc-subtitle { color:rgba(201,162,39,0.6); font-size:13px; margin-bottom:20px; }
@@ -2042,7 +2051,12 @@
   <!-- ── SCREEN: GAME COMPLETE ─────────────────────────────── -->
   <div id="screen-complete" class="screen">
     <div class="screen-inner" style="text-align:center;padding:24px 20px 32px">
-      <div class="gc-trophy" id="gc-trophy">🏆</div>
+      <!-- 🎬 TROPHY ANIMATION — upgrade to video here -->
+      <!-- To upgrade: replace emoji with a <video> or Lottie animation -->
+      <!-- Suggested: short looping MP4/WebM per outcome (win/draw/loss) -->
+      <!-- e.g. <video id="gc-trophy-video" src="/animations/trophy-win.mp4" autoplay loop muted playsinline style="width:100px;height:100px"/> -->
+      <div class="gc-trophy" id="gc-trophy" title="[TODO: replace with video animation]">🏆</div>
+      <!-- /TROPHY ANIMATION -->
       <h2 class="gc-title" id="gc-title">Battle Complete!</h2>
       <p class="gc-subtitle" id="gc-subtitle">10 rounds fought</p>
       <div class="gc-result-banner win" id="gc-result-banner">⚔️ VICTORY</div>
@@ -3385,6 +3399,8 @@ async function showGameComplete(game, myUid, oppUid, myScore, oppScore, rounds) 
   const bannerTxt = won ? '⚔️ VICTORY' : draw ? '🤝 DRAW' : '💔 DEFEAT';
   const bannerCls = won ? 'win' : draw ? 'draw' : 'loss';
 
+  // 🎬 TROPHY ANIMATION TODO — swap this for video when ready
+  // e.g. document.getElementById('gc-trophy-video').src = `/animations/trophy-${won?'win':draw?'draw':'loss'}.mp4`;
   document.getElementById('gc-trophy').textContent  = trophy;
   document.getElementById('gc-title').textContent   = title;
   document.getElementById('gc-subtitle').textContent = `${rounds} rounds fought`;
