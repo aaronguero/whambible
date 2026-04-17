@@ -25,7 +25,9 @@
   position: fixed;
   top: 14px;
   right: 14px;
-  z-index: 3000;
+  z-index: 9000;
+  pointer-events: auto;
+  isolation: isolate;
 }
 
 /* Hamburger toggle button */
@@ -43,6 +45,13 @@
   cursor: pointer;
   backdrop-filter: blur(8px);
   transition: all 0.2s;
+  position: relative;
+  z-index: 9001;
+  pointer-events: auto;
+  -webkit-appearance: none;
+  appearance: none;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
 }
 .wham-menu-btn.open {
   background: rgba(201, 162, 39, 0.15);
@@ -62,6 +71,8 @@
 
 /* Dropdown panel */
 .wham-menu-panel {
+  z-index: 9000;
+  pointer-events: auto;
   position: absolute;
   top: 52px;
   right: 0;
