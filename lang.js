@@ -171,6 +171,15 @@ async function whamApplyLang(lang) {
   WHAM_LANG = lang;
   localStorage.setItem('whamLang', lang);
 
+  // Update menu language button to show active flag
+  const curLang = WHAM_LANGUAGES.find(l => l.code === lang);
+  if (curLang) {
+    const flagEl  = document.getElementById('menu-lang-flag');
+    const labelEl = document.getElementById('menu-lang-label');
+    if (flagEl)  flagEl.textContent  = curLang.flag;
+    if (labelEl) labelEl.textContent = curLang.nativeName || curLang.label;
+  }
+
   // Sync all scroll wheels
   whamLangWheelSync(lang);
 
@@ -201,6 +210,16 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelectorAll('.wham-lang-wheel-wrap').forEach(wrap => {
     whamLangWheelInit(wrap);
   });
+
+  // Restore menu language button from saved pref
+  const savedLang = WHAM_LANGUAGES.find(l => l.code === WHAM_LANG);
+  if (savedLang) {
+    const flagEl  = document.getElementById('menu-lang-flag');
+    const labelEl = document.getElementById('menu-lang-label');
+    if (flagEl && WHAM_LANG !== 'en')  flagEl.textContent  = savedLang.flag;
+    if (labelEl && WHAM_LANG !== 'en') labelEl.textContent = savedLang.nativeName || savedLang.label;
+  }
+
   if (WHAM_LANG && WHAM_LANG !== 'en') {
     whamApplyLang(WHAM_LANG);
   }
