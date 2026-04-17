@@ -2,7 +2,7 @@ importScripts('https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js
 importScripts('https://www.gstatic.com/firebasejs/10.11.0/firebase-messaging-compat.js');
 
 firebase.initializeApp({
-  apiKey:            "AIzaSyBx5A9pWYf4RRGqBK9UL7YMEs_s5qwiSeQ",
+  apiKey:            "%%FIREBASE_API_KEY%%",
   authDomain:        "wham-bible.firebaseapp.com",
   projectId:         "wham-bible",
   storageBucket:     "wham-bible.firebasestorage.app",
