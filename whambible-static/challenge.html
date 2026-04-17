@@ -989,7 +989,7 @@
   window._fb = { fbApp, auth, db, messaging,
     signInWithPopup, signInAnonymously, GoogleAuthProvider,
     createUserWithEmailAndPassword, signInWithEmailAndPassword,
-    signOut, onAuthStateChanged,
+    signOut, onAuthStateChanged, updateProfile,
     doc, setDoc, getDoc, collection, addDoc, updateDoc,
     onSnapshot, serverTimestamp, query, where, orderBy, limit ,
     getDocs, onSnapshot, serverTimestamp, query, where, orderBy, limit, addDoc, updateDoc };
@@ -1039,7 +1039,153 @@
 </script>
 
 
-  <!-- == WHAM MENU WRAP ======================================= -->
+  
+<!-- == MY PROFILE MODAL ===================================== -->
+<style>
+#profile-overlay {
+  position: fixed; inset: 0; z-index: 8000;
+  background: rgba(0,0,0,0.80);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: flex-end; justify-content: center;
+  animation: profileFadeIn 0.2s ease;
+}
+@keyframes profileFadeIn { from{opacity:0} to{opacity:1} }
+#profile-sheet {
+  background: linear-gradient(170deg,#1a1008 0%,#0f172a 100%);
+  border: 1px solid rgba(201,162,39,0.35);
+  border-bottom: none;
+  border-radius: 24px 24px 0 0;
+  width: 100%; max-width: 480px; max-height: 90vh;
+  overflow-y: auto; padding: 0 0 48px;
+  animation: profileSlideUp 0.25s cubic-bezier(0.32,0.72,0,1);
+  position: relative;
+}
+@keyframes profileSlideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+#profile-sheet .ps-handle {
+  width:40px; height:4px;
+  background:rgba(201,162,39,0.3);
+  border-radius:2px; margin:12px auto 0;
+}
+.ps-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 20px 0;
+}
+.ps-title {
+  color:#c9a227; font-family:'Cinzel',serif;
+  font-size:15px; letter-spacing:2px; text-transform:uppercase;
+}
+.ps-close {
+  background:none; border:none; color:rgba(201,162,39,0.6);
+  font-size:22px; cursor:pointer; padding:4px 8px;
+  -webkit-tap-highlight-color:transparent; -webkit-appearance:none;
+}
+.ps-avatar-section {
+  display:flex; flex-direction:column; align-items:center;
+  padding:24px 20px 20px;
+  border-bottom:1px solid rgba(201,162,39,0.12);
+}
+.ps-avatar-ring {
+  width:84px; height:84px; border-radius:50%;
+  border:2px solid rgba(201,162,39,0.5);
+  box-shadow:0 0 24px rgba(201,162,39,0.2);
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden;
+  background:linear-gradient(135deg,#2a1a05,#1a0f02);
+  margin-bottom:14px;
+}
+.ps-avatar-ring img { width:100%; height:100%; object-fit:cover; }
+.ps-avatar-initials {
+  font-size:32px; font-weight:bold;
+  color:#c9a227; font-family:'Cinzel',serif; line-height:1;
+}
+.ps-display-name {
+  color:#f0e4c0; font-family:'Cinzel',serif;
+  font-size:19px; font-weight:700;
+  margin-bottom:4px; text-align:center;
+}
+.ps-email { color:rgba(201,162,39,0.5); font-size:12px; letter-spacing:0.5px; }
+.ps-badge {
+  margin-top:10px;
+  background:rgba(201,162,39,0.1);
+  border:1px solid rgba(201,162,39,0.3);
+  border-radius:20px; padding:4px 14px;
+  color:rgba(201,162,39,0.8);
+  font-size:11px; letter-spacing:1px; text-transform:uppercase;
+}
+.ps-stats {
+  display:flex; justify-content:space-around;
+  padding:20px 20px;
+  border-bottom:1px solid rgba(201,162,39,0.12);
+}
+.ps-stat { display:flex; flex-direction:column; align-items:center; gap:3px; }
+.ps-stat-val {
+  color:#c9a227; font-family:'Cinzel',serif;
+  font-size:28px; font-weight:700; line-height:1;
+}
+.ps-stat-lbl {
+  color:rgba(201,162,39,0.45); font-size:10px;
+  letter-spacing:1.5px; text-transform:uppercase;
+}
+.ps-section { padding:16px 20px 0; }
+.ps-section-label {
+  color:rgba(201,162,39,0.45); font-size:10px;
+  letter-spacing:2px; text-transform:uppercase; margin-bottom:8px;
+}
+.ps-name-row { display:flex; gap:8px; }
+.ps-name-input {
+  flex:1;
+  background:rgba(201,162,39,0.07);
+  border:1px solid rgba(201,162,39,0.25);
+  border-radius:8px; color:#f0e4c0;
+  font-size:14px; padding:10px 14px;
+  font-family:inherit; outline:none;
+  -webkit-appearance:none;
+}
+.ps-name-input:focus { border-color:rgba(201,162,39,0.6); }
+.ps-name-save {
+  background:rgba(201,162,39,0.15);
+  border:1px solid rgba(201,162,39,0.4);
+  border-radius:8px; color:#c9a227;
+  font-size:13px; font-weight:600;
+  padding:10px 16px; cursor:pointer;
+  white-space:nowrap;
+  -webkit-tap-highlight-color:transparent;
+  -webkit-appearance:none;
+}
+.ps-name-save:active { background:rgba(201,162,39,0.3); }
+.ps-meta {
+  padding:12px 20px 0;
+  color:rgba(201,162,39,0.35); font-size:11px;
+}
+.ps-signout {
+  margin:24px 20px 0;
+  width:calc(100% - 40px);
+  padding:14px;
+  background:rgba(248,113,113,0.07);
+  border:1px solid rgba(248,113,113,0.3);
+  border-radius:10px; color:#f87171;
+  font-size:14px; font-weight:600;
+  font-family:'Cinzel',serif; letter-spacing:1px;
+  cursor:pointer; display:block;
+  -webkit-appearance:none;
+  -webkit-tap-highlight-color:transparent;
+}
+.ps-signout:active { background:rgba(248,113,113,0.18); }
+.ps-toast {
+  position:fixed; bottom:60px; left:50%;
+  transform:translateX(-50%);
+  background:#1e293b; color:#c9a227;
+  border:1px solid #c9a227;
+  padding:8px 20px; border-radius:30px;
+  font-size:13px; font-weight:600;
+  pointer-events:none; opacity:0;
+  transition:opacity 0.2s;
+  white-space:nowrap; z-index:9999;
+  id:ps-toast-el;
+}
+</style>
+
+<!-- == WHAM MENU WRAP ======================================= -->
   <div class="wham-menu-wrap" id="whamMenu">
     <button class="wham-menu-btn" id="menuToggleBtn" onclick="whamMenuToggle()" aria-label="Menu">
       <div class="bar"></div><div class="bar"></div><div class="bar"></div>
@@ -1397,8 +1543,8 @@
       case 'playerList':   whamPlaceholder('👥 Player List — coming soon'); break;
       case 'howToPlay':       htpOpen(); break;
       case 'invite':       inviteOpen(); break;
-      case 'profile':      if(typeof lmOpen === 'function') lmOpen(); break;
-      case 'signout':      if(typeof lmSignOut === 'function') lmSignOut(); break;
+      case 'profile':      psOpen(); break;
+      case 'signout':      psSignOut(); break;
     }
   };
 
@@ -2582,6 +2728,186 @@ window.newGame  = function() {
   _currentGameId = null; _currentGame = null;
   showScreen('lobby');
 };
+</script>
+
+
+<!-- == MY PROFILE SHEET ===================================== -->
+<div id="profile-overlay" style="display:none;" onclick="psOverlayClick(event)">
+  <div id="profile-sheet">
+    <div class="ps-handle"></div>
+    <div class="ps-header">
+      <span class="ps-title">⚔️ My Profile</span>
+      <button class="ps-close" onclick="psClose()">✕</button>
+    </div>
+
+    <!-- ── Not logged in ─── -->
+    <div id="ps-guest-view" style="display:none; padding:32px 20px; text-align:center;">
+      <div style="font-size:40px; margin-bottom:12px;">👤</div>
+      <div style="color:#f0e4c0; font-family:'Cinzel',serif; font-size:16px; margin-bottom:8px;">You're playing as a Guest</div>
+      <div style="color:rgba(201,162,39,0.5); font-size:13px; margin-bottom:24px; line-height:1.6;">Sign in to save your progress,<br>challenge friends &amp; appear on leaderboards.</div>
+      <button onclick="psClose(); setTimeout(()=>lmOpen&&lmOpen(),200);" style="width:100%; padding:14px; background:linear-gradient(135deg,#c9a227,#a07818); border:none; border-radius:10px; color:#1a0f02; font-family:'Cinzel',serif; font-size:15px; font-weight:700; cursor:pointer; letter-spacing:1px; -webkit-appearance:none;">Sign In / Create Account</button>
+    </div>
+
+    <!-- ── Logged in ─── -->
+    <div id="ps-logged-view" style="display:none;">
+      <div class="ps-avatar-section">
+        <div class="ps-avatar-ring" id="ps-avatar-ring">
+          <span class="ps-avatar-initials" id="ps-avatar-initials">?</span>
+        </div>
+        <div class="ps-display-name" id="ps-display-name">—</div>
+        <div class="ps-email" id="ps-email-text">—</div>
+        <div class="ps-badge" id="ps-account-badge">⚔️ Warrior</div>
+      </div>
+
+      <div class="ps-stats">
+        <div class="ps-stat">
+          <div class="ps-stat-val" id="ps-stat-score">—</div>
+          <div class="ps-stat-lbl">Score</div>
+        </div>
+        <div class="ps-stat">
+          <div class="ps-stat-val" id="ps-stat-games">—</div>
+          <div class="ps-stat-lbl">Games</div>
+        </div>
+        <div class="ps-stat">
+          <div class="ps-stat-val" id="ps-stat-streak">—</div>
+          <div class="ps-stat-lbl">Streak 🔥</div>
+        </div>
+        <div class="ps-stat">
+          <div class="ps-stat-val" id="ps-stat-wins">—</div>
+          <div class="ps-stat-lbl">Wins</div>
+        </div>
+      </div>
+
+      <div class="ps-section">
+        <div class="ps-section-label">Display Name</div>
+        <div class="ps-name-row">
+          <input class="ps-name-input" id="ps-name-input" type="text" placeholder="Enter display name" maxlength="24"/>
+          <button class="ps-name-save" onclick="psSaveName()">Save</button>
+        </div>
+      </div>
+
+      <div class="ps-meta" id="ps-member-since">Member since —</div>
+
+      <button class="ps-signout" onclick="psSignOut()">🚪 Sign Out</button>
+    </div>
+
+    <div id="ps-toast" class="ps-toast"></div>
+  </div>
+</div>
+
+
+<script>
+// ── My Profile Sheet ────────────────────────────────────────
+window.psOpen = async function() {
+  const overlay = document.getElementById('profile-overlay');
+  overlay.style.display = 'flex';
+  const user = window._fbUser;
+  const guestView  = document.getElementById('ps-guest-view');
+  const loggedView = document.getElementById('ps-logged-view');
+
+  if (!user || user.isAnonymous) {
+    guestView.style.display  = 'block';
+    loggedView.style.display = 'none';
+    return;
+  }
+
+  guestView.style.display  = 'none';
+  loggedView.style.display = 'block';
+
+  // Avatar
+  const ring = document.getElementById('ps-avatar-ring');
+  if (user.photoURL) {
+    ring.innerHTML = `<img src="${user.photoURL}" onerror="this.parentNode.innerHTML='<span class=\"ps-avatar-initials\">${psInitials(user)}</span>'"/>`;
+  } else {
+    ring.innerHTML = `<span class="ps-avatar-initials">${psInitials(user)}</span>`;
+  }
+
+  // Name & email
+  const name = user.displayName || user.email || 'Player';
+  document.getElementById('ps-display-name').textContent = name;
+  document.getElementById('ps-email-text').textContent   = user.email || 'Guest';
+  document.getElementById('ps-name-input').value         = user.displayName || '';
+
+  // Load Firestore stats
+  try {
+    const { db, doc, getDoc } = window._fb;
+    const snap = await getDoc(doc(db, 'players', user.uid));
+    if (snap.exists()) {
+      const d = snap.data();
+      document.getElementById('ps-stat-score').textContent  = d.score        ?? 0;
+      document.getElementById('ps-stat-games').textContent  = d.gamesPlayed  ?? 0;
+      document.getElementById('ps-stat-streak').textContent = d.streak       ?? 0;
+      document.getElementById('ps-stat-wins').textContent   = d.wins         ?? 0;
+      // Badge based on score
+      const badge = document.getElementById('ps-account-badge');
+      const score = d.score || 0;
+      if      (score >= 500) badge.textContent = '👑 Champion';
+      else if (score >= 200) badge.textContent = '🛡️ Knight';
+      else if (score >= 100) badge.textContent = '⚔️ Warrior';
+      else if (score >= 50)  badge.textContent = '🗡️ Squire';
+      else                   badge.textContent = '📜 Scribe';
+      // Member since
+      if (d.createdAt && d.createdAt.toDate) {
+        const dt = d.createdAt.toDate();
+        document.getElementById('ps-member-since').textContent =
+          'Member since ' + dt.toLocaleDateString('en-US', {month:'long', year:'numeric'});
+      }
+    }
+  } catch(e) { console.warn('psOpen stats:', e); }
+};
+
+function psInitials(user) {
+  const name = user.displayName || user.email || '?';
+  return name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+}
+
+window.psClose = function() {
+  document.getElementById('profile-overlay').style.display = 'none';
+};
+
+window.psOverlayClick = function(e) {
+  if (e.target.id === 'profile-overlay') psClose();
+};
+
+window.psSaveName = async function() {
+  const input = document.getElementById('ps-name-input');
+  const newName = input.value.trim();
+  if (!newName) return;
+  const user = window._fbUser;
+  if (!user) return;
+  try {
+    const { db, doc, updateDoc } = window._fb;
+    // Update Firestore
+    await updateDoc(doc(db, 'players', user.uid), { displayName: newName });
+    // Update Firebase Auth profile
+    const { updateProfile } = window._fb;
+    if (updateProfile) await updateProfile(user, { displayName: newName });
+    // Update UI
+    document.getElementById('ps-display-name').textContent = newName;
+    const ring = document.getElementById('ps-avatar-ring');
+    if (!user.photoURL) ring.innerHTML = `<span class="ps-avatar-initials">${newName.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2)}</span>`;
+    psToast('✅ Name updated!');
+  } catch(e) { psToast('❌ ' + (e.message || 'Update failed')); }
+};
+
+window.psSignOut = async function() {
+  try {
+    const { auth, signOut } = window._fb;
+    await signOut(auth);
+    psClose();
+    // redirect home if not already there
+    if (!window.location.pathname.endsWith('index.html') && window.location.pathname !== '/') {
+      window.location.href = 'index.html';
+    }
+  } catch(e) { psToast('❌ Sign out failed'); }
+};
+
+function psToast(msg) {
+  const t = document.getElementById('ps-toast');
+  if (!t) return;
+  t.textContent = msg; t.style.opacity = '1';
+  clearTimeout(t._t); t._t = setTimeout(()=>{ t.style.opacity='0'; }, 2200);
+}
 </script>
 
 </body>
