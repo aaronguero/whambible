@@ -1177,25 +1177,25 @@
     <section class="level-section">
       <p data-i18n="level-title">⚔️ Choose Your Battle ⚔️</p>
       <div class="level-row">
-        <div class="level-card" onclick="window.location.href='game.html?level=5'">
+        <div class="level-card" onclick="handleLevelSelect(5)">
           <span class="level-icon">🗡️</span>
           <span class="level-points">5</span>
           <span class="level-pt-label">pts</span>
           <span data-i18n="level-squire">Squire</span>
         </div>
-        <div class="level-card" onclick="window.location.href='game.html?level=10'">
+        <div class="level-card" onclick="handleLevelSelect(10)">
           <span class="level-icon">⚔️</span>
           <span class="level-points">10</span>
           <span class="level-pt-label">pts</span>
           <span data-i18n="level-warrior">Warrior</span>
         </div>
-        <div class="level-card" onclick="window.location.href='game.html?level=15'">
+        <div class="level-card" onclick="handleLevelSelect(15)">
           <span class="level-icon">🛡️</span>
           <span class="level-points">15</span>
           <span class="level-pt-label">pts</span>
           <span data-i18n="level-knight">Knight</span>
         </div>
-        <div class="level-card" onclick="window.location.href='game.html?level=20'">
+        <div class="level-card" onclick="handleLevelSelect(20)">
           <span class="level-icon">👑</span>
           <span class="level-points">20</span>
           <span class="level-pt-label">pts</span>
@@ -1206,8 +1206,8 @@
 
     <!-- CTA Buttons -->
     <div class="btn-row">
-      <button class="btn-primary" onclick="window.location.href='game.html?level=10'">⚔️ Play Solo (Guest)</button>
-      <button class="btn-secondary" onclick="window.location.href='challenge.html'">🏆 Multiplayer — Login / Sign Up</button>
+      <button class="btn-primary" onclick="startSoloGame()">⚔️ Play Solo</button>
+      <button class="btn-secondary" onclick="window.location.href='challenge.html'">👥 Multiplayer — Challenge Friends</button>
       <button class="btn-ghost" onclick="showComingSoon('World Leaderboard')">📜 World Leaderboard</button>
     </div>
 
@@ -2133,6 +2133,24 @@ document.addEventListener('whamAuthChange', e => {
     }
   }
 });
+</script>
+
+
+<script>
+// Level select from home screen
+window.handleLevelSelect = function(pts) {
+  // If logged in → go to challenge screen with level pre-selected
+  // If guest → go directly to solo game
+  if (window._fbUser && !window._fbUser.isAnonymous) {
+    window.location.href = 'challenge.html';
+  } else {
+    window.location.href = 'game.html?level=' + pts;
+  }
+};
+
+window.startSoloGame = function() {
+  window.location.href = 'game.html?level=10';
+};
 </script>
 
 </body>
