@@ -20,7 +20,10 @@
 //   → Wrong recovery  → show correct values, return
 // ============================================================
 
-const ITEM_HEIGHT  = 40;
+const ITEM_HEIGHT  = 42;   // matches --wh-item CSS var
+const VISIBLE_ROWS = 5;    // total rows shown in wheel
+const CENTER_ROW   = 2;    // 0-indexed row that is "selected" (middle of 5)
+const WHEEL_H      = ITEM_HEIGHT * VISIBLE_ROWS;  // 210px
 const RECOVERY_SEC = 7;
 
 // Exact Whamgame audio
@@ -41,8 +44,10 @@ let R = {
   submitted:     false,
 };
 
-const CHAPTERS = Array.from({length: 50}, (_, i) => i + 1);
-const VERSES_N = Array.from({length: 50}, (_, i) => i + 1);
+// Chapters: 1–150 (Psalms has most); verses: 1–176 (Psalms 119)
+// Show 1–150 for chapters, 1–176 for verses — snaps to valid range on submit
+const CHAPTERS = Array.from({length: 150}, (_, i) => i + 1);
+const VERSES_N = Array.from({length: 176}, (_, i) => i + 1);
 
 // ── Init ───────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
@@ -126,9 +131,11 @@ function initRecoveryScreen() {
   R.chapterItems = CHAPTERS;
   R.verseItems   = VERSES_N;
 
-  R.bookIndex    = randomStartIndex(R.bookItems,    v.book,    6);
-  R.chapterIndex = randomStartIndex(R.chapterItems, v.chapter, 5);
-  R.verseIndex   = randomStartIndex(R.verseItems,   v.verse,   5);
+  // Start 8 items before correct answer for book (needs scrolling to find it)
+  // 4 items before for chapter/verse
+  R.bookIndex    = randomStartIndex(R.bookItems,    v.book,    8);
+  R.chapterIndex = randomStartIndex(R.chapterItems, v.chapter, 4);
+  R.verseIndex   = randomStartIndex(R.verseItems,   v.verse,   4);
 
   buildWheel('wheel-book-inner',    R.bookItems,    R.bookIndex);
   buildWheel('wheel-chapter-inner', R.chapterItems, R.chapterIndex);
@@ -146,93 +153,201 @@ function initRecoveryScreen() {
 }
 
 // ── Wheel Builder ─────────────────────────────────────────
+// Offset formula:
+//   We render copies: [copy0][copy1][copy2]
+//   We start in copy1 so we can scroll in both directions.
+//   To put startIndex in the CENTER row we need the translateY that puts
+//   the top of the selected item at (CENTER_ROW * ITEM_HEIGHT) from the
+//   top of the visible window, i.e.:
+//     offset = (items.length + startIndex) * ITEM_HEIGHT - CENTER_ROW * ITEM_HEIGHT
 function buildWheel(innerId, items, startIndex) {
   const inner = document.getElementById(innerId);
   inner.innerHTML = '';
-  [...items, ...items, ...items].forEach(item => {
+  // 5 copies so long lists (66 books) have room to momentum-scroll without hitting an edge
+  [...items, ...items, ...items, ...items, ...items].forEach(item => {
     const el = document.createElement('div');
     el.className   = 'scroll-item';
-    el.textContent = item;
+    el.textContent = String(item);
     inner.appendChild(el);
   });
-  const offset = (items.length + startIndex) * ITEM_HEIGHT - (ITEM_HEIGHT * 2);
-  inner.style.transform = `translateY(-${offset}px)`;
-  inner._offset  = offset;
+  // Start in copy index 2 (middle of 5 copies)
+  const offset = (items.length * 2 + startIndex) * ITEM_HEIGHT - CENTER_ROW * ITEM_HEIGHT;
+  setWheelOffset(inner, offset, false);
   inner._items   = items;
   inner._current = startIndex;
 }
 
+function setWheelOffset(inner, offset, animate) {
+  inner.style.transition = animate ? 'transform 0.18s cubic-bezier(0.25,0.46,0.45,0.94)' : 'none';
+  inner.style.transform  = `translateY(-${offset}px)`;
+  inner._offset = offset;
+}
+
+// ── Highlight the correct items based on current offset ───
 function updateWheelHighlight(innerId, currentIdx, items) {
   const inner    = document.getElementById(innerId);
   const allItems = inner.querySelectorAll('.scroll-item');
   const len      = items.length;
   allItems.forEach((el, i) => {
-    const relIdx = i % len;
-    el.classList.remove('selected', 'near');
-    if (relIdx === currentIdx) el.classList.add('selected');
-    else if (relIdx === (currentIdx + 1) % len || relIdx === (currentIdx - 1 + len) % len) {
-      el.classList.add('near');
+    const relIdx = ((i % len) + len) % len;
+    el.classList.remove('selected', 'near1', 'near2', 'near');
+    if (relIdx === currentIdx) {
+      el.classList.add('selected');
+    } else {
+      const dist = Math.min(
+        Math.abs(relIdx - currentIdx),
+        Math.abs(relIdx - currentIdx + len),
+        Math.abs(relIdx - currentIdx - len)
+      );
+      if (dist === 1) el.classList.add('near1');
+      else if (dist === 2) el.classList.add('near2');
     }
   });
 }
 
 function randomStartIndex(arr, correct, offsetBy) {
-  const idx = arr.indexOf ? arr.indexOf(correct) : arr.findIndex(v => v === correct);
+  const idx = Array.isArray(arr)
+    ? arr.findIndex(v => String(v) === String(correct))
+    : -1;
   const len = arr.length;
   return ((idx - offsetBy) % len + len) % len;
 }
 
-// ── Wheel Drag ────────────────────────────────────────────
+// ── Clamp offset to valid range (wrap when near edges) ────
+function normalizeOffset(inner, rawOffset) {
+  const items = inner._items;
+  const len   = items.length;
+  const total = len * ITEM_HEIGHT * 5; // 5 copies
+  // Keep us in copies 1-3 to allow free scrolling
+  const minOff = len * ITEM_HEIGHT;
+  const maxOff = len * ITEM_HEIGHT * 3;
+  let off = rawOffset;
+  while (off < minOff) off += len * ITEM_HEIGHT;
+  while (off > maxOff) off -= len * ITEM_HEIGHT;
+  return off;
+}
+
+// ── Convert offset → item index ──────────────────────────
+function offsetToIndex(inner, offset) {
+  const items = inner._items;
+  const len   = items.length;
+  // Which row is in the CENTER slot?
+  const centerRow = Math.round((offset + CENTER_ROW * ITEM_HEIGHT) / ITEM_HEIGHT);
+  return ((centerRow % len) + len) % len;
+}
+
+// ── Wheel Drag — with velocity / momentum physics ─────────
 function attachWheelDrag(wheelId, key) {
   const outer = document.getElementById(wheelId);
   const inner = outer.querySelector('.scroll-wheel-inner');
-  let startY = 0, startOffset = 0, dragging = false;
 
-  const onStart = (y) => {
+  let startY      = 0;
+  let startOffset = 0;
+  let dragging    = false;
+  let lastY       = 0;
+  let lastT       = 0;
+  let velocity    = 0;  // px/ms
+  let rafId       = null;
+
+  function getIdx(offset) {
+    const items = inner._items;
+    const len   = items.length;
+    const centered = offset + CENTER_ROW * ITEM_HEIGHT;
+    return (((Math.round(centered / ITEM_HEIGHT)) % len) + len) % len;
+  }
+
+  function applyOffset(offset, animate) {
+    // Wrap to stay in valid zone
+    offset = normalizeOffset(inner, offset);
+    setWheelOffset(inner, offset, animate);
+    const idx = getIdx(offset);
+    inner._current = idx;
+    if (key === 'book')    R.bookIndex    = idx;
+    if (key === 'chapter') R.chapterIndex = idx;
+    if (key === 'verse')   R.verseIndex   = idx;
+    updateWheelHighlight(inner.id, idx, inner._items);
+  }
+
+  function snapToNearest(offset) {
+    // Round to nearest item boundary
+    const centered   = offset + CENTER_ROW * ITEM_HEIGHT;
+    const snappedCtr = Math.round(centered / ITEM_HEIGHT) * ITEM_HEIGHT;
+    const snapped    = snappedCtr - CENTER_ROW * ITEM_HEIGHT;
+    applyOffset(snapped, true);
+  }
+
+  function onStart(y) {
+    cancelAnimationFrame(rafId);
     dragging    = true;
     startY      = y;
+    lastY       = y;
+    lastT       = performance.now();
+    velocity    = 0;
     startOffset = inner._offset || 0;
     inner.style.transition = 'none';
-  };
+  }
 
-  const onMove = (y) => {
+  function onMove(y) {
     if (!dragging) return;
+    const now  = performance.now();
+    const dt   = now - lastT || 16;
+    velocity   = (lastY - y) / dt;  // positive = scrolling down (increasing offset)
+    lastY      = y;
+    lastT      = now;
     const offset = startOffset + (startY - y);
-    inner.style.transform = `translateY(-${offset}px)`;
-    inner._offset = offset;
-    const items  = inner._items;
-    const rawIdx = Math.round(offset / ITEM_HEIGHT) % items.length;
-    const idx    = ((rawIdx % items.length) + items.length) % items.length;
-    inner._current = idx;
-    if (key === 'book')    R.bookIndex    = idx;
-    if (key === 'chapter') R.chapterIndex = idx;
-    if (key === 'verse')   R.verseIndex   = idx;
-    updateWheelHighlight(inner.id, idx, items);
-  };
+    applyOffset(offset, false);
+  }
 
-  const onEnd = () => {
+  function onEnd() {
     if (!dragging) return;
     dragging = false;
-    const items   = inner._items;
-    const rawIdx  = Math.round(inner._offset / ITEM_HEIGHT);
-    const idx     = ((rawIdx % items.length) + items.length) % items.length;
-    const snapped = rawIdx * ITEM_HEIGHT;
-    inner.style.transition = 'transform 0.12s ease-out';
-    inner.style.transform  = `translateY(-${snapped}px)`;
-    inner._offset  = snapped;
-    inner._current = idx;
-    if (key === 'book')    R.bookIndex    = idx;
-    if (key === 'chapter') R.chapterIndex = idx;
-    if (key === 'verse')   R.verseIndex   = idx;
-    updateWheelHighlight(inner.id, idx, items);
-  };
 
-  outer.addEventListener('touchstart', e => onStart(e.touches[0].clientY), { passive: true });
-  outer.addEventListener('touchmove',  e => { e.preventDefault(); onMove(e.touches[0].clientY); }, { passive: false });
-  outer.addEventListener('touchend',   () => onEnd());
-  outer.addEventListener('mousedown',  e => { onStart(e.clientY); e.preventDefault(); });
-  document.addEventListener('mousemove', e => { if (dragging) onMove(e.clientY); });
-  document.addEventListener('mouseup',   () => { if (dragging) onEnd(); });
+    // Momentum coast
+    let vel    = velocity * 1000; // px/s
+    let offset = inner._offset;
+    const friction = 0.94; // decay per frame
+    const MIN_VEL  = 0.5;
+
+    function coast() {
+      if (Math.abs(vel) < MIN_VEL) {
+        snapToNearest(offset);
+        return;
+      }
+      vel    *= friction;
+      offset += vel / 60;
+      applyOffset(offset, false);
+      rafId = requestAnimationFrame(coast);
+    }
+
+    if (Math.abs(vel) > 80) {
+      coast();
+    } else {
+      snapToNearest(offset);
+    }
+  }
+
+  // Touch events
+  outer.addEventListener('touchstart', e => {
+    onStart(e.touches[0].clientY);
+  }, { passive: true });
+
+  outer.addEventListener('touchmove', e => {
+    e.preventDefault();
+    onMove(e.touches[0].clientY);
+  }, { passive: false });
+
+  outer.addEventListener('touchend', () => onEnd(), { passive: true });
+
+  // Mouse events (desktop)
+  outer.addEventListener('mousedown', e => {
+    onStart(e.clientY);
+    e.preventDefault();
+  });
+
+  // Use outer itself, not document, so multiple wheels don't interfere
+  outer.addEventListener('mousemove', e => { if (dragging) onMove(e.clientY); });
+  outer.addEventListener('mouseleave', () => { if (dragging) onEnd(); });
+  document.addEventListener('mouseup', () => { if (dragging) onEnd(); });
 }
 
 // ── Recovery Timer ────────────────────────────────────────

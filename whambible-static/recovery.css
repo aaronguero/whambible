@@ -125,6 +125,21 @@
 }
 
 /* ── SCROLL WHEELS ────────────────────────────────── */
+/*
+  GEOMETRY (fixed):
+    WHEEL_H     = 210px  (5 visible rows × 42px)
+    ITEM_H      = 42px
+    CENTER_TOP  = (210 - 42) / 2 = 84px   ← selector band top
+    VISIBLE     = 5 rows (2 above, selected, 2 below)
+    FADE_H      = 65px   (covers top-2 and bottom-2 partially)
+*/
+:root {
+  --wh-item:   42px;
+  --wh-height: 210px;   /* 5 × 42 */
+  --wh-center: 84px;    /* (210 - 42) / 2 */
+  --wh-fade:   65px;
+}
+
 .scroll-section {
   display: flex;
   flex-direction: column;
@@ -148,10 +163,11 @@
 
 .scroll-container {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: flex-start;
   width: 100%;
   justify-content: center;
+  padding: 0 4px;
 }
 
 .scroll-wheel-wrap {
@@ -159,7 +175,12 @@
   flex-direction: column;
   align-items: center;
   gap: 6px;
+  flex: 1;
 }
+/* Book gets 50% of available space, ch/vs split the rest */
+.scroll-wheel-wrap.book-wrap    { flex: 2.2; max-width: 175px; }
+.scroll-wheel-wrap.chapter-wrap { flex: 1;   max-width: 80px;  }
+.scroll-wheel-wrap.verse-wrap   { flex: 1;   max-width: 80px;  }
 
 .scroll-label {
   font-family: 'Cinzel', serif;
@@ -169,97 +190,102 @@
   text-transform: uppercase;
 }
 
-.scroll-wheel-wrap:nth-child(1) .scroll-wheel-outer { width: 140px; }
-.scroll-wheel-wrap:nth-child(2) .scroll-wheel-outer { width: 60px; }
-.scroll-wheel-wrap:nth-child(3) .scroll-wheel-outer { width: 60px; }
-
+/* ── Outer drum ─────────────────────────────────── */
 .scroll-wheel-outer {
   position: relative;
-  height: 160px;
-  border-radius: 10px;
+  width: 100%;
+  height: var(--wh-height);
+  border-radius: 12px;
   overflow: hidden;
-  background: linear-gradient(180deg, rgba(10,5,0,0.98) 0%, rgba(30,18,3,0.98) 50%, rgba(10,5,0,0.98) 100%);
+  background: linear-gradient(180deg,
+    rgba(10,5,0,0.98)  0%,
+    rgba(30,18,3,0.98) 50%,
+    rgba(10,5,0,0.98)  100%);
   border: 1px solid rgba(201,162,39,0.3);
-  box-shadow: inset 0 0 20px rgba(0,0,0,0.5), 0 4px 16px rgba(0,0,0,0.4);
+  box-shadow:
+    inset 0 0 24px rgba(0,0,0,0.6),
+    0 4px 16px rgba(0,0,0,0.4);
+  /* grab cursor + touch-action so native scroll doesn't fight us */
   cursor: grab;
   user-select: none;
+  touch-action: none;
 }
 .scroll-wheel-outer:active { cursor: grabbing; }
 
-.scroll-wheel { height: 100%; overflow: hidden; position: relative; }
-
+/* ── Inner strip (translated via JS) ───────────── */
 .scroll-wheel-inner {
   display: flex;
   flex-direction: column;
-  transition: transform 0.12s ease-out;
   will-change: transform;
+  /* transition applied in JS for snap-back only */
 }
 
+/* ── Each row ───────────────────────────────────── */
 .scroll-item {
-  height: 40px;
+  height: var(--wh-item);
   display: flex;
   align-items: center;
   justify-content: center;
   font-family: 'Cinzel', serif;
   font-size: 12px;
-  color: rgba(201,162,39,0.35);
-  padding: 0 6px;
+  color: rgba(201,162,39,0.3);
+  padding: 0 5px;
   text-align: center;
-  line-height: 1.2;
-  transition: color 0.15s, font-size 0.15s;
+  line-height: 1.15;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   flex-shrink: 0;
+  pointer-events: none;
+  transition: color 0.12s, font-size 0.12s, font-weight 0.12s;
 }
+/* near-1 row (adjacent to selected) */
+.scroll-item.near1 { color: rgba(201,162,39,0.55); font-size: 12.5px; }
+/* near-2 row */
+.scroll-item.near2 { color: rgba(201,162,39,0.3);  font-size: 11.5px; }
+/* selected row */
 .scroll-item.selected {
   color: #f0e4c0;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
-  text-shadow: 0 0 10px rgba(201,162,39,0.6);
+  text-shadow: 0 0 12px rgba(201,162,39,0.7);
 }
-.scroll-item.near { color: rgba(201,162,39,0.6); font-size: 12px; }
 
+/* ── Gradient fade top & bottom ────────────────── */
 .scroll-wheel-outer::before,
 .scroll-wheel-outer::after {
   content: '';
   position: absolute;
   left: 0; right: 0;
-  height: 50px;
+  height: var(--wh-fade);
   z-index: 3;
   pointer-events: none;
 }
 .scroll-wheel-outer::before {
   top: 0;
-  background: linear-gradient(180deg, rgba(10,5,0,0.95) 0%, transparent 100%);
+  background: linear-gradient(180deg, rgba(10,5,0,0.96) 0%, transparent 100%);
 }
 .scroll-wheel-outer::after {
   bottom: 0;
-  background: linear-gradient(0deg, rgba(10,5,0,0.95) 0%, transparent 100%);
+  background: linear-gradient(0deg,   rgba(10,5,0,0.96) 0%, transparent 100%);
 }
 
-.scroll-selector-line {
+/* ── Selector band (exactly centred on item height) */
+.scroll-selector-band {
   position: absolute;
-  left: 8px; right: 8px;
-  height: 1px;
-  background: rgba(201,162,39,0.4);
+  left: 0; right: 0;
+  top: var(--wh-center);          /* 84px */
+  height: var(--wh-item);         /* 42px */
+  background: rgba(201,162,39,0.07);
+  border-top:    1px solid rgba(201,162,39,0.45);
+  border-bottom: 1px solid rgba(201,162,39,0.45);
   z-index: 4;
   pointer-events: none;
 }
-.scroll-selector-line.top    { top: 60px; }
-.scroll-selector-line.bottom { top: 100px; }
 
-.scroll-highlight-band {
-  position: absolute;
-  left: 0; right: 0;
-  top: 60px;
-  height: 40px;
-  background: rgba(201,162,39,0.06);
-  z-index: 2;
-  pointer-events: none;
-  border-top: 1px solid rgba(201,162,39,0.15);
-  border-bottom: 1px solid rgba(201,162,39,0.15);
-}
+/* Legacy selector-line / highlight-band kept for compat */
+.scroll-selector-line,
+.scroll-highlight-band { display: none; }
 
 /* ── TIMER RING ───────────────────────────────────── */
 .recovery-timer-wrap {
