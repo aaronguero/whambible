@@ -19,3 +19,6 @@
 
 ## Env vars required in Netlify
 - FIREBASE_API_KEY ✅ set
+
+## 🚩 Side Notes / Flags for Later
+- [ ] Google API key restrictions: add *.whambible.com/* in Google Cloud Console (currently only *.whambible.org/* and *.netlify.app/*)
