@@ -1360,6 +1360,147 @@
 @keyframes lbSpin { to{transform:rotate(360deg)} }
 </style>
 
+
+<!-- == MY SCORES MODAL ====================================== -->
+<style>
+#ms-overlay {
+  position: fixed; inset: 0; z-index: 8200;
+  background: rgba(0,0,0,0.82);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: flex-end; justify-content: center;
+  animation: msFadeIn 0.2s ease;
+}
+@keyframes msFadeIn { from{opacity:0} to{opacity:1} }
+
+#ms-sheet {
+  background: linear-gradient(170deg,#1a1008 0%,#0f172a 100%);
+  border: 1px solid rgba(201,162,39,0.35);
+  border-bottom: none;
+  border-radius: 24px 24px 0 0;
+  width: 100%; max-width: 480px; max-height: 88vh;
+  display: flex; flex-direction: column;
+  animation: msSlideUp 0.25s cubic-bezier(0.32,0.72,0,1);
+}
+@keyframes msSlideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+
+.ms-handle {
+  width:40px; height:4px;
+  background: rgba(201,162,39,0.3);
+  border-radius:2px; margin:12px auto 0; flex-shrink:0;
+}
+.ms-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 20px 0; flex-shrink:0;
+}
+.ms-title {
+  color:#c9a227; font-family:'Cinzel',serif;
+  font-size:15px; letter-spacing:2px; text-transform:uppercase;
+}
+.ms-close {
+  background:none; border:none; color:rgba(201,162,39,0.6);
+  font-size:22px; cursor:pointer; padding:4px 8px;
+  -webkit-tap-highlight-color:transparent; -webkit-appearance:none;
+}
+
+/* Summary bar */
+.ms-summary {
+  display:flex; justify-content:space-around;
+  padding:16px 20px 12px;
+  border-bottom:1px solid rgba(201,162,39,0.1);
+  flex-shrink:0;
+}
+.ms-sum-stat { display:flex; flex-direction:column; align-items:center; gap:2px; }
+.ms-sum-val {
+  color:#c9a227; font-family:'Cinzel',serif;
+  font-size:24px; font-weight:700; line-height:1;
+}
+.ms-sum-lbl {
+  color:rgba(201,162,39,0.45); font-size:10px;
+  letter-spacing:1.5px; text-transform:uppercase;
+}
+.ms-win-rate {
+  color:#4ade80; font-family:'Cinzel',serif;
+  font-size:24px; font-weight:700; line-height:1;
+}
+
+/* Filter tabs */
+.ms-filters {
+  display:flex; gap:6px; padding:10px 20px;
+  overflow-x:auto; flex-shrink:0;
+  -webkit-overflow-scrolling:touch;
+}
+.ms-filter-btn {
+  padding:6px 14px;
+  background:rgba(201,162,39,0.07);
+  border:1px solid rgba(201,162,39,0.2);
+  border-radius:20px;
+  color:rgba(201,162,39,0.5); font-size:12px; font-weight:600;
+  letter-spacing:0.5px; cursor:pointer; white-space:nowrap;
+  -webkit-appearance:none; -webkit-tap-highlight-color:transparent;
+  transition:all 0.15s; flex-shrink:0;
+}
+.ms-filter-btn.active {
+  background:rgba(201,162,39,0.2);
+  border-color:rgba(201,162,39,0.5);
+  color:#c9a227;
+}
+
+/* Game history list */
+.ms-list-wrap {
+  flex:1; overflow-y:auto; padding:0 12px 32px;
+}
+.ms-game-card {
+  background:rgba(255,255,255,0.03);
+  border:1px solid rgba(201,162,39,0.1);
+  border-radius:12px; padding:12px 14px;
+  margin-bottom:8px; display:flex; align-items:center; gap:10px;
+}
+.ms-game-card.win  { border-left:3px solid #4ade80; }
+.ms-game-card.loss { border-left:3px solid #f87171; }
+.ms-game-card.draw { border-left:3px solid #facc15; }
+
+.ms-result-icon { font-size:22px; flex-shrink:0; width:28px; text-align:center; }
+.ms-game-info   { flex:1; min-width:0; }
+.ms-opp-name {
+  color:#f0e4c0; font-size:14px; font-weight:600;
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.ms-game-meta { color:rgba(201,162,39,0.4); font-size:11px; margin-top:2px; }
+.ms-score-col  { text-align:right; flex-shrink:0; }
+.ms-score-val  {
+  color:#c9a227; font-family:'Cinzel',serif;
+  font-size:16px; font-weight:700;
+}
+.ms-score-sub  { color:rgba(201,162,39,0.4); font-size:10px; }
+.ms-result-badge {
+  padding:3px 10px; border-radius:20px;
+  font-size:10px; font-weight:700; letter-spacing:1px;
+  text-transform:uppercase; flex-shrink:0;
+}
+.ms-result-badge.win  { background:rgba(74,222,128,0.15); color:#4ade80; border:1px solid rgba(74,222,128,0.3); }
+.ms-result-badge.loss { background:rgba(248,113,113,0.15); color:#f87171; border:1px solid rgba(248,113,113,0.3); }
+.ms-result-badge.draw { background:rgba(250,204,21,0.15);  color:#facc15; border:1px solid rgba(250,204,21,0.3); }
+
+/* Empty / loading */
+.ms-empty {
+  text-align:center; padding:48px 20px;
+  color:rgba(201,162,39,0.4); font-size:14px; line-height:1.8;
+}
+.ms-spinner {
+  width:28px; height:28px; border:2px solid rgba(201,162,39,0.2);
+  border-top-color:#c9a227; border-radius:50%;
+  animation:msSpin 0.8s linear infinite; margin:0 auto 12px;
+}
+@keyframes msSpin { to{transform:rotate(360deg)} }
+
+/* Solo scores section */
+.ms-section-label {
+  color:rgba(201,162,39,0.35); font-size:10px;
+  letter-spacing:2px; text-transform:uppercase;
+  padding:8px 4px 6px; margin-top:4px;
+}
+</style>
+
 <!-- == WHAM MENU WRAP ======================================= -->
   <div class="wham-menu-wrap" id="whamMenu">
     <button class="wham-menu-btn" id="menuToggleBtn" onclick="whamMenuToggle()" aria-label="Menu">
@@ -1536,7 +1677,7 @@
       case 'leaderboard':  lbOpen(); break;
       case 'learning':     whamPlaceholder('🎓 Learning Center — coming soon'); break;
       case 'versePack':    cvpOpen(); break;
-      case 'myScores':     whamPlaceholder('📊 My Scores — coming soon'); break;
+      case 'myScores':     msOpen(); break;
       case 'playerList':   whamPlaceholder('👥 Player List — coming soon'); break;
       case 'howToPlay':       htpOpen(); break;
       case 'invite':       inviteOpen(); break;
