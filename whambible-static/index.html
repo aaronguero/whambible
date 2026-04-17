@@ -1173,36 +1173,7 @@
       <p class="verse-ref">— John 3:16</p>
     </section>
 
-    <!-- Level Selector -->
-    <section class="level-section">
-      <p data-i18n="level-title">⚔️ Choose Your Battle ⚔️</p>
-      <div class="level-row">
-        <div class="level-card" id="lvl-5"  onclick="selectLevel(5)">
-          <span class="level-icon">🗡️</span>
-          <span class="level-points">5</span>
-          <span class="level-pt-label">pts</span>
-          <span data-i18n="level-squire">Squire</span>
-        </div>
-        <div class="level-card" id="lvl-10" onclick="selectLevel(10)">
-          <span class="level-icon">⚔️</span>
-          <span class="level-points">10</span>
-          <span class="level-pt-label">pts</span>
-          <span data-i18n="level-warrior">Warrior</span>
-        </div>
-        <div class="level-card" id="lvl-15" onclick="selectLevel(15)">
-          <span class="level-icon">🛡️</span>
-          <span class="level-points">15</span>
-          <span class="level-pt-label">pts</span>
-          <span data-i18n="level-knight">Knight</span>
-        </div>
-        <div class="level-card" id="lvl-20" onclick="selectLevel(20)">
-          <span class="level-icon">👑</span>
-          <span class="level-points">20</span>
-          <span class="level-pt-label">pts</span>
-          <span data-i18n="level-champion">Champion</span>
-        </div>
-      </div>
-    </section>
+<!-- Level select moved to challenge.html pick-level screen -->
 
     <!-- CTA Buttons -->
     <div class="btn-row">
@@ -2139,51 +2110,28 @@ document.addEventListener('whamAuthChange', e => {
 <script>
 // ── Home screen game-flow wiring ──────────────────────────────────────────
 //
-//  selectLevel(pts)    — highlight chosen card, store selection
-//  startSoloGame()     — go to game.html with chosen level (guest OK)
-//  startMultiplayer()  — requires login → challenge.html?level=pts
-//
-// Game flow (mirrors Whamgame):
-//   Home → pick level → Play Solo  → game.html?level=N  (answer the verse)
-//   Home → pick level → Multiplayer → challenge.html?level=N (issue challenge to friend)
+// Flow:
+//   Play Solo      → game.html (guest OK, level chosen on game screen)
+//   Challenge Friend → requires login → challenge.html (level chosen there)
 // ─────────────────────────────────────────────────────────────────────────
 
-let _selectedLevel = 10; // default
-
-window.selectLevel = function(pts) {
-  _selectedLevel = pts;
-  // Highlight selected card, clear others
-  [5, 10, 15, 20].forEach(n => {
-    const el = document.getElementById('lvl-' + n);
-    if (el) el.classList.toggle('selected', n === pts);
-  });
-  // Brief haptic hint on mobile
-  if (navigator.vibrate) navigator.vibrate(18);
-};
-
-// Default level-10 card highlighted on load
-window.addEventListener('DOMContentLoaded', () => {
-  window.selectLevel(10);
-});
-
 window.startSoloGame = function() {
-  // Solo = guest or logged-in, goes straight to game screen
-  window.location.href = 'game.html?level=' + _selectedLevel;
+  // Solo: anyone can play, level is chosen on game.html
+  window.location.href = 'game.html';
 };
 
 window.startMultiplayer = function() {
-  // Multiplayer requires a real account (not anonymous)
+  // Multiplayer requires a real account (not anonymous guest)
   const user = window._fbUser;
   if (!user || user.isAnonymous) {
-    // Prompt login — store intended destination
-    sessionStorage.setItem('wb_after_login', 'challenge.html?level=' + _selectedLevel);
+    sessionStorage.setItem('wb_after_login', 'challenge.html');
     document.getElementById('login-modal-overlay').style.display = 'flex';
     return;
   }
-  window.location.href = 'challenge.html?level=' + _selectedLevel;
+  window.location.href = 'challenge.html';
 };
 
-// Called after successful login (from lmSuccess / lmGuest in Firebase block)
+// Called after successful login — redirect to stored destination
 window._onLoginSuccess = function(user) {
   const dest = sessionStorage.getItem('wb_after_login');
   if (dest) {
@@ -2191,9 +2139,6 @@ window._onLoginSuccess = function(user) {
     window.location.href = dest;
   }
 };
-
-// Legacy — keep for any remaining call sites
-window.handleLevelSelect = window.selectLevel;
 </script>
 
 </body>
