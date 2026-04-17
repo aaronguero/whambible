@@ -194,6 +194,16 @@ html, body {
   box-shadow: 0 6px 20px rgba(0,0,0,0.4);
 }
 
+/* Selected state — persists until another card is tapped */
+.level-card.selected {
+  border-color: #c9a227;
+  background: rgba(201,162,39,0.16);
+  box-shadow: 0 0 0 2px rgba(201,162,39,0.4), 0 6px 24px rgba(0,0,0,0.5);
+  transform: translateY(-3px) scale(1.04);
+}
+.level-card.selected .level-icon   { transform: scale(1.18); display: inline-block; }
+.level-card.selected .level-points { color: #f0e4c0; text-shadow: 0 0 10px rgba(201,162,39,0.6); }
+
 .level-icon { font-size: 18px; }
 .level-points { color: var(--gold); font-size: 20px; font-weight: bold; font-family: 'Cinzel', serif; }
 .level-pt-label { color: rgba(201,162,39,0.5); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; }
