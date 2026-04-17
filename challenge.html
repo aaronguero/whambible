@@ -424,6 +424,10 @@
   content: ''; position: absolute; left: 0; top: 0; bottom: 0;
   width: 3px; background: #c9a227; border-radius: 3px 0 0 3px;
 }
+.ag-card.complete {
+  border-color: rgba(201,162,39,0.15);
+  opacity: 0.7;
+}
 .ag-card.waiting { border-color: rgba(255,255,255,0.1); }
 .ag-opp-avatar {
   width: 42px; height: 42px; border-radius: 50%;
@@ -1671,6 +1675,53 @@
 @keyframes plSpin { to{transform:rotate(360deg)} }
 </style>
 
+<style>
+/* ── Game Complete Screen ─────────────────────────────────── */
+#screen-complete .gc-trophy { font-size: 64px; margin-bottom: 8px; animation: gcBounce 0.6s ease; }
+@keyframes gcBounce { 0%{transform:scale(0.5);opacity:0} 70%{transform:scale(1.15)} 100%{transform:scale(1);opacity:1} }
+.gc-title { font-family:'Cinzel',serif; font-size:22px; color:#c9a227; margin:0 0 4px; }
+.gc-subtitle { color:rgba(201,162,39,0.6); font-size:13px; margin-bottom:20px; }
+.gc-result-banner {
+  padding:12px 20px; border-radius:12px; margin:0 0 20px;
+  font-family:'Cinzel',serif; font-size:16px; font-weight:700; letter-spacing:1px;
+  text-align:center;
+}
+.gc-result-banner.win  { background:rgba(74,222,128,0.15); border:1px solid rgba(74,222,128,0.4); color:#4ade80; }
+.gc-result-banner.loss { background:rgba(248,113,113,0.15); border:1px solid rgba(248,113,113,0.4); color:#f87171; }
+.gc-result-banner.draw { background:rgba(250,204,21,0.15);  border:1px solid rgba(250,204,21,0.4);  color:#facc15; }
+.gc-scoreboard {
+  display:flex; align-items:center; justify-content:center;
+  gap:12px; margin-bottom:20px;
+}
+.gc-player-block { display:flex; flex-direction:column; align-items:center; gap:6px; flex:1; }
+.gc-player-avatar {
+  width:52px; height:52px; border-radius:50%; overflow:hidden;
+  background:linear-gradient(135deg,#2a1a05,#1a0f02);
+  border:2px solid rgba(201,162,39,0.3);
+  display:flex; align-items:center; justify-content:center;
+  font-size:20px;
+}
+.gc-player-avatar img { width:100%; height:100%; object-fit:cover; }
+.gc-player-name { color:#f0e4c0; font-size:13px; font-weight:600; text-align:center; max-width:90px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.gc-player-score { color:#c9a227; font-family:'Cinzel',serif; font-size:26px; font-weight:700; }
+.gc-vs-divider { color:rgba(201,162,39,0.35); font-family:'Cinzel',serif; font-size:16px; font-weight:700; }
+.gc-stats-row {
+  display:flex; gap:8px; margin-bottom:20px;
+}
+.gc-stat-chip {
+  flex:1; text-align:center; padding:10px 6px;
+  background:rgba(201,162,39,0.07);
+  border:1px solid rgba(201,162,39,0.18);
+  border-radius:10px;
+}
+.gc-stat-val { color:#c9a227; font-family:'Cinzel',serif; font-size:18px; font-weight:700; }
+.gc-stat-lbl { color:rgba(201,162,39,0.45); font-size:10px; letter-spacing:1px; text-transform:uppercase; margin-top:2px; }
+.gc-rank-up {
+  padding:10px 16px; border-radius:12px; margin-bottom:16px;
+  background:rgba(201,162,39,0.12); border:1px solid rgba(201,162,39,0.35);
+  color:#c9a227; font-size:13px; text-align:center; display:none;
+}
+</style>
 <!-- == WHAM MENU WRAP ======================================= -->
   <div class="wham-menu-wrap" id="whamMenu">
     <button class="wham-menu-btn" id="menuToggleBtn" onclick="whamMenuToggle()" aria-label="Menu">
@@ -1984,6 +2035,38 @@
 
       <button class="btn-primary" onclick="newGame()">⚔️ New Battle</button>
       <button class="btn-secondary" style="margin-top:12px" onclick="window.location.href='index.html'">← Home</button>
+    </div>
+  </div>
+
+
+  <!-- ── SCREEN: GAME COMPLETE ─────────────────────────────── -->
+  <div id="screen-complete" class="screen">
+    <div class="screen-inner" style="text-align:center;padding:24px 20px 32px">
+      <div class="gc-trophy" id="gc-trophy">🏆</div>
+      <h2 class="gc-title" id="gc-title">Battle Complete!</h2>
+      <p class="gc-subtitle" id="gc-subtitle">10 rounds fought</p>
+      <div class="gc-result-banner win" id="gc-result-banner">⚔️ VICTORY</div>
+      <div class="gc-scoreboard">
+        <div class="gc-player-block">
+          <div class="gc-player-avatar" id="gc-p1-avatar">👤</div>
+          <div class="gc-player-name" id="gc-p1-name">You</div>
+          <div class="gc-player-score" id="gc-p1-score">0</div>
+        </div>
+        <div class="gc-vs-divider">VS</div>
+        <div class="gc-player-block">
+          <div class="gc-player-avatar" id="gc-p2-avatar">👤</div>
+          <div class="gc-player-name" id="gc-p2-name">Opponent</div>
+          <div class="gc-player-score" id="gc-p2-score">0</div>
+        </div>
+      </div>
+      <div class="gc-stats-row">
+        <div class="gc-stat-chip"><div class="gc-stat-val" id="gc-pts-earned">+0</div><div class="gc-stat-lbl">Pts Earned</div></div>
+        <div class="gc-stat-chip"><div class="gc-stat-val" id="gc-round-count">10</div><div class="gc-stat-lbl">Rounds</div></div>
+        <div class="gc-stat-chip"><div class="gc-stat-val" id="gc-new-rank">📜</div><div class="gc-stat-lbl">Rank</div></div>
+      </div>
+      <div class="gc-rank-up" id="gc-rank-up">🎉 You ranked up!</div>
+      <button class="btn-primary" onclick="newGame()">⚔️ New Battle</button>
+      <button class="btn-ghost" style="margin-top:10px;width:100%" onclick="window.location.href='index.html'">← Home</button>
     </div>
   </div>
 
@@ -2793,11 +2876,12 @@ async function loadLobbyProfile(user) {
 }
 
 // ── Live active games subscription ────────────────────────
+let _currentGameUnsub = null;
+
 function subscribeActiveGames(user) {
   if (_activeGamesUnsub) _activeGamesUnsub();
   const { db, collection, query, where, onSnapshot, orderBy } = window._fb;
 
-  // Listen for all games where this user is p1 OR p2
   const q = query(
     collection(db, 'games'),
     where('players', 'array-contains', user.uid),
@@ -2805,10 +2889,48 @@ function subscribeActiveGames(user) {
   );
 
   _activeGamesUnsub = onSnapshot(q, snap => {
-    const games = snap.docs.map(d => ({ id: d.id, ...d.data() }))
-      .filter(g => g.status !== 'complete');
-    renderActiveGames(games, user.uid);
+    const all   = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    // Active + recently completed (last 24h) so you can see results
+    const active = all.filter(g => {
+      if (g.status !== 'complete') return true;
+      const upd = g.updatedAt?.toDate ? g.updatedAt.toDate() : null;
+      return upd && (Date.now() - upd.getTime()) < 24 * 60 * 60 * 1000;
+    });
+    renderActiveGames(active, user.uid);
+
+    // Real-time: if we are watching a game and it changed, react
+    if (_currentGameId) {
+      const updated = all.find(g => g.id === _currentGameId);
+      if (updated) {
+        _currentGame = updated;
+        handleLiveGameUpdate(updated, user.uid);
+      }
+    }
   }, err => console.warn('games sub:', err));
+}
+
+// ── React to live game updates ────────────────────────────
+function handleLiveGameUpdate(game, myUid) {
+  const currentScreen = document.querySelector('.screen.active')?.id;
+
+  // If it's now our turn and we're sitting on round-result or lobby, nudge in
+  if (game.currentTurn === myUid) {
+    if (currentScreen === 'screen-round-result') {
+      setTimeout(() => openGame(game.id, game), 1200);
+    } else if (currentScreen === 'screen-lobby') {
+      showToast('⚔️ Opponent moved — it's your turn!');
+    }
+  }
+
+  // If game just completed and we're on an active screen, show complete
+  if (game.status === 'complete' &&
+      currentScreen !== 'screen-complete' &&
+      currentScreen !== 'screen-lobby') {
+    const oppUid   = game.players.find(p => p !== myUid);
+    const myScore  = game.scores?.[myUid]  || 0;
+    const oppScore = game.scores?.[oppUid] || 0;
+    showGameComplete(game, myUid, oppUid, myScore, oppScore, game.round - 1 || 10);
+  }
 }
 
 // ── Render active games list ───────────────────────────────
@@ -2839,7 +2961,8 @@ async function renderActiveGames(games, myUid) {
       : (game.lastLevel ? `${game.lastLevel} pts` : '');
 
     const card = document.createElement('div');
-    card.className = `ag-card ${isMyTurn ? 'your-turn' : 'waiting'}`;
+    const isComplete  = game.status === 'complete';
+    card.className = `ag-card ${isComplete ? 'complete' : isMyTurn ? 'your-turn' : 'waiting'}`;
     card.innerHTML = `
       <div class="ag-opp-avatar">
         ${oppPhoto ? `<img src="${oppPhoto}" onerror="this.parentElement.textContent='👤'"/>` : '👤'}
@@ -2849,7 +2972,7 @@ async function renderActiveGames(games, myUid) {
         <div class="ag-rank" id="ag-rank-${game.id}">
           <span class="rank-badge rank-scribe">📜 Scribe</span>
         </div>
-        <div class="ag-turn-label">${isMyTurn ? '⚔️ Your turn!' : '⏳ Waiting for opponent'}</div>
+        <div class="ag-turn-label">${isComplete ? '🏁 Battle ended' : isMyTurn ? '⚔️ Your turn!' : '⏳ Waiting for opponent'}</div>
       </div>
       <div class="ag-score-wrap">
         <div class="ag-score">${myScore}–${oppScore}</div>
@@ -2880,19 +3003,25 @@ async function renderActiveGames(games, myUid) {
 function openGame(gameId, game) {
   _currentGameId = gameId;
   _currentGame   = game;
-  const myUid    = window._fbUser?.uid;
+  const myUid   = window._fbUser?.uid;
+  const oppUid  = game.players?.find(p => p !== myUid);
   const isMyTurn = game.currentTurn === myUid;
+
+  if (game.status === 'complete') {
+    const myScore  = game.scores?.[myUid]  || 0;
+    const oppScore = game.scores?.[oppUid] || 0;
+    showGameComplete(game, myUid, oppUid, myScore, oppScore, (game.round || 11) - 1);
+    return;
+  }
 
   if (isMyTurn) {
     if (game.status === 'waiting_for_answer') {
-      // I need to answer a challenge
       loadAnswerScreen(game);
     } else {
-      // I need to pick a level to challenge opponent
       loadPickLevelScreen(game);
     }
   } else {
-    showToast('⏳ Waiting for opponent's move');
+    showToast('⏳ Waiting for opponent’s move');
   }
 }
 
@@ -3116,7 +3245,21 @@ function renderAnswerChoices(verse, pts) {
     const isCorrect = opt.book === correct.book && opt.chapter === correct.chapter && opt.verse === correct.verse;
     window.markChoiceFeedback(btn, isCorrect, correct.book);
     window.stopAnswerTimer();
-    setTimeout(() => submitAnswer(opt, correct, pts, verse), 700);
+    if (!isCorrect) {
+      // Wrong — launch scroll recovery before submitting
+      setTimeout(() => {
+        if (typeof launchMPRecovery === 'function') {
+          launchMPRecovery(pts, (recovered, bonus) => {
+            const recoveredOpt = recovered ? correct : opt; // force correct if recovered
+            submitAnswer(recoveredOpt, correct, recovered ? Math.floor(pts * 0.5) : pts, verse);
+          });
+        } else {
+          submitAnswer(opt, correct, pts, verse);
+        }
+      }, 700);
+    } else {
+      setTimeout(() => submitAnswer(opt, correct, pts, verse), 700);
+    }
   };
   window.renderAnswerChoices(verse, pts);
 }
@@ -3130,66 +3273,160 @@ async function submitAnswer(chosen, correct, pts, verse) {
   const isRight = chosen.book===correct.book && chosen.chapter===correct.chapter && chosen.verse===correct.verse;
 
   clearInterval(_ansTimerInterval);
-
-  // Visual feedback
-  const btns = document.querySelectorAll('.choice-btn');
-  btns.forEach(b => {
-    b.disabled = true;
-    const ref = `${correct.book} ${correct.chapter}:${correct.verse}`;
-    if (b.textContent === ref) b.classList.add('correct');
-    else if (b.textContent === `${chosen.book} ${chosen.chapter}:${chosen.verse}`) b.classList.add('wrong');
-  });
-
-  const earned = isRight ? pts : 0;
+  const earned    = isRight ? pts : 0;
   await new Promise(r => setTimeout(r, 800));
 
-  // Update scores + flip turn
   try {
     const { db, doc, updateDoc, serverTimestamp } = window._fb;
-    const newMyScore  = (game.scores?.[me.uid]  || 0) + earned;
-    const newOppScore =  game.scores?.[oppUid]  || 0;
-    const newRound    = (game.round || 1) + 1;
-    const isComplete  = newRound > 10; // 10 rounds total
+    const newMyScore = (game.scores?.[me.uid]  || 0) + earned;
+    const newOppScore = game.scores?.[oppUid]  || 0;
+    const newRound   = (game.round || 1) + 1;
+    const isComplete = newRound > 10;
 
     await updateDoc(doc(db,'games',_currentGameId), {
       [`scores.${me.uid}`]: newMyScore,
-      currentTurn:   oppUid,
-      status:        isComplete ? 'complete' : 'pick_level',
-      pendingVerse:  null,
-      pendingLevel:  null,
-      round:         newRound,
-      lastAnswer:    { uid: me.uid, correct: isRight, earned, verse: `${correct.book} ${correct.chapter}:${correct.verse}` },
-      updatedAt:     serverTimestamp()
+      currentTurn:  oppUid,
+      status:       isComplete ? 'complete' : 'pick_level',
+      pendingVerse: null,
+      pendingLevel: null,
+      round:        newRound,
+      lastAnswer:   { uid: me.uid, correct: isRight, earned, verse: `${correct.book} ${correct.chapter}:${correct.verse}` },
+      updatedAt:    serverTimestamp()
     });
 
-    // Show result
-    document.getElementById('rr-icon').textContent   = isRight ? '✅' : '❌';
-    document.getElementById('rr-title').textContent  = isRight ? `+${pts} Points!` : 'Wrong Answer';
-    document.getElementById('rr-verse-ref').textContent = `${correct.book} ${correct.chapter}:${correct.verse}`;
-    document.getElementById('rr-verse-text').textContent = verse.text || '';
-    document.getElementById('rr-p1-name').textContent  = game.playerNames?.[me.uid] || 'You';
-    document.getElementById('rr-p2-name').textContent  = game.playerNames?.[oppUid] || 'Opponent';
-    document.getElementById('rr-p1-delta').textContent = isRight ? `+${pts}` : '+0';
-    document.getElementById('rr-p1-delta').style.color = isRight ? '#4ade80' : '#f87171';
-    document.getElementById('rr-p1-total').textContent = `${newMyScore} pts`;
-    document.getElementById('rr-p2-total').textContent = `${newOppScore} pts`;
-    document.getElementById('share-code').textContent  = _currentGameId.slice(0,8).toUpperCase();
-    document.getElementById('rr-next-btn').textContent = '← Back to Battles';
-    document.getElementById('rr-next-btn').onclick = () => showScreen('lobby');
+    // Update player stats in Firestore
+    await updatePlayerStats(me.uid, earned, isRight, isComplete, newMyScore, newOppScore);
 
-    showScreen('round-result');
+    if (isComplete) {
+      // Show game complete screen
+      showGameComplete(game, me.uid, oppUid, newMyScore, newOppScore, newRound - 1);
+    } else {
+      // Show round result
+      document.getElementById('rr-icon').textContent   = isRight ? '✅' : '❌';
+      document.getElementById('rr-title').textContent  = isRight ? `+${pts} Points!` : 'Wrong Answer';
+      document.getElementById('rr-verse-ref').textContent = `${correct.book} ${correct.chapter}:${correct.verse}`;
+      document.getElementById('rr-verse-text').textContent = verse.text || '';
+      document.getElementById('rr-p1-name').textContent  = game.playerNames?.[me.uid] || 'You';
+      document.getElementById('rr-p2-name').textContent  = game.playerNames?.[oppUid] || 'Opponent';
+      document.getElementById('rr-p1-delta').textContent = isRight ? `+${pts}` : '+0';
+      document.getElementById('rr-p1-delta').style.color = isRight ? '#4ade80' : '#f87171';
+      document.getElementById('rr-p1-total').textContent = `${newMyScore} pts`;
+      document.getElementById('rr-p2-total').textContent = `${newOppScore} pts`;
+      document.getElementById('share-code').textContent  = _currentGameId.slice(0,8).toUpperCase();
+      document.getElementById('rr-next-btn').textContent = '← Back to Battles';
+      document.getElementById('rr-next-btn').onclick = () => showScreen('lobby');
+      showScreen('round-result');
+    }
 
-    // Notify opponent
+    // Push opponent
     const { db: db2, doc: d2, getDoc } = window._fb;
     const oppSnap = await getDoc(d2(db2,'players',oppUid));
     if (oppSnap.exists() && oppSnap.data().fcmToken) {
       const myName = game.playerNames?.[me.uid] || 'Opponent';
-      sendPushToOpponent(oppSnap.data().fcmToken,
-        '⚔️ Your turn!',
-        `${myName} answered — now it's your turn to challenge!`,
-        _currentGameId);
+      if (isComplete) {
+        sendPushToOpponent(oppSnap.data().fcmToken,
+          '🏁 Battle Over!',
+          `${myName} played their final turn — check the result!`,
+          _currentGameId);
+      } else {
+        sendPushToOpponent(oppSnap.data().fcmToken,
+          '⚔️ Your turn!',
+          `${myName} answered — now it's your turn to challenge!`,
+          _currentGameId);
+      }
     }
   } catch(e) { showToast('Error: ' + e.message); }
+}
+
+// ── Update player stats after each answer ──────────────────
+async function updatePlayerStats(uid, earned, isRight, isComplete, myScore, oppScore) {
+  if (!uid || !window._fb) return;
+  try {
+    const { db, doc, getDoc, updateDoc, increment, serverTimestamp } = window._fb;
+    // Firestore increment helper (may not be imported)
+    const ref  = doc(db, 'players', uid);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return;
+    const d     = snap.data();
+    const prevScore  = d.score || 0;
+    const prevStreak = d.streak || 0;
+    const newStreak  = isRight ? prevStreak + 1 : 0;
+    const newScore   = prevScore + earned;
+
+    const updates = {
+      score:       newScore,
+      streak:      newStreak,
+      lastSeen:    serverTimestamp(),
+    };
+
+    if (isComplete) {
+      const won = myScore > oppScore;
+      const draw = myScore === oppScore;
+      updates.gamesPlayed = (d.gamesPlayed || 0) + 1;
+      if (won) updates.wins = (d.wins || 0) + 1;
+    }
+
+    await updateDoc(ref, updates);
+  } catch(e) { console.warn('stats update:', e); }
+}
+
+// ── Show game complete screen ───────────────────────────────
+async function showGameComplete(game, myUid, oppUid, myScore, oppScore, rounds) {
+  const myName   = game.playerNames?.[myUid]  || 'You';
+  const oppName  = game.playerNames?.[oppUid] || 'Opponent';
+  const myPhoto  = game.playerPhotos?.[myUid]  || '';
+  const oppPhoto = game.playerPhotos?.[oppUid] || '';
+
+  const won  = myScore > oppScore;
+  const draw = myScore === oppScore;
+
+  const trophy   = won ? '🏆' : draw ? '🤝' : '💔';
+  const title    = won ? 'Victory!' : draw ? 'Draw!' : 'Defeated';
+  const bannerTxt = won ? '⚔️ VICTORY' : draw ? '🤝 DRAW' : '💔 DEFEAT';
+  const bannerCls = won ? 'win' : draw ? 'draw' : 'loss';
+
+  document.getElementById('gc-trophy').textContent  = trophy;
+  document.getElementById('gc-title').textContent   = title;
+  document.getElementById('gc-subtitle').textContent = `${rounds} rounds fought`;
+
+  const banner = document.getElementById('gc-result-banner');
+  banner.textContent  = bannerTxt;
+  banner.className    = `gc-result-banner ${bannerCls}`;
+
+  // Avatars
+  const p1av = document.getElementById('gc-p1-avatar');
+  const p2av = document.getElementById('gc-p2-avatar');
+  p1av.innerHTML = myPhoto  ? `<img src="${myPhoto}"  onerror="this.parentElement.textContent='👤'"/>` : '👤';
+  p2av.innerHTML = oppPhoto ? `<img src="${oppPhoto}" onerror="this.parentElement.textContent='👤'"/>` : '👤';
+
+  document.getElementById('gc-p1-name').textContent  = myName;
+  document.getElementById('gc-p2-name').textContent  = oppName;
+  document.getElementById('gc-p1-score').textContent = myScore;
+  document.getElementById('gc-p2-score').textContent = oppScore;
+  document.getElementById('gc-pts-earned').textContent = `+${myScore}`;
+  document.getElementById('gc-round-count').textContent = rounds;
+
+  // Rank badge
+  const rb = typeof rankBadge === 'function' ? rankBadge(myScore) : {icon:'📜'};
+  document.getElementById('gc-new-rank').textContent = rb.icon;
+
+  // Rank-up check
+  try {
+    const { db, doc, getDoc } = window._fb;
+    const snap = await getDoc(doc(db,'players',myUid));
+    if (snap.exists()) {
+      const prevTotal = (snap.data().score || 0) - myScore;
+      const prevRb    = typeof rankBadge === 'function' ? rankBadge(prevTotal) : null;
+      const newRb     = typeof rankBadge === 'function' ? rankBadge(snap.data().score || 0) : null;
+      const rankUpEl  = document.getElementById('gc-rank-up');
+      if (rankUpEl && prevRb && newRb && prevRb.label !== newRb.label) {
+        rankUpEl.textContent = `🎉 Ranked up to ${newRb.icon} ${newRb.label}!`;
+        rankUpEl.style.display = 'block';
+      }
+    }
+  } catch(e) {}
+
+  showScreen('complete');
 }
 
 // Timer delegated to challenge.js startAnswerTimer()
@@ -3241,28 +3478,42 @@ function showToast(msg) {
 }
 
 // ── Send push via Netlify function ────────────────────────
-function sendPushToOpponent(token, title, body, gameId) {
+function sendPushToOpponent(token, title, body, gameId, fromName) {
   fetch('/.netlify/functions/send-push', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ token, title, body, data: { gameId } })
+    body: JSON.stringify({ token, title, body, gameId, fromName: fromName || '', type: 'game_update' })
   }).catch(e => console.warn('push send:', e));
 }
 
-// ── On page load — check URL for game code ────────────────
-window.addEventListener('load', () => {
-  const params = new URLSearchParams(window.location.search);
-  const code   = params.get('code');
-  if (code) {
-    const codeEl = document.getElementById('game-code');
-    if (codeEl) { codeEl.value = code; resumeGame(); }
-  }
+// ── On page load — check URL for deep link ───────────────
+window.addEventListener('load', async () => {
+  const params  = new URLSearchParams(window.location.search);
+  const gameId  = params.get('game') || params.get('code');
+
   // If already authed, load lobby immediately
   if (window._fbUser && !window._fbUser.isAnonymous) {
     document.getElementById('lobby-auth-gate').style.display = 'none';
     document.getElementById('lobby-main').style.display = '';
     loadLobbyProfile(window._fbUser);
     subscribeActiveGames(window._fbUser);
+
+    // Deep link — open specific game
+    if (gameId) {
+      try {
+        const { db, doc, getDoc } = window._fb;
+        const snap = await getDoc(doc(db, 'games', gameId));
+        if (snap.exists()) {
+          const game = { id: snap.id, ...snap.data() };
+          _currentGameId = game.id;
+          _currentGame   = game;
+          showToast('🔗 Opening game…');
+          setTimeout(() => openGame(game.id, game), 600);
+        } else {
+          showToast('⚠️ Game not found');
+        }
+      } catch(e) { console.warn('deep link:', e); }
+    }
   }
 });
 
