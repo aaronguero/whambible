@@ -198,7 +198,9 @@
 
 .choice-btn {
   width: 100%;
-  padding: 14px 18px;
+  /* Fixed height — every button identical shape regardless of book name length */
+  height: 64px;
+  padding: 0 16px;
   background: linear-gradient(135deg, rgba(35,22,4,0.95) 0%, rgba(25,15,3,0.95) 100%);
   border: 1px solid rgba(201,162,39,0.3);
   border-radius: 10px;
@@ -206,10 +208,11 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  transition: all 0.2s;
+  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.15s;
   text-align: left;
   box-shadow: 0 2px 10px rgba(0,0,0,0.3);
   animation: choiceIn 0.35s ease-out both;
+  overflow: hidden; /* never grows */
 }
 
 .choice-btn:nth-child(1) { animation-delay: 0.05s; }
@@ -234,6 +237,7 @@
 .choice-letter {
   width: 30px;
   height: 30px;
+  flex-shrink: 0;
   border-radius: 50%;
   background: rgba(201,162,39,0.12);
   border: 1px solid rgba(201,162,39,0.35);
@@ -244,18 +248,25 @@
   font-size: 12px;
   font-weight: 700;
   color: var(--gold);
-  flex-shrink: 0;
-  transition: all 0.2s;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 
-.choice-text-wrap { flex: 1; }
+/* Text column — clamp, never wrap, never resize */
+.choice-text-wrap {
+  flex: 1;
+  min-width: 0; /* allow flex child to shrink below content width */
+  overflow: hidden;
+}
 
 .choice-book {
   font-family: 'Cinzel', serif;
-  font-size: 14px;
+  font-size: 13px;   /* uniform size — long names like "1 Thessalonians" stay on one line */
   font-weight: 700;
   color: #f0e4c0;
   display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .choice-ref {
@@ -264,13 +275,16 @@
   color: rgba(201,162,39,0.6);
   display: block;
   margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* Answer states */
+/* ── Answer states — applied ONLY after tap ── */
 .choice-btn.correct {
   background: linear-gradient(135deg, rgba(20,60,30,0.98) 0%, rgba(15,45,22,0.98) 100%) !important;
   border-color: #4caf7d !important;
-  box-shadow: 0 0 20px rgba(76,175,125,0.4) !important;
+  box-shadow: 0 0 20px rgba(76,175,125,0.35) !important;
 }
 .choice-btn.correct .choice-letter {
   background: #4caf7d;
@@ -289,9 +303,16 @@
   color: #fff;
 }
 
+/* Reveal = correct button shown after wrong answer or time-up — subtle, not green */
 .choice-btn.reveal {
-  border-color: #4caf7d !important;
-  opacity: 0.6;
+  border-color: rgba(201,162,39,0.6) !important;
+  background: linear-gradient(135deg, rgba(40,28,6,0.98) 0%, rgba(30,20,4,0.98) 100%) !important;
+  opacity: 0.75;
+}
+.choice-btn.reveal .choice-letter {
+  background: rgba(201,162,39,0.25);
+  border-color: rgba(201,162,39,0.6);
+  color: #c9a227;
 }
 
 /* Feedback bar */
