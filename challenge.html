@@ -1731,6 +1731,107 @@
   color:#c9a227; font-size:13px; text-align:center; display:none;
 }
 </style>
+<style>
+/* ══ LANGUAGE SWITCHER SHEET ════════════════════════════════ */
+#ls-overlay {
+  position: fixed; inset: 0; z-index: 8500;
+  background: rgba(0,0,0,0.82);
+  backdrop-filter: blur(6px);
+  display: flex; align-items: flex-end; justify-content: center;
+  animation: lsFadeIn 0.2s ease;
+}
+@keyframes lsFadeIn { from{opacity:0} to{opacity:1} }
+
+#ls-sheet {
+  background: linear-gradient(170deg,#1a1008 0%,#0f172a 100%);
+  border: 1px solid rgba(201,162,39,0.35);
+  border-bottom: none;
+  border-radius: 24px 24px 0 0;
+  width: 100%; max-width: 480px;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  animation: lsSlideUp 0.25s cubic-bezier(0.32,0.72,0,1);
+}
+@keyframes lsSlideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+
+.ls-handle {
+  width:40px; height:4px;
+  background:rgba(201,162,39,0.3);
+  border-radius:2px; margin:12px auto 0;
+}
+.ls-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 20px 12px;
+}
+.ls-title {
+  color:#c9a227; font-family:'Cinzel',serif;
+  font-size:15px; letter-spacing:2px; text-transform:uppercase;
+}
+.ls-close {
+  background:none; border:none; color:rgba(201,162,39,0.6);
+  font-size:22px; cursor:pointer; padding:4px 8px;
+  -webkit-tap-highlight-color:transparent; -webkit-appearance:none;
+}
+
+/* Current language pill */
+.ls-current-wrap {
+  padding: 0 20px 14px;
+  display: flex; align-items: center; gap: 10px;
+}
+.ls-current-label { color:rgba(201,162,39,0.4); font-size:11px; letter-spacing:1px; text-transform:uppercase; }
+.ls-current-pill {
+  padding: 5px 14px; border-radius: 20px;
+  background: rgba(201,162,39,0.15);
+  border: 1px solid rgba(201,162,39,0.4);
+  color: #c9a227; font-size: 13px; font-weight: 700;
+  display: flex; align-items: center; gap: 6px;
+}
+
+/* Language grid */
+.ls-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  padding: 0 16px 24px;
+}
+.ls-lang-btn {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 12px 6px 10px;
+  background: rgba(201,162,39,0.06);
+  border: 1.5px solid rgba(201,162,39,0.15);
+  border-radius: 14px;
+  cursor: pointer;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: all 0.15s;
+  position: relative;
+}
+.ls-lang-btn:active { transform: scale(0.94); }
+.ls-lang-btn.active {
+  background: rgba(201,162,39,0.2);
+  border-color: rgba(201,162,39,0.6);
+}
+.ls-lang-btn.active::after {
+  content: '✓';
+  position: absolute; top: 4px; right: 6px;
+  color: #c9a227; font-size: 10px; font-weight: 700;
+}
+.ls-lang-flag { font-size: 22px; line-height: 1; }
+.ls-lang-code { color: rgba(201,162,39,0.7); font-size: 10px; font-weight: 700; letter-spacing: 0.5px; }
+.ls-lang-btn.active .ls-lang-code { color: #c9a227; }
+
+/* Translating indicator */
+.ls-translating {
+  text-align: center; padding: 0 20px 16px;
+  color: rgba(201,162,39,0.5); font-size: 12px;
+  display: none; align-items: center; justify-content: center; gap: 8px;
+}
+.ls-spin {
+  width: 14px; height: 14px; border: 2px solid rgba(201,162,39,0.2);
+  border-top-color: #c9a227; border-radius: 50%;
+  animation: lsSpin 0.7s linear infinite; flex-shrink: 0;
+}
+@keyframes lsSpin { to{transform:rotate(360deg)} }
+</style>
 <!-- == WHAM MENU WRAP ======================================= -->
   <div class="wham-menu-wrap" id="whamMenu">
     <button class="wham-menu-btn" id="menuToggleBtn" onclick="whamMenuToggle()" aria-label="Menu">
@@ -1752,6 +1853,9 @@
       </button>
       <button class="wham-menu-item" onclick="whamMenuGo('playerList')">
         <span class="m-icon">👥</span><span class="m-label">Player List</span>
+      </button>
+      <button class="wham-menu-item" id="menu-lang-btn" onclick="whamMenuGo('language')">
+        <span class="m-icon" id="menu-lang-flag">🌐</span><span class="m-label" id="menu-lang-label">Language</span>
       </button>
 
       <!-- Bible Verses — replaces Theme Store -->
@@ -2124,6 +2228,7 @@
       case 'versePack':    cvpOpen(); break;
       case 'myScores':     msOpen(); break;
       case 'playerList':   plOpen(); break;
+      case 'language':     lsOpen(); break;
       case 'howToPlay':       htpOpen(); break;
       case 'invite':       inviteOpen(); break;
       case 'profile':      psOpen(); break;
