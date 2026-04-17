@@ -426,25 +426,7 @@
   padding: 2px 7px; border-radius: 20px;
 }
 
-/* Join code */
-.join-code-wrap  { margin-bottom: 4px; }
-.join-code-label { font-size: 12px; color: rgba(255,255,255,0.35); margin-bottom: 8px; text-align: center; }
-.join-code-row   { display: flex; gap: 8px; }
-.join-code-input {
-  flex: 1; background: rgba(255,255,255,0.06);
-  border: 1px solid rgba(201,162,39,0.2);
-  border-radius: 10px; padding: 11px 14px;
-  color: #fff; font-size: 15px; font-weight: 700;
-  outline: none; text-align: center; letter-spacing: 4px;
-}
-.join-code-input::placeholder { letter-spacing: 1px; font-weight: 400; font-size: 12px; }
-.join-code-btn {
-  padding: 11px 20px; border-radius: 10px; border: none;
-  background: rgba(201,162,39,0.2);
-  color: #c9a227; font-size: 14px; font-weight: 700;
-  cursor: pointer; transition: background .2s;
-}
-.join-code-btn:hover { background: rgba(201,162,39,0.3); }
+/* join-code styles removed */
 
 /* New Challenge modal */
 .nc-modal {
@@ -984,7 +966,7 @@
            signInWithEmailAndPassword, signOut }
                                     from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js';
   import { getFirestore, doc, setDoc, getDoc, collection,
-           addDoc, updateDoc, onSnapshot, serverTimestamp, query, where, orderBy, limit }
+           addDoc, updateDoc, onSnapshot, serverTimestamp, query, where, orderBy, limit, getDocs }
                                     from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js';
   import { getMessaging, getToken, onMessage }
                                     from 'https://www.gstatic.com/firebasejs/10.11.0/firebase-messaging.js';
@@ -1009,7 +991,8 @@
     createUserWithEmailAndPassword, signInWithEmailAndPassword,
     signOut, onAuthStateChanged,
     doc, setDoc, getDoc, collection, addDoc, updateDoc,
-    onSnapshot, serverTimestamp, query, where, orderBy, limit };
+    onSnapshot, serverTimestamp, query, where, orderBy, limit ,
+    getDocs, onSnapshot, serverTimestamp, query, where, orderBy, limit, addDoc, updateDoc };
 
   // ── Auth state listener ─────────────────────────────────
   onAuthStateChanged(auth, async user => {
@@ -1204,14 +1187,7 @@
           </div>
         </div>
 
-        <!-- Join by code -->
-        <div class="join-code-wrap">
-          <div class="join-code-label">Have a game code?</div>
-          <div class="join-code-row">
-            <input type="text" id="game-code" class="join-code-input" placeholder="ENTER CODE" maxlength="8" style="text-transform:uppercase;letter-spacing:4px" />
-            <button class="join-code-btn" onclick="resumeGame()">Join</button>
-          </div>
-        </div>
+<!-- join-by-code removed: games opened via push notification deep link -->
 
         <button class="btn-ghost" style="margin-top:16px" onclick="window.location.href='index.html'">← Home</button>
       </div>
@@ -2274,22 +2250,22 @@ window.ncIssueChallenge = async function() {
   // Look up opponent by displayName or email in players collection
   const { db, collection, query, where, getDocs, addDoc, serverTimestamp } = window._fb;
 
-  // Try email first
+  // Try email first, then displayName — using getDocs from window._fb
   let oppDoc = null;
   try {
+    const { getDocs } = window._fb;
     const q1 = query(collection(db,'players'), where('email','==',oppVal));
-    const s1 = await (await import('https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js')).getDocs(q1);
+    const s1 = await getDocs(q1);
     if (!s1.empty) oppDoc = { id: s1.docs[0].id, ...s1.docs[0].data() };
-  } catch(e) {}
+  } catch(e) { console.warn('email lookup:', e); }
 
-  // Try displayName
   if (!oppDoc) {
     try {
-      const { getDocs: gd, query: q2fn } = window._fb;
-      const q2 = q2fn(collection(db,'players'), where('displayName','==',oppVal));
+      const { getDocs } = window._fb;
+      const q2 = query(collection(db,'players'), where('displayName','==',oppVal));
       const s2 = await getDocs(q2);
       if (!s2.empty) oppDoc = { id: s2.docs[0].id, ...s2.docs[0].data() };
-    } catch(e) {}
+    } catch(e) { console.warn('name lookup:', e); }
   }
 
   // Create game doc
@@ -2425,10 +2401,14 @@ async function loadAnswerScreen(game) {
     } catch(e) {}
   }
 
-  document.getElementById('ans-verse-body').textContent = verse.text || '';
+  document.getElementById('ans-verse-body').textContent = `"${verse.text || ''}"`;
   renderAnswerChoices(verse, pts);
   showScreen('answer');
-  startAnswerTimer(pts);
+  window.startAnswerTimer(20, () => {
+    // Timeout — auto-submit wrong
+    window.stopAnswerTimer();
+    submitAnswer({book:'',chapter:0,verse:0}, {book:'X',chapter:0,verse:0}, pts, verse);
+  });
 }
 
 // ── Pick random verse from verses.js pool ─────────────────
@@ -2438,38 +2418,17 @@ function pickRandomVerse() {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
-// ── Render answer choices ──────────────────────────────────
+// ── Render answer choices — delegates to challenge.js ────────
 function renderAnswerChoices(verse, pts) {
-  const grid = document.getElementById('ans-choices-grid');
-  if (!grid) return;
-
-  const correct = { book: verse.book, chapter: verse.chapter, verse: verse.verse };
-  const choices = generateChoices(correct);
-
-  grid.innerHTML = '';
-  choices.forEach(ch => {
-    const btn = document.createElement('button');
-    btn.className = 'choice-btn';
-    btn.textContent = `${ch.book} ${ch.chapter}:${ch.verse}`;
-    btn.onclick = () => submitAnswer(ch, correct, pts, verse);
-    grid.appendChild(btn);
-  });
-}
-
-// ── Generate 4 choices ────────────────────────────────────
-function generateChoices(correct) {
-  const BOOKS = ['Genesis','Exodus','Psalms','Proverbs','Matthew','John','Romans','Revelation','Luke','Acts','Isaiah','Jeremiah'];
-  const choices = [correct];
-  while (choices.length < 4) {
-    const book = Math.random() > 0.5
-      ? BOOKS[Math.floor(Math.random()*BOOKS.length)]
-      : correct.book;
-    const chapter = Math.floor(Math.random()*20)+1;
-    const verse   = Math.floor(Math.random()*30)+1;
-    const isDupe  = choices.some(c => c.book===book && c.chapter===chapter && c.verse===verse);
-    if (!isDupe) choices.push({ book, chapter, verse });
-  }
-  return choices.sort(() => Math.random()-0.5);
+  // Set callback so challenge.js choice buttons call our submitAnswer
+  window._onChoiceSelect = (opt, btn, options) => {
+    const correct = { book: verse.book, chapter: verse.chapter, verse: verse.verse };
+    const isCorrect = opt.book === correct.book && opt.chapter === correct.chapter && opt.verse === correct.verse;
+    window.markChoiceFeedback(btn, isCorrect, correct.book);
+    window.stopAnswerTimer();
+    setTimeout(() => submitAnswer(opt, correct, pts, verse), 700);
+  };
+  window.renderAnswerChoices(verse, pts);
 }
 
 // ── Submit answer ──────────────────────────────────────────
@@ -2543,29 +2502,7 @@ async function submitAnswer(chosen, correct, pts, verse) {
   } catch(e) { showToast('Error: ' + e.message); }
 }
 
-// ── Answer timer ───────────────────────────────────────────
-let _ansTimerInterval = null;
-function startAnswerTimer(pts) {
-  const bar = document.getElementById('ans-timer-bar');
-  if (!bar) return;
-  clearInterval(_ansTimerInterval);
-  const duration = 30000;
-  const start    = Date.now();
-  bar.style.width = '100%';
-  bar.style.background = '#c9a227';
-  _ansTimerInterval = setInterval(() => {
-    const elapsed = Date.now() - start;
-    const pct     = Math.max(0, 100 - (elapsed/duration)*100);
-    bar.style.width = pct + '%';
-    bar.style.background = pct > 50 ? '#c9a227' : pct > 25 ? '#f59e0b' : '#f87171';
-    if (pct <= 0) {
-      clearInterval(_ansTimerInterval);
-      // Auto-submit wrong
-      submitAnswer({ book:'', chapter:0, verse:0 },
-        { book:'X', chapter:0, verse:0 }, pts, { text:'' });
-    }
-  }, 100);
-}
+// Timer delegated to challenge.js startAnswerTimer()
 
 // ── Resume game by code ────────────────────────────────────
 window.resumeGame = async function() {
