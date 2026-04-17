@@ -586,6 +586,181 @@
 <style>
 /* == HTP + INVITE OVERLAYS == */
 
+
+/* ═══════════════════════════════════════════
+   TUTORIAL MODAL — Home Screen
+   ═══════════════════════════════════════════ */
+@keyframes menuFadeIn {
+  from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);     }
+}
+#tut-overlay {
+  position: fixed; inset: 0; z-index: 4000;
+  background: rgba(0,0,0,0.82);
+  backdrop-filter: blur(5px);
+  display: none; align-items: center; justify-content: center;
+  padding: 16px;
+}
+#tut-overlay.open { display: flex; }
+#tut-modal {
+  background: linear-gradient(160deg, #0f172a 0%, #0a0f1e 100%);
+  border: 1px solid rgba(201,162,39,0.45);
+  border-radius: 20px;
+  width: min(96vw, 480px);
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 16px 70px rgba(0,0,0,0.9), 0 0 0 1px rgba(201,162,39,0.15);
+  padding-bottom: 24px;
+  animation: menuFadeIn 0.2s ease;
+}
+#tut-header {
+  display: flex; align-items: center; gap: 12px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid rgba(201,162,39,0.2);
+  position: sticky; top: 0;
+  background: linear-gradient(160deg, #0f172a 0%, #0a0f1e 100%);
+  z-index: 2;
+}
+#tut-header h2 {
+  flex: 1; margin: 0;
+  font-family: 'Cinzel', serif; font-size: 17px; font-weight: 700;
+  color: #c9a227; letter-spacing: 0.5px;
+}
+#tut-close {
+  background: transparent; border: none;
+  color: #64748b; font-size: 22px; cursor: pointer;
+  line-height: 1; padding: 2px 6px; border-radius: 6px;
+  transition: color 0.15s;
+}
+#tut-close:hover { color: #f87171; }
+
+/* Papa intro banner */
+#tut-papa-banner {
+  display: flex; align-items: flex-end;
+  background: linear-gradient(135deg, rgba(201,162,39,0.08) 0%, rgba(13,8,0,0.6) 100%);
+  border-bottom: 1px solid rgba(201,162,39,0.15);
+  padding: 0 20px 0 0;
+  gap: 0; min-height: 140px; overflow: hidden;
+}
+#tut-papa-img {
+  width: 110px; flex-shrink: 0;
+  mix-blend-mode: multiply;
+  filter: drop-shadow(0 4px 14px rgba(0,0,0,0.5));
+  animation: papaBannerFloat 3.2s ease-in-out infinite;
+  transform-origin: bottom center; align-self: flex-end;
+}
+@keyframes papaBannerFloat {
+  0%,100% { transform: translateY(0px); }
+  50%     { transform: translateY(-7px); }
+}
+#tut-papa-bubble {
+  flex: 1; margin: 16px 0 16px 8px;
+  background: rgba(201,162,39,0.1);
+  border: 1px solid rgba(201,162,39,0.3);
+  border-radius: 14px 14px 14px 4px;
+  padding: 12px 14px;
+}
+#tut-papa-bubble p {
+  font-family: 'Crimson Text', serif;
+  font-size: 15px; line-height: 1.6; font-style: italic;
+  color: #f0e4c0; margin: 0;
+}
+#tut-papa-bubble span.tut-name {
+  display: block; font-family: 'Cinzel', serif; font-size: 10px;
+  font-style: normal; color: #c9a227; letter-spacing: 1px;
+  margin-bottom: 4px; font-weight: 700;
+}
+
+/* Steps */
+.tut-step {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(201,162,39,0.1);
+}
+.tut-step:last-of-type { border-bottom: none; }
+.tut-step-icon {
+  width: 40px; height: 40px; flex-shrink: 0;
+  background: rgba(201,162,39,0.1); border: 1px solid rgba(201,162,39,0.3);
+  border-radius: 12px; display: flex; align-items: center; justify-content: center;
+  font-size: 20px;
+}
+.tut-step-body { flex: 1; }
+.tut-step-body strong {
+  display: block; font-family: 'Cinzel', serif; font-size: 13px; font-weight: 700;
+  color: #f0e4c0; letter-spacing: 0.3px; margin-bottom: 4px;
+}
+.tut-step-body p {
+  font-family: 'Crimson Text', serif; font-size: 15px; line-height: 1.55;
+  color: #94a3b8; margin: 0;
+}
+.tut-step-body .tut-pill {
+  display: inline-block;
+  background: rgba(201,162,39,0.15); color: #c9a227;
+  border: 1px solid rgba(201,162,39,0.3);
+  border-radius: 20px; font-size: 11px; font-weight: 700;
+  padding: 2px 8px; margin: 3px 3px 0 0;
+  font-family: 'Cinzel', serif; letter-spacing: 0.5px;
+}
+.tut-pill.green { background: rgba(76,175,125,0.12); color: #4caf7d; border-color: rgba(76,175,125,0.3); }
+.tut-pill.red   { background: rgba(201,48,48,0.12);  color: #ef5252; border-color: rgba(201,48,48,0.3); }
+.tut-section-label {
+  font-family: 'Cinzel', serif; font-size: 9px; font-weight: 800;
+  letter-spacing: 2.5px; color: rgba(201,162,39,0.45); text-transform: uppercase;
+  padding: 14px 20px 6px; text-align: center;
+}
+#tut-play-btn {
+  display: block; margin: 10px 20px 0;
+  padding: 14px;
+  background: linear-gradient(135deg, #c9a227, #a07720);
+  border: none; border-radius: 12px;
+  color: #0f172a; font-size: 15px; font-weight: 800;
+  font-family: 'Cinzel', serif; letter-spacing: 0.5px;
+  cursor: pointer; width: calc(100% - 40px);
+  transition: opacity 0.15s, transform 0.1s;
+}
+#tut-play-btn:hover  { opacity: 0.9; }
+#tut-play-btn:active { transform: scale(0.98); }
+
+/* ── Tutorial toggle button on home screen ── */
+#tut-toggle-btn {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  margin: 10px auto 0;
+  background: rgba(201,162,39,0.07);
+  border: 1px solid rgba(201,162,39,0.25);
+  border-radius: 50px;
+  padding: 9px 20px;
+  cursor: pointer;
+  font-family: 'Cinzel', serif; font-size: 12px; font-weight: 700;
+  color: rgba(201,162,39,0.7);
+  letter-spacing: 0.5px;
+  transition: all 0.2s;
+  width: fit-content;
+  -webkit-appearance: none; appearance: none;
+  outline: none; -webkit-tap-highlight-color: transparent;
+}
+#tut-toggle-btn:hover {
+  background: rgba(201,162,39,0.12);
+  border-color: rgba(201,162,39,0.45);
+  color: #c9a227;
+}
+/* The toggle pill inside the button */
+.tut-toggle-track {
+  width: 36px; height: 20px;
+  background: #334155;
+  border-radius: 20px; position: relative;
+  transition: background 0.25s;
+  flex-shrink: 0;
+}
+.tut-toggle-track.on { background: #4caf7d; }
+.tut-toggle-thumb {
+  position: absolute; top: 3px; left: 3px;
+  width: 14px; height: 14px;
+  background: #fff; border-radius: 50%;
+  transition: transform 0.25s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+.tut-toggle-track.on .tut-toggle-thumb { transform: translateX(16px); }
+
 /* ── How To Play & Invite overlays ─────────────────────── */
 #htp-overlay, #invite-overlay {
   position: fixed; inset: 0;
@@ -1796,6 +1971,9 @@
         <span class="m-icon">📖</span><span class="m-label">Bible Verses</span>
       </button>
 
+      <button class="wham-menu-item" onclick="whamMenuGo('tutorial')">
+        <span class="m-icon">🎬</span><span class="m-label">Tutorial</span>
+      </button>
       <button class="wham-menu-item" onclick="whamMenuGo('howToPlay')">
         <span class="m-icon">❓</span><span class="m-label">How to Play</span>
       </button>
@@ -1893,6 +2071,17 @@
       <button class="btn-ghost"      onclick="showComingSoon('World Leaderboard')">📜 World Leaderboard</button>
     </div>
 
+
+    <!-- Tutorial toggle button -->
+    <div style="display:flex; justify-content:center; margin-top:10px;">
+      <button id="tut-toggle-btn" onclick="tutToggle()" aria-label="Tutorial auto-play toggle">
+        <span id="tut-toggle-label">🎬 Tutorial</span>
+        <div class="tut-toggle-track" id="tut-toggle-track">
+          <div class="tut-toggle-thumb"></div>
+        </div>
+      </button>
+    </div>
+
     <!-- Donate -->
     <a href="https://whambible.org" target="_blank" rel="noopener" class="btn-donate">
       ❤️ Support WhamBible.org — Donate
@@ -1947,6 +2136,7 @@
       case 'myScores':     msOpen(); break;
       case 'playerList':   plOpen(); break;
       case 'language':     lsOpen(); break;
+      case 'tutorial':        tutOpen(); break;
       case 'howToPlay':       htpOpen(); break;
       case 'invite':       inviteOpen(); break;
       case 'profile':      psOpen(); break;
@@ -3031,7 +3221,187 @@ function psToast(msg) {
   t.textContent = msg; t.style.opacity = '1';
   clearTimeout(t._t); t._t = setTimeout(()=>{ t.style.opacity='0'; }, 2200);
 }
+
+// ── Tutorial — Home Screen ─────────────────────────────────
+(function() {
+  const KEY_SEEN   = 'wb_tutorial_seen';
+  const KEY_AUTO   = 'wb_tutorial_auto'; // 'on' or 'off'
+
+  function tutIsAutoOn() {
+    // Default ON for new players; explicit 'off' disables
+    return localStorage.getItem(KEY_AUTO) !== 'off';
+  }
+
+  function tutUpdateToggleUI() {
+    const track = document.getElementById('tut-toggle-track');
+    const label = document.getElementById('tut-toggle-label');
+    if (!track) return;
+    const on = tutIsAutoOn();
+    track.classList.toggle('on', on);
+    if (label) label.textContent = on ? '🎬 Tutorial: ON' : '🎬 Tutorial: OFF';
+  }
+
+  window.tutOpen = function() {
+    const el = document.getElementById('tut-overlay');
+    if (el) el.classList.add('open');
+  };
+
+  window.tutClose = function() {
+    const el = document.getElementById('tut-overlay');
+    if (el) el.classList.remove('open');
+    // Mark as seen after first close
+    localStorage.setItem(KEY_SEEN, '1');
+  };
+
+  window.tutOverlayClick = function(e) {
+    if (e.target === document.getElementById('tut-overlay')) tutClose();
+  };
+
+  // Toggle auto-play on/off
+  window.tutToggle = function() {
+    const isOn = tutIsAutoOn();
+    localStorage.setItem(KEY_AUTO, isOn ? 'off' : 'on');
+    tutUpdateToggleUI();
+    // If just turned ON, open it right now as feedback
+    if (!isOn) tutOpen();
+  };
+
+  // On page load: auto-fire if first visit AND auto is on
+  window.addEventListener('DOMContentLoaded', function() {
+    tutUpdateToggleUI();
+    const seen = localStorage.getItem(KEY_SEEN);
+    if (!seen && tutIsAutoOn()) {
+      // Small delay so page renders fully first
+      setTimeout(tutOpen, 600);
+    }
+  });
+})();
+
 </script>
+
+
+  <!-- ══ TUTORIAL MODAL — HOME ═══════════════════════════════ -->
+  <div id="tut-overlay" onclick="tutOverlayClick(event)">
+    <div id="tut-modal">
+
+      <div id="tut-header">
+        <span style="font-size:20px;">🎬</span>
+        <h2>Tutorial</h2>
+        <button id="tut-close" onclick="tutClose()">✕</button>
+      </div>
+
+      <!-- Papa intro banner -->
+      <div id="tut-papa-banner">
+        <img id="tut-papa-img" src="https://media.base44.com/images/public/69c5c3fce2ed0e50ba525a44/3f5d4294c_image.png" alt="Papa" />
+        <div id="tut-papa-bubble">
+          <span class="tut-name">PAPA</span>
+          <p>Welcome, warrior! Let me show you how to battle with the Word. It's simple — and you'll be a Champion before you know it.</p>
+        </div>
+      </div>
+
+      <div class="tut-section-label">How the Game Works</div>
+
+      <div class="tut-step">
+        <div class="tut-step-icon">📜</div>
+        <div class="tut-step-body">
+          <strong>Read the Verse</strong>
+          <p>A Bible verse appears on screen. Your mission: identify exactly where it's found in Scripture.</p>
+        </div>
+      </div>
+
+      <div class="tut-step">
+        <div class="tut-step-icon">🎯</div>
+        <div class="tut-step-body">
+          <strong>Choose the Location</strong>
+          <p>Four options appear — each showing a <span class="tut-pill">Book</span> <span class="tut-pill">Chapter</span> <span class="tut-pill">Verse</span>. Tap the correct one before time runs out!</p>
+        </div>
+      </div>
+
+      <div class="tut-step">
+        <div class="tut-step-icon">⏱️</div>
+        <div class="tut-step-body">
+          <strong>Beat the Clock</strong>
+          <p>You have <strong style="color:#c9a227;">20 seconds</strong> per verse. The gold timer bar shrinks — then turns red. Don't overthink it!</p>
+        </div>
+      </div>
+
+      <div class="tut-section-label">Scoring</div>
+
+      <div class="tut-step">
+        <div class="tut-step-icon">✅</div>
+        <div class="tut-step-body">
+          <strong>Correct Answer</strong>
+          <p>You earn points based on your chosen level. Chain correct answers to build your streak!</p>
+          <div>
+            <span class="tut-pill">🗡️ Squire — 5 pts</span>
+            <span class="tut-pill">⚔️ Warrior — 10 pts</span>
+            <span class="tut-pill">🛡️ Knight — 15 pts</span>
+            <span class="tut-pill">👑 Champion — 20 pts</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tut-step">
+        <div class="tut-step-icon">🔥</div>
+        <div class="tut-step-body">
+          <strong>Streak Bonus</strong>
+          <p>String together correct answers without missing and earn bonus points on top of your base score.</p>
+          <div>
+            <span class="tut-pill green">3 in a row → +3 pts</span>
+            <span class="tut-pill green">5 in a row → +5 pts</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tut-step">
+        <div class="tut-step-icon">❌</div>
+        <div class="tut-step-body">
+          <strong>Wrong Answer</strong>
+          <p>No points lost — but your streak resets. You'll get a chance to recover!</p>
+          <span class="tut-pill red">0 pts · streak reset</span>
+        </div>
+      </div>
+
+      <div class="tut-section-label">Scroll Recovery</div>
+
+      <div class="tut-step">
+        <div class="tut-step-icon">📿</div>
+        <div class="tut-step-body">
+          <strong>The Recovery Scroll</strong>
+          <p>Miss a verse? A recovery scroll appears. Spin the wheels to land on the correct Book · Chapter · Verse within <strong style="color:#c9a227;">7 seconds</strong> to earn recovery points!</p>
+          <span class="tut-pill green">Successful recovery → +5 pts</span>
+        </div>
+      </div>
+
+      <div class="tut-section-label">Multiplayer</div>
+
+      <div class="tut-step">
+        <div class="tut-step-icon">👥</div>
+        <div class="tut-step-body">
+          <strong>Challenge Friends</strong>
+          <p>Find a player and send them a challenge verse. They answer on their device — you get notified. Play async, anytime.</p>
+        </div>
+      </div>
+
+      <div class="tut-step">
+        <div class="tut-step-icon">🏆</div>
+        <div class="tut-step-body">
+          <strong>Climb the Ranks</strong>
+          <p>Earn points across games to rise through the ranks:</p>
+          <div>
+            <span class="tut-pill">📜 Scribe — 0+</span>
+            <span class="tut-pill">🗡️ Squire — 50+</span>
+            <span class="tut-pill">⚔️ Warrior — 100+</span>
+            <span class="tut-pill">🛡️ Knight — 200+</span>
+            <span class="tut-pill" style="background:rgba(201,162,39,0.2);color:#c9a227;border-color:rgba(201,162,39,0.5);">👑 Champion — 500+</span>
+          </div>
+        </div>
+      </div>
+
+      <button id="tut-play-btn" onclick="tutClose(); startSoloGame();">⚔️ Let's Battle!</button>
+
+    </div>
+  </div>
 
 </body>
 </html>
