@@ -190,19 +190,44 @@ function loadVerse() {
 }
 
 // ── Choices ───────────────────────────────────────────────
+
+// ── Reveal chapter:verse on all buttons after answer ─────────────────────
+// Called immediately when any answer is submitted (correct, wrong, or time-up)
+// Before this: refs are hidden. After: all four refs slide in.
+function revealAllRefs() {
+  if (!state.choices) return;
+  state.choices.forEach((_, i) => {
+    const ref = document.getElementById(`ref-${i}`);
+    if (ref) {
+      ref.style.visibility  = 'visible';
+      ref.style.opacity     = '0';
+      ref.style.transform   = 'translateY(4px)';
+      ref.style.transition  = 'opacity 0.25s ease, transform 0.25s ease';
+      // Stagger per button
+      setTimeout(() => {
+        ref.style.opacity   = '1';
+        ref.style.transform = 'translateY(0)';
+      }, i * 40);
+    }
+  });
+}
+
 function buildChoices(correctVerse) {
   const grid = document.getElementById('choices-grid');
   grid.innerHTML = '';
-  generateChoices(correctVerse).forEach((choice, i) => {
+  // Store choices on state so handleAnswer can reveal chapter:verse after tap
+  state.choices = generateChoices(correctVerse);
+  state.choices.forEach((choice, i) => {
     const btn     = document.createElement('button');
     btn.className = 'choice-btn';
     btn.id        = `choice-${i}`;
     btn.onclick   = () => handleAnswer(i, choice.correct);
+    // PRE-ANSWER: Book name only — chapter & verse hidden until after tap
     btn.innerHTML = `
       <div class="choice-letter">${LETTERS[i]}</div>
       <div class="choice-text-wrap">
         <span class="choice-book">${choice.book}</span>
-        <span class="choice-ref">Chapter ${choice.chapter} · Verse ${choice.verse}</span>
+        <span class="choice-ref" id="ref-${i}" style="visibility:hidden;">Ch ${choice.chapter} · Vs ${choice.verse}</span>
       </div>`;
     grid.appendChild(btn);
   });
@@ -230,6 +255,9 @@ function handleAnswer(choiceIndex, isCorrect) {
   const buttons = document.querySelectorAll('.choice-btn');
   buttons.forEach(btn => btn.disabled = true);
   document.getElementById(`choice-${choiceIndex}`).classList.add(isCorrect ? 'correct' : 'wrong');
+
+  // Reveal ALL chapter:verse refs now that answer is locked in
+  revealAllRefs();
 
   if (isCorrect) {
     const bonus = awardPoints();
@@ -396,6 +424,7 @@ function timeUp() {
     btn.disabled = true;
     if (btn.querySelector('.choice-book')?.textContent === state.currentVerse.book) btn.classList.add('reveal');
   });
+  revealAllRefs();
   state.streak = 0;
   state.results.push({ correct: false, timeUp: true });
   updateDot(state.currentIndex, 'wrong');
