@@ -313,6 +313,155 @@
   font-size: 15px; color: #64748b; font-style: italic;
 }
 
+
+/* ── Lobby Redesign ─────────────────────────────────────── */
+.lobby-header { text-align: center; margin-bottom: 24px; padding-top: 8px; }
+.lobby-logo   { font-size: 36px; margin-bottom: 4px; }
+.lobby-title  {
+  font-family: 'Cinzel', 'Georgia', serif;
+  font-size: 26px; font-weight: 900;
+  color: #c9a227; letter-spacing: 1px;
+  margin: 0 0 4px;
+}
+.lobby-sub { font-size: 13px; color: rgba(255,255,255,0.4); margin: 0; }
+
+.auth-gate-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(201,162,39,0.2);
+  border-radius: 16px; padding: 28px 20px;
+  text-align: center; margin-bottom: 16px;
+}
+
+/* Player banner */
+.lobby-player-banner {
+  display: flex; align-items: center; gap: 14px;
+  background: rgba(201,162,39,0.08);
+  border: 1px solid rgba(201,162,39,0.2);
+  border-radius: 14px; padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.lobby-avatar-wrap {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: rgba(201,162,39,0.15);
+  border: 2px solid #c9a227;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; overflow: hidden; flex-shrink: 0;
+}
+.lobby-avatar-wrap img { width: 100%; height: 100%; object-fit: cover; }
+.lobby-player-name  { font-family: 'Cinzel', serif; font-size: 16px; font-weight: 700; color: #c9a227; }
+.lobby-player-stats { font-size: 12px; color: rgba(255,255,255,0.45); margin-top: 2px; }
+
+/* New challenge button */
+.btn-challenge-new {
+  width: 100%; padding: 15px; border-radius: 12px; border: none;
+  background: linear-gradient(135deg, #c9a227, #a07820);
+  color: #1a1008; font-size: 16px; font-weight: 800;
+  cursor: pointer; margin-bottom: 20px; letter-spacing: .3px;
+  font-family: 'Cinzel', serif;
+  box-shadow: 0 4px 20px rgba(201,162,39,0.3);
+  transition: opacity .2s, transform .15s;
+}
+.btn-challenge-new:active { transform: scale(0.98); opacity: .9; }
+
+/* Active Games section */
+.active-games-section { margin-bottom: 20px; }
+.active-games-header  {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.ag-title { font-size: 13px; font-weight: 700; color: rgba(255,255,255,0.6); text-transform: uppercase; letter-spacing: .8px; }
+.ag-badge {
+  background: #c9a227; color: #1a1008;
+  font-size: 11px; font-weight: 800;
+  padding: 2px 8px; border-radius: 20px;
+}
+.active-games-list { display: flex; flex-direction: column; gap: 10px; }
+.ag-empty {
+  text-align: center; padding: 28px 16px;
+  color: rgba(255,255,255,0.4); font-size: 14px;
+  background: rgba(255,255,255,0.02);
+  border: 1px dashed rgba(255,255,255,0.08);
+  border-radius: 12px;
+}
+
+/* Game card in list */
+.ag-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px; padding: 14px 16px;
+  display: flex; align-items: center; gap: 14px;
+  cursor: pointer; transition: all .2s;
+  position: relative; overflow: hidden;
+}
+.ag-card:hover { background: rgba(255,255,255,0.07); border-color: rgba(201,162,39,0.3); }
+.ag-card.your-turn { border-color: #c9a227; background: rgba(201,162,39,0.07); }
+.ag-card.your-turn::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 3px; background: #c9a227; border-radius: 3px 0 0 3px;
+}
+.ag-card.waiting { border-color: rgba(255,255,255,0.1); }
+.ag-opp-avatar {
+  width: 42px; height: 42px; border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  border: 1.5px solid rgba(255,255,255,0.15);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; flex-shrink: 0; overflow: hidden;
+}
+.ag-opp-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.ag-card-body { flex: 1; min-width: 0; }
+.ag-opp-name  { font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 2px; }
+.ag-turn-label {
+  font-size: 12px; font-weight: 600;
+  color: rgba(255,255,255,0.4);
+}
+.ag-card.your-turn .ag-turn-label { color: #c9a227; }
+.ag-score-wrap { text-align: right; flex-shrink: 0; }
+.ag-score      { font-size: 18px; font-weight: 800; color: #c9a227; line-height: 1; }
+.ag-score-vs   { font-size: 10px; color: rgba(255,255,255,0.3); }
+.ag-level-badge {
+  position: absolute; top: 10px; right: 10px;
+  background: rgba(201,162,39,0.15);
+  border: 1px solid rgba(201,162,39,0.3);
+  color: #c9a227; font-size: 10px; font-weight: 700;
+  padding: 2px 7px; border-radius: 20px;
+}
+
+/* Join code */
+.join-code-wrap  { margin-bottom: 4px; }
+.join-code-label { font-size: 12px; color: rgba(255,255,255,0.35); margin-bottom: 8px; text-align: center; }
+.join-code-row   { display: flex; gap: 8px; }
+.join-code-input {
+  flex: 1; background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(201,162,39,0.2);
+  border-radius: 10px; padding: 11px 14px;
+  color: #fff; font-size: 15px; font-weight: 700;
+  outline: none; text-align: center; letter-spacing: 4px;
+}
+.join-code-input::placeholder { letter-spacing: 1px; font-weight: 400; font-size: 12px; }
+.join-code-btn {
+  padding: 11px 20px; border-radius: 10px; border: none;
+  background: rgba(201,162,39,0.2);
+  color: #c9a227; font-size: 14px; font-weight: 700;
+  cursor: pointer; transition: background .2s;
+}
+.join-code-btn:hover { background: rgba(201,162,39,0.3); }
+
+/* New Challenge modal */
+.nc-modal {
+  background: linear-gradient(160deg,#1e1408 0%,#2a1c0a 100%);
+  border: 1px solid rgba(201,162,39,0.35);
+  border-radius: 20px; width: min(88vw,340px);
+  padding: 28px 24px 24px; text-align: center;
+  position: relative; animation: slideUp .25s ease;
+}
+.nc-close {
+  position: absolute; top: 12px; right: 14px;
+  background: none; border: none;
+  color: rgba(255,255,255,0.35); font-size: 18px; cursor: pointer;
+}
+.nc-title { font-family: 'Cinzel',serif; font-size: 20px; font-weight: 700; color: #c9a227; margin: 0 0 4px; }
+.nc-sub   { font-size: 13px; color: rgba(255,255,255,0.45); margin: 0 0 18px; }
+
 </style>
 <style>
 /* == LANG WHEEL == */
@@ -1002,33 +1151,85 @@
 
   <div class="bg-overlay"></div>
 
-  <!-- ── SCREEN: LOBBY (find/create game) ─────────────────── -->
+  <!-- ── SCREEN: LOBBY ─────────────────────────────────────── -->
   <div id="screen-lobby" class="screen active">
     <div class="screen-inner">
-      <div class="lobby-logo">⚔️</div>
-      <h1 data-i18n="lobby-title">Challenge a<br>Warrior</h1>
-      <p data-i18n="lobby-sub">Async multiplayer · Take turns · Win glory</p>
 
-      <div class="lobby-card">
-        <label class="field-label">Your Warrior Name</label>
-        <input type="text" id="my-name" class="field-input" placeholder="Enter your name" maxlength="20" />
+      <!-- Header -->
+      <div class="lobby-header">
+        <div class="lobby-logo">⚔️</div>
+        <h1 class="lobby-title">WhamBible</h1>
+        <p class="lobby-sub">Challenge · Compete · Win Glory</p>
       </div>
 
-      <div class="lobby-card">
-        <label class="field-label">Opponent's Name</label>
-        <input type="text" id="opp-name" class="field-input" placeholder="Opponent's warrior name" maxlength="20" />
+      <!-- Auth gate -->
+      <div id="lobby-auth-gate" style="display:none;">
+        <div class="auth-gate-card">
+          <div style="font-size:32px;margin-bottom:8px;">🔐</div>
+          <p style="color:rgba(255,255,255,0.7);font-size:14px;margin-bottom:16px;">Sign in to challenge friends and track your victories</p>
+          <button class="btn-primary" onclick="lmOpen()">Sign In / Create Account</button>
+          <button class="btn-ghost" style="margin-top:10px" onclick="window.location.href='index.html'">← Play Solo as Guest</button>
+        </div>
       </div>
 
-      <button class="btn-primary" onclick="startNewGame()">⚔️ Issue Challenge</button>
-      <div class="divider"></div>
+      <!-- Logged-in content -->
+      <div id="lobby-main" style="display:none;">
 
-      <div class="lobby-card">
-        <label class="field-label">Or resume a battle</label>
-        <input type="text" id="game-code" class="field-input" placeholder="Enter Game Code" maxlength="8" style="text-transform:uppercase;letter-spacing:4px" />
+        <!-- Player banner -->
+        <div class="lobby-player-banner" id="lobby-player-banner">
+          <div id="lobby-avatar-wrap" class="lobby-avatar-wrap">👤</div>
+          <div class="lobby-player-info">
+            <div class="lobby-player-name" id="lobby-player-name">Player</div>
+            <div class="lobby-player-stats" id="lobby-player-stats">Loading stats...</div>
+          </div>
+        </div>
+
+        <!-- New Challenge button -->
+        <button class="btn-challenge-new" onclick="showNewChallenge()">
+          ⚔️ Issue New Challenge
+        </button>
+
+        <!-- Active Games list -->
+        <div class="active-games-section">
+          <div class="active-games-header">
+            <span class="ag-title">Active Battles</span>
+            <span class="ag-badge" id="ag-count">0</span>
+          </div>
+          <div id="active-games-list" class="active-games-list">
+            <div class="ag-empty" id="ag-empty">
+              <div style="font-size:28px;margin-bottom:8px;">🏹</div>
+              <div>No active battles yet</div>
+              <div style="font-size:12px;color:rgba(255,255,255,0.3);margin-top:4px;">Issue a challenge to get started</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Join by code -->
+        <div class="join-code-wrap">
+          <div class="join-code-label">Have a game code?</div>
+          <div class="join-code-row">
+            <input type="text" id="game-code" class="join-code-input" placeholder="ENTER CODE" maxlength="8" style="text-transform:uppercase;letter-spacing:4px" />
+            <button class="join-code-btn" onclick="resumeGame()">Join</button>
+          </div>
+        </div>
+
+        <button class="btn-ghost" style="margin-top:16px" onclick="window.location.href='index.html'">← Home</button>
       </div>
-      <button class="btn-secondary" onclick="resumeGame()">🛡️ Resume Battle</button>
 
-      <button class="btn-ghost" style="margin-top:12px" onclick="window.location.href='index.html'">← Back to Home</button>
+    </div>
+  </div>
+
+  <!-- ── NEW CHALLENGE MODAL ───────────────────────────────── -->
+  <div id="new-challenge-modal" style="display:none;position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,0.75);display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px);" onclick="ncOverlayClick(event)">
+    <div class="nc-modal">
+      <button class="nc-close" onclick="hideNewChallenge()">✕</button>
+      <div style="font-size:28px;margin-bottom:4px;">⚔️</div>
+      <h2 class="nc-title">Issue Challenge</h2>
+      <p class="nc-sub">Enter your opponent's display name or email</p>
+      <input type="text" id="nc-opponent" class="lm-input" placeholder="Opponent name or email" style="margin-bottom:10px;" />
+      <div id="nc-err" style="color:#f87171;font-size:12px;min-height:16px;margin-bottom:8px;text-align:center;"></div>
+      <button class="btn-primary" style="width:100%" onclick="ncIssueChallenge()">Send Challenge ⚔️</button>
+      <button class="btn-ghost" style="width:100%;margin-top:8px" onclick="hideNewChallenge()">Cancel</button>
     </div>
   </div>
 
@@ -1220,8 +1421,8 @@
       case 'playerList':   whamPlaceholder('👥 Player List — coming soon'); break;
       case 'howToPlay':       htpOpen(); break;
       case 'invite':       inviteOpen(); break;
-      case 'profile':      whamPlaceholder('👤 My Profile — coming soon'); break;
-      case 'signout':      whamPlaceholder('🚪 Sign Out — coming soon'); break;
+      case 'profile':      if(typeof lmOpen === 'function') lmOpen(); break;
+      case 'signout':      if(typeof lmSignOut === 'function') lmSignOut(); break;
     }
   };
 
@@ -1907,6 +2108,543 @@ document.addEventListener('whamAuthChange', e => {
   if (loginBtn)  loginBtn.style.display  = user ? 'none' : 'flex';
   if (logoutBtn) logoutBtn.style.display = user ? 'flex' : 'none';
 });
+</script>
+
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// CHALLENGE SCREEN — Firebase Multiplayer Engine
+// ══════════════════════════════════════════════════════════════
+let _activeGamesUnsub = null;
+let _currentGameId    = null;
+let _currentGame      = null;
+
+// ── Auth state → show/hide lobby sections ──────────────────
+document.addEventListener('whamAuthChange', async e => {
+  const user = e.detail;
+  const gate  = document.getElementById('lobby-auth-gate');
+  const main  = document.getElementById('lobby-main');
+  if (!gate || !main) return;
+
+  if (user && !user.isAnonymous) {
+    gate.style.display = 'none';
+    main.style.display = '';
+    loadLobbyProfile(user);
+    subscribeActiveGames(user);
+  } else {
+    gate.style.display = '';
+    main.style.display = 'none';
+    if (_activeGamesUnsub) { _activeGamesUnsub(); _activeGamesUnsub = null; }
+  }
+});
+
+// ── Load player banner stats ───────────────────────────────
+async function loadLobbyProfile(user) {
+  const nameEl  = document.getElementById('lobby-player-name');
+  const statsEl = document.getElementById('lobby-player-stats');
+  const avWrap  = document.getElementById('lobby-avatar-wrap');
+
+  if (nameEl)  nameEl.textContent  = user.displayName || user.email || 'Warrior';
+  if (avWrap) {
+    avWrap.innerHTML = user.photoURL
+      ? `<img src="${user.photoURL}" onerror="this.parentElement.textContent='👤'"/>`
+      : '👤';
+  }
+
+  try {
+    const { db, doc, getDoc } = window._fb;
+    const snap = await getDoc(doc(db, 'players', user.uid));
+    if (snap.exists() && statsEl) {
+      const d = snap.data();
+      statsEl.textContent = `${d.score || 0} pts · ${d.gamesPlayed || 0} games · streak ${d.streak || 0}`;
+    }
+  } catch(e) { console.warn('lobby profile:', e); }
+}
+
+// ── Live active games subscription ────────────────────────
+function subscribeActiveGames(user) {
+  if (_activeGamesUnsub) _activeGamesUnsub();
+  const { db, collection, query, where, onSnapshot, orderBy } = window._fb;
+
+  // Listen for all games where this user is p1 OR p2
+  const q = query(
+    collection(db, 'games'),
+    where('players', 'array-contains', user.uid),
+    orderBy('updatedAt', 'desc')
+  );
+
+  _activeGamesUnsub = onSnapshot(q, snap => {
+    const games = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+      .filter(g => g.status !== 'complete');
+    renderActiveGames(games, user.uid);
+  }, err => console.warn('games sub:', err));
+}
+
+// ── Render active games list ───────────────────────────────
+async function renderActiveGames(games, myUid) {
+  const list    = document.getElementById('active-games-list');
+  const emptyEl = document.getElementById('ag-empty');
+  const countEl = document.getElementById('ag-count');
+  if (!list) return;
+
+  if (countEl) countEl.textContent = games.length;
+
+  if (games.length === 0) {
+    list.innerHTML = '';
+    list.appendChild(emptyEl || buildEmptyState());
+    return;
+  }
+
+  list.innerHTML = '';
+  for (const game of games) {
+    const isMyTurn    = game.currentTurn === myUid;
+    const oppUid      = game.players.find(p => p !== myUid);
+    const myScore     = game.scores?.[myUid] || 0;
+    const oppScore    = game.scores?.[oppUid] || 0;
+    const oppName     = game.playerNames?.[oppUid] || 'Opponent';
+    const oppPhoto    = game.playerPhotos?.[oppUid] || '';
+    const levelLabel  = game.pendingLevel
+      ? `${game.pendingLevel} pts`
+      : (game.lastLevel ? `${game.lastLevel} pts` : '');
+
+    const card = document.createElement('div');
+    card.className = `ag-card ${isMyTurn ? 'your-turn' : 'waiting'}`;
+    card.innerHTML = `
+      <div class="ag-opp-avatar">
+        ${oppPhoto ? `<img src="${oppPhoto}" onerror="this.parentElement.textContent='👤'"/>` : '👤'}
+      </div>
+      <div class="ag-card-body">
+        <div class="ag-opp-name">${oppName}</div>
+        <div class="ag-turn-label">${isMyTurn ? '⚔️ Your turn!' : '⏳ Waiting for opponent'}</div>
+      </div>
+      <div class="ag-score-wrap">
+        <div class="ag-score">${myScore}–${oppScore}</div>
+        <div class="ag-score-vs">pts</div>
+      </div>
+      ${levelLabel ? `<div class="ag-level-badge">${levelLabel}</div>` : ''}
+    `;
+    card.onclick = () => openGame(game.id, game);
+    list.appendChild(card);
+  }
+}
+
+// ── Open an existing game ──────────────────────────────────
+function openGame(gameId, game) {
+  _currentGameId = gameId;
+  _currentGame   = game;
+  const myUid    = window._fbUser?.uid;
+  const isMyTurn = game.currentTurn === myUid;
+
+  if (isMyTurn) {
+    if (game.status === 'waiting_for_answer') {
+      // I need to answer a challenge
+      loadAnswerScreen(game);
+    } else {
+      // I need to pick a level to challenge opponent
+      loadPickLevelScreen(game);
+    }
+  } else {
+    showToast('⏳ Waiting for opponent's move');
+  }
+}
+
+// ── Show new challenge modal ───────────────────────────────
+window.showNewChallenge = function() {
+  const modal = document.getElementById('new-challenge-modal');
+  if (modal) { modal.style.display = 'flex'; }
+};
+
+window.hideNewChallenge = function() {
+  const modal = document.getElementById('new-challenge-modal');
+  if (modal) { modal.style.display = 'none'; }
+};
+
+window.ncOverlayClick = function(e) {
+  if (e.target.id === 'new-challenge-modal') hideNewChallenge();
+};
+
+// ── Issue new challenge ────────────────────────────────────
+window.ncIssueChallenge = async function() {
+  const me     = window._fbUser;
+  if (!me) return;
+  const oppVal = document.getElementById('nc-opponent')?.value?.trim();
+  const errEl  = document.getElementById('nc-err');
+  if (!oppVal) { if(errEl) errEl.textContent = 'Enter an opponent name or email'; return; }
+
+  // Look up opponent by displayName or email in players collection
+  const { db, collection, query, where, getDocs, addDoc, serverTimestamp } = window._fb;
+
+  // Try email first
+  let oppDoc = null;
+  try {
+    const q1 = query(collection(db,'players'), where('email','==',oppVal));
+    const s1 = await (await import('https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js')).getDocs(q1);
+    if (!s1.empty) oppDoc = { id: s1.docs[0].id, ...s1.docs[0].data() };
+  } catch(e) {}
+
+  // Try displayName
+  if (!oppDoc) {
+    try {
+      const { getDocs: gd, query: q2fn } = window._fb;
+      const q2 = q2fn(collection(db,'players'), where('displayName','==',oppVal));
+      const s2 = await getDocs(q2);
+      if (!s2.empty) oppDoc = { id: s2.docs[0].id, ...s2.docs[0].data() };
+    } catch(e) {}
+  }
+
+  // Create game doc
+  const myName  = me.displayName || me.email || 'Warrior';
+  const myPhoto = me.photoURL || '';
+  const oppName  = oppDoc?.displayName || oppVal;
+  const oppPhoto = oppDoc?.photoURL || '';
+  const oppUid   = oppDoc?.id || 'pending_' + Date.now();
+
+  try {
+    const gameRef = await addDoc(collection(db, 'games'), {
+      players:      [me.uid, oppUid],
+      playerNames:  { [me.uid]: myName, [oppUid]: oppName },
+      playerPhotos: { [me.uid]: myPhoto, [oppUid]: oppPhoto },
+      scores:       { [me.uid]: 0, [oppUid]: 0 },
+      currentTurn:  me.uid,
+      status:       'pick_level',
+      round:        1,
+      createdAt:    serverTimestamp(),
+      updatedAt:    serverTimestamp(),
+      createdBy:    me.uid
+    });
+
+    hideNewChallenge();
+    showToast('⚔️ Challenge issued!');
+
+    // Open pick level immediately
+    const game = {
+      id: gameRef.id,
+      players: [me.uid, oppUid],
+      playerNames:  { [me.uid]: myName, [oppUid]: oppName },
+      playerPhotos: { [me.uid]: myPhoto, [oppUid]: oppPhoto },
+      scores:       { [me.uid]: 0, [oppUid]: 0 },
+      currentTurn:  me.uid, status: 'pick_level', round: 1
+    };
+    _currentGameId = gameRef.id;
+    _currentGame   = game;
+    loadPickLevelScreen(game);
+
+    // Send push notification to opponent (if they're in Firestore)
+    if (oppDoc?.fcmToken) {
+      sendPushToOpponent(oppDoc.fcmToken, '⚔️ New Challenge!',
+        `${myName} challenged you to WhamBible!`, gameRef.id);
+    }
+  } catch(e) {
+    if (errEl) errEl.textContent = 'Error creating game: ' + e.message;
+  }
+};
+
+// ── Load pick-level screen ─────────────────────────────────
+function loadPickLevelScreen(game) {
+  const myUid  = window._fbUser?.uid;
+  const oppUid = game.players.find(p => p !== myUid);
+  const myName = game.playerNames?.[myUid] || 'You';
+  const oppName= game.playerNames?.[oppUid] || 'Opponent';
+
+  document.getElementById('pick-turn-name').textContent  = myName;
+  document.getElementById('vs-p1-name').textContent      = myName;
+  document.getElementById('vs-p2-name').textContent      = oppName;
+  document.getElementById('vs-p1-score').textContent     = game.scores?.[myUid] || 0;
+  document.getElementById('vs-p2-score').textContent     = game.scores?.[oppUid] || 0;
+  document.getElementById('round-label').textContent     = `Round ${game.round || 1}`;
+
+  showScreen('pick-level');
+}
+
+// ── Pick level → update Firestore, send push, go to waiting ─
+window.pickLevel = async function(pts, name, icon) {
+  if (!_currentGameId || !window._fbUser) return;
+  const me     = window._fbUser;
+  const game   = _currentGame;
+  const oppUid = game.players.find(p => p !== me.uid);
+
+  try {
+    const { db, doc, updateDoc, serverTimestamp } = window._fb;
+    await updateDoc(doc(db,'games',_currentGameId), {
+      currentTurn:   oppUid,
+      status:        'waiting_for_answer',
+      pendingLevel:  pts,
+      pendingName:   name,
+      pendingIcon:   icon,
+      updatedAt:     serverTimestamp()
+    });
+
+    // Show share code / waiting
+    document.getElementById('share-code').textContent = _currentGameId.slice(0,8).toUpperCase();
+    document.getElementById('rr-p1-name').textContent = game.playerNames?.[me.uid] || 'You';
+    document.getElementById('rr-p2-name').textContent = game.playerNames?.[oppUid] || 'Opponent';
+    document.getElementById('rr-p1-total').textContent = `${game.scores?.[me.uid]||0} pts`;
+    document.getElementById('rr-p2-total').textContent = `${game.scores?.[oppUid]||0} pts`;
+    document.getElementById('rr-p1-delta').textContent = `⚔️ Sent ${pts}pt challenge`;
+    document.getElementById('rr-p2-delta').textContent = '⏳ Waiting...';
+    document.getElementById('rr-icon').textContent  = icon;
+    document.getElementById('rr-title').textContent = `${name} Challenge Sent!`;
+    document.getElementById('rr-next-btn').textContent = '← Back to Battles';
+    document.getElementById('rr-next-btn').onclick = () => showScreen('lobby');
+
+    showScreen('round-result');
+    showToast(`${icon} ${name} challenge sent!`);
+
+    // Push opponent
+    const { db: db2, doc: d2, getDoc } = window._fb;
+    const oppSnap = await getDoc(d2(db2,'players',oppUid));
+    if (oppSnap.exists() && oppSnap.data().fcmToken) {
+      const myName = game.playerNames?.[me.uid] || 'Opponent';
+      sendPushToOpponent(oppSnap.data().fcmToken,
+        '⚔️ WhamBible Challenge!',
+        `${myName} sent you a ${pts}pt ${name} challenge!`,
+        _currentGameId);
+    }
+  } catch(e) { showToast('Error: ' + e.message); }
+};
+
+// ── Load answer screen ─────────────────────────────────────
+async function loadAnswerScreen(game) {
+  const myUid  = window._fbUser?.uid;
+  const oppUid = game.players.find(p => p !== myUid);
+  const oppName= game.playerNames?.[oppUid] || 'Opponent';
+  const pts    = game.pendingLevel || 10;
+  const icon   = game.pendingIcon  || '⚔️';
+
+  document.getElementById('challenge-from-label').textContent = `${icon} ${oppName} challenged you!`;
+  document.getElementById('challenge-pts-badge').textContent  = `${pts} pts`;
+
+  // Load verse from game or pick random
+  let verse = game.pendingVerse;
+  if (!verse) {
+    verse = pickRandomVerse();
+    // Save verse to game doc so both players see same verse
+    try {
+      const { db, doc, updateDoc } = window._fb;
+      await updateDoc(doc(db,'games',_currentGameId), { pendingVerse: verse });
+    } catch(e) {}
+  }
+
+  document.getElementById('ans-verse-body').textContent = verse.text || '';
+  renderAnswerChoices(verse, pts);
+  showScreen('answer');
+  startAnswerTimer(pts);
+}
+
+// ── Pick random verse from verses.js pool ─────────────────
+function pickRandomVerse() {
+  const pool = window.WHAM_VERSES || [];
+  if (pool.length === 0) return { text: 'For God so loved the world...', book: 'John', chapter: 3, verse: 16 };
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+// ── Render answer choices ──────────────────────────────────
+function renderAnswerChoices(verse, pts) {
+  const grid = document.getElementById('ans-choices-grid');
+  if (!grid) return;
+
+  const correct = { book: verse.book, chapter: verse.chapter, verse: verse.verse };
+  const choices = generateChoices(correct);
+
+  grid.innerHTML = '';
+  choices.forEach(ch => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = `${ch.book} ${ch.chapter}:${ch.verse}`;
+    btn.onclick = () => submitAnswer(ch, correct, pts, verse);
+    grid.appendChild(btn);
+  });
+}
+
+// ── Generate 4 choices ────────────────────────────────────
+function generateChoices(correct) {
+  const BOOKS = ['Genesis','Exodus','Psalms','Proverbs','Matthew','John','Romans','Revelation','Luke','Acts','Isaiah','Jeremiah'];
+  const choices = [correct];
+  while (choices.length < 4) {
+    const book = Math.random() > 0.5
+      ? BOOKS[Math.floor(Math.random()*BOOKS.length)]
+      : correct.book;
+    const chapter = Math.floor(Math.random()*20)+1;
+    const verse   = Math.floor(Math.random()*30)+1;
+    const isDupe  = choices.some(c => c.book===book && c.chapter===chapter && c.verse===verse);
+    if (!isDupe) choices.push({ book, chapter, verse });
+  }
+  return choices.sort(() => Math.random()-0.5);
+}
+
+// ── Submit answer ──────────────────────────────────────────
+async function submitAnswer(chosen, correct, pts, verse) {
+  const me      = window._fbUser;
+  if (!me || !_currentGameId) return;
+  const game    = _currentGame;
+  const oppUid  = game.players.find(p => p !== me.uid);
+  const isRight = chosen.book===correct.book && chosen.chapter===correct.chapter && chosen.verse===correct.verse;
+
+  clearInterval(_ansTimerInterval);
+
+  // Visual feedback
+  const btns = document.querySelectorAll('.choice-btn');
+  btns.forEach(b => {
+    b.disabled = true;
+    const ref = `${correct.book} ${correct.chapter}:${correct.verse}`;
+    if (b.textContent === ref) b.classList.add('correct');
+    else if (b.textContent === `${chosen.book} ${chosen.chapter}:${chosen.verse}`) b.classList.add('wrong');
+  });
+
+  const earned = isRight ? pts : 0;
+  await new Promise(r => setTimeout(r, 800));
+
+  // Update scores + flip turn
+  try {
+    const { db, doc, updateDoc, serverTimestamp } = window._fb;
+    const newMyScore  = (game.scores?.[me.uid]  || 0) + earned;
+    const newOppScore =  game.scores?.[oppUid]  || 0;
+    const newRound    = (game.round || 1) + 1;
+    const isComplete  = newRound > 10; // 10 rounds total
+
+    await updateDoc(doc(db,'games',_currentGameId), {
+      [`scores.${me.uid}`]: newMyScore,
+      currentTurn:   oppUid,
+      status:        isComplete ? 'complete' : 'pick_level',
+      pendingVerse:  null,
+      pendingLevel:  null,
+      round:         newRound,
+      lastAnswer:    { uid: me.uid, correct: isRight, earned, verse: `${correct.book} ${correct.chapter}:${correct.verse}` },
+      updatedAt:     serverTimestamp()
+    });
+
+    // Show result
+    document.getElementById('rr-icon').textContent   = isRight ? '✅' : '❌';
+    document.getElementById('rr-title').textContent  = isRight ? `+${pts} Points!` : 'Wrong Answer';
+    document.getElementById('rr-verse-ref').textContent = `${correct.book} ${correct.chapter}:${correct.verse}`;
+    document.getElementById('rr-verse-text').textContent = verse.text || '';
+    document.getElementById('rr-p1-name').textContent  = game.playerNames?.[me.uid] || 'You';
+    document.getElementById('rr-p2-name').textContent  = game.playerNames?.[oppUid] || 'Opponent';
+    document.getElementById('rr-p1-delta').textContent = isRight ? `+${pts}` : '+0';
+    document.getElementById('rr-p1-delta').style.color = isRight ? '#4ade80' : '#f87171';
+    document.getElementById('rr-p1-total').textContent = `${newMyScore} pts`;
+    document.getElementById('rr-p2-total').textContent = `${newOppScore} pts`;
+    document.getElementById('share-code').textContent  = _currentGameId.slice(0,8).toUpperCase();
+    document.getElementById('rr-next-btn').textContent = '← Back to Battles';
+    document.getElementById('rr-next-btn').onclick = () => showScreen('lobby');
+
+    showScreen('round-result');
+
+    // Notify opponent
+    const { db: db2, doc: d2, getDoc } = window._fb;
+    const oppSnap = await getDoc(d2(db2,'players',oppUid));
+    if (oppSnap.exists() && oppSnap.data().fcmToken) {
+      const myName = game.playerNames?.[me.uid] || 'Opponent';
+      sendPushToOpponent(oppSnap.data().fcmToken,
+        '⚔️ Your turn!',
+        `${myName} answered — now it's your turn to challenge!`,
+        _currentGameId);
+    }
+  } catch(e) { showToast('Error: ' + e.message); }
+}
+
+// ── Answer timer ───────────────────────────────────────────
+let _ansTimerInterval = null;
+function startAnswerTimer(pts) {
+  const bar = document.getElementById('ans-timer-bar');
+  if (!bar) return;
+  clearInterval(_ansTimerInterval);
+  const duration = 30000;
+  const start    = Date.now();
+  bar.style.width = '100%';
+  bar.style.background = '#c9a227';
+  _ansTimerInterval = setInterval(() => {
+    const elapsed = Date.now() - start;
+    const pct     = Math.max(0, 100 - (elapsed/duration)*100);
+    bar.style.width = pct + '%';
+    bar.style.background = pct > 50 ? '#c9a227' : pct > 25 ? '#f59e0b' : '#f87171';
+    if (pct <= 0) {
+      clearInterval(_ansTimerInterval);
+      // Auto-submit wrong
+      submitAnswer({ book:'', chapter:0, verse:0 },
+        { book:'X', chapter:0, verse:0 }, pts, { text:'' });
+    }
+  }, 100);
+}
+
+// ── Resume game by code ────────────────────────────────────
+window.resumeGame = async function() {
+  const codeEl = document.getElementById('game-code');
+  const code   = codeEl?.value?.trim();
+  if (!code || code.length < 6) { showToast('Enter a valid game code'); return; }
+
+  // Game IDs stored in Firestore — search by prefix
+  const { db, collection, query, where, getDocs } = window._fb;
+  try {
+    // Try direct doc ID lookup (first 8 chars)
+    const { getDoc, doc } = window._fb;
+    // We store full IDs — search active games for matching prefix
+    const snap = await getDocs(collection(db,'games'));
+    const match = snap.docs.find(d => d.id.toUpperCase().startsWith(code.toUpperCase()));
+    if (match) {
+      const game = { id: match.id, ...match.data() };
+      _currentGameId = match.id;
+      _currentGame   = game;
+      openGame(match.id, game);
+    } else {
+      showToast('Game not found. Check the code.');
+    }
+  } catch(e) { showToast('Error: ' + e.message); }
+};
+
+// ── Screen switcher ────────────────────────────────────────
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const el = document.getElementById('screen-' + id);
+  if (el) el.classList.add('active');
+}
+
+// ── Copy code ──────────────────────────────────────────────
+window.copyCode = function() {
+  const code = document.getElementById('share-code')?.textContent || '';
+  navigator.clipboard.writeText(code).then(() => showToast('📋 Code copied!'));
+};
+
+// ── Toast ──────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._t); t._t = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── Send push via Netlify function ────────────────────────
+function sendPushToOpponent(token, title, body, gameId) {
+  fetch('/.netlify/functions/send-push', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, title, body, data: { gameId } })
+  }).catch(e => console.warn('push send:', e));
+}
+
+// ── On page load — check URL for game code ────────────────
+window.addEventListener('load', () => {
+  const params = new URLSearchParams(window.location.search);
+  const code   = params.get('code');
+  if (code) {
+    const codeEl = document.getElementById('game-code');
+    if (codeEl) { codeEl.value = code; resumeGame(); }
+  }
+  // If already authed, load lobby immediately
+  if (window._fbUser && !window._fbUser.isAnonymous) {
+    document.getElementById('lobby-auth-gate').style.display = 'none';
+    document.getElementById('lobby-main').style.display = '';
+    loadLobbyProfile(window._fbUser);
+    subscribeActiveGames(window._fbUser);
+  }
+});
+
+// ── nextTurn placeholder (used by result screen) ──────────
+window.nextTurn = function() { showScreen('lobby'); };
+window.newGame  = function() {
+  _currentGameId = null; _currentGame = null;
+  showScreen('lobby');
+};
 </script>
 
 </body>
