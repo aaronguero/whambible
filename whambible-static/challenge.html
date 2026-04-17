@@ -333,6 +333,31 @@
 }
 
 /* Player banner */
+
+/* ── Rank badges ───────────────────────────────────────────── */
+.rank-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 10px; border-radius: 20px;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.8px;
+  text-transform: uppercase; white-space: nowrap;
+}
+.rank-champion { background: rgba(201,162,39,0.25); border: 1px solid rgba(201,162,39,0.7); color: #f5d87a; }
+.rank-knight   { background: rgba(148,163,184,0.2); border: 1px solid rgba(148,163,184,0.5); color: #cbd5e1; }
+.rank-warrior  { background: rgba(251,146,60,0.18); border: 1px solid rgba(251,146,60,0.45); color: #fdba74; }
+.rank-squire   { background: rgba(134,239,172,0.15); border: 1px solid rgba(134,239,172,0.35); color: #86efac; }
+.rank-scribe   { background: rgba(148,163,184,0.12); border: 1px solid rgba(148,163,184,0.25); color: rgba(148,163,184,0.8); }
+
+/* lobby banner rank */
+.lobby-rank-badge { margin-top: 4px; }
+
+/* VS strip rank under name */
+.vs-rank { display: block; font-size: 11px; margin-top: 3px; }
+.vs-rank .rank-badge { font-size: 10px; padding: 2px 8px; }
+
+/* Active game card rank */
+.ag-rank { margin-top: 3px; }
+.ag-rank .rank-badge { font-size: 10px; padding: 2px 8px; }
+
 .lobby-player-banner {
   display: flex; align-items: center; gap: 14px;
   background: rgba(201,162,39,0.08);
@@ -2260,6 +2285,16 @@ document.addEventListener('whamAuthChange', async e => {
   }
 });
 
+
+// ── Rank badge helper (shared) ─────────────────────────────
+function rankBadge(score) {
+  if      (score >= 500) return { icon:'👑', label:'Champion', cls:'rank-champion' };
+  else if (score >= 200) return { icon:'🛡️', label:'Knight',   cls:'rank-knight'   };
+  else if (score >= 100) return { icon:'⚔️', label:'Warrior',  cls:'rank-warrior'  };
+  else if (score >= 50)  return { icon:'🗡️', label:'Squire',   cls:'rank-squire'   };
+  else                   return { icon:'📜', label:'Scribe',   cls:'rank-scribe'   };
+}
+
 // ── Load player banner stats ───────────────────────────────
 async function loadLobbyProfile(user) {
   const nameEl  = document.getElementById('lobby-player-name');
@@ -2278,7 +2313,20 @@ async function loadLobbyProfile(user) {
     const snap = await getDoc(doc(db, 'players', user.uid));
     if (snap.exists() && statsEl) {
       const d = snap.data();
-      statsEl.textContent = `${d.score || 0} pts · ${d.gamesPlayed || 0} games · streak ${d.streak || 0}`;
+      const sc = d.score || 0;
+      const rb = rankBadge(sc);
+      statsEl.innerHTML = `${sc} pts &nbsp;·&nbsp; ${d.gamesPlayed || 0} games &nbsp;·&nbsp; 🔥${d.streak || 0}`;
+      // Inject rank badge under name
+      const nameEl2 = document.getElementById('lobby-player-name');
+      if (nameEl2 && !document.getElementById('lobby-rank-badge')) {
+        const badgeEl = document.createElement('div');
+        badgeEl.id = 'lobby-rank-badge';
+        badgeEl.className = 'lobby-rank-badge';
+        badgeEl.innerHTML = `<span class="rank-badge ${rb.cls}">${rb.icon} ${rb.label}</span>`;
+        nameEl2.parentNode.insertBefore(badgeEl, nameEl2.nextSibling);
+      } else if (document.getElementById('lobby-rank-badge')) {
+        document.getElementById('lobby-rank-badge').innerHTML = `<span class="rank-badge ${rb.cls}">${rb.icon} ${rb.label}</span>`;
+      }
     }
   } catch(e) { console.warn('lobby profile:', e); }
 }
@@ -2337,6 +2385,9 @@ async function renderActiveGames(games, myUid) {
       </div>
       <div class="ag-card-body">
         <div class="ag-opp-name">${oppName}</div>
+        <div class="ag-rank" id="ag-rank-${game.id}">
+          <span class="rank-badge rank-scribe">📜 Scribe</span>
+        </div>
         <div class="ag-turn-label">${isMyTurn ? '⚔️ Your turn!' : '⏳ Waiting for opponent'}</div>
       </div>
       <div class="ag-score-wrap">
@@ -2347,6 +2398,20 @@ async function renderActiveGames(games, myUid) {
     `;
     card.onclick = () => openGame(game.id, game);
     list.appendChild(card);
+    // Async load opponent rank
+    if (oppUid) {
+      (async (gid, oUid) => {
+        try {
+          const { db, doc, getDoc } = window._fb;
+          const oSnap = await getDoc(doc(db, 'players', oUid));
+          if (oSnap.exists()) {
+            const rb = rankBadge(oSnap.data().score || 0);
+            const el = document.getElementById('ag-rank-' + gid);
+            if (el) el.innerHTML = `<span class="rank-badge ${rb.cls}">${rb.icon} ${rb.label}</span>`;
+          }
+        } catch(e) {}
+      })(game.id, oppUid);
+    }
   }
 }
 
@@ -2473,6 +2538,24 @@ function loadPickLevelScreen(game) {
   document.getElementById('vs-p2-name').textContent      = oppName;
   document.getElementById('vs-p1-score').textContent     = game.scores?.[myUid] || 0;
   document.getElementById('vs-p2-score').textContent     = game.scores?.[oppUid] || 0;
+  // Load rank badges for VS strip
+  (async () => {
+    try {
+      const { db, doc, getDoc } = window._fb;
+      // My rank
+      const mySnap = await getDoc(doc(db, 'players', myUid));
+      const myRb = rankBadge(mySnap.exists() ? (mySnap.data().score || 0) : 0);
+      let p1rank = document.getElementById('vs-p1-rank');
+      if (!p1rank) { p1rank = document.createElement('span'); p1rank.id='vs-p1-rank'; p1rank.className='vs-rank'; document.getElementById('vs-p1').appendChild(p1rank); }
+      p1rank.innerHTML = `<span class="rank-badge ${myRb.cls}">${myRb.icon} ${myRb.label}</span>`;
+      // Opponent rank
+      const oppSnap = await getDoc(doc(db, 'players', oppUid));
+      const oppRb = rankBadge(oppSnap.exists() ? (oppSnap.data().score || 0) : 0);
+      let p2rank = document.getElementById('vs-p2-rank');
+      if (!p2rank) { p2rank = document.createElement('span'); p2rank.id='vs-p2-rank'; p2rank.className='vs-rank'; document.getElementById('vs-p2').appendChild(p2rank); }
+      p2rank.innerHTML = `<span class="rank-badge ${oppRb.cls}">${oppRb.icon} ${oppRb.label}</span>`;
+    } catch(e) { console.warn('vs rank:', e); }
+  })();
   document.getElementById('round-label').textContent     = `Round ${game.round || 1}`;
 
   showScreen('pick-level');
