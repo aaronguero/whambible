@@ -28,22 +28,22 @@ let state = {
 // ── Init ─────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   const params    = new URLSearchParams(window.location.search);
-  const lvl       = parseInt(params.get('level'))    || 10;
-  const retIndex  = parseInt(params.get('retIndex')) ;
+  const lvl       = parseInt(params.get('level'));
+  const retIndex  = parseInt(params.get('retIndex'));
   const recovered = params.get('recovered');
 
-  setLevel(lvl);
-  buildQueue();
-  renderProgressDots();
   prewarmWhamAudio();
 
-  // Returning from recovery screen
+  // ── Returning from recovery screen — skip pick screen ────
   if (!isNaN(retIndex) && recovered !== null) {
+    hideSoloPickScreen();
+    setLevel(isNaN(lvl) ? 10 : lvl);
+    buildQueue();
+    renderProgressDots();
     state.currentIndex = retIndex;
     restoreScoreFromStorage();
-
     if (recovered === '1') {
-      state.score += 5; // Recovery success = flat +5 (exact Whamgame: Le(Y=>Y+5))
+      state.score += 5;
       updateScoreDisplay();
       updateDot(retIndex, 'recovered');
       state.results[retIndex] = { correct: true, recovered: true };
@@ -52,10 +52,55 @@ window.addEventListener('DOMContentLoaded', () => {
       state.results[retIndex] = { correct: false };
     }
     state.currentIndex++;
+    loadVerse();
+    return;
   }
 
-  loadVerse();
+  // ── Fresh entry — show pick-level screen ──────────────────
+  // If level was passed via URL (future use), auto-start
+  if (!isNaN(lvl) && lvl > 0) {
+    soloPickLevel(lvl,
+      {5:'Squire',10:'Warrior',15:'Knight',20:'Champion'}[lvl]||'Warrior',
+      {5:'🗡️',10:'⚔️',15:'🛡️',20:'👑'}[lvl]||'⚔️'
+    );
+    return;
+  }
+
+  // Default: show pick screen with Warrior pre-highlighted
+  // (already styled in HTML)
 });
+
+// ── Solo Level Pick ───────────────────────────────────────
+window.soloPickLevel = function(pts, name, icon) {
+  // Highlight selected card
+  [5,10,15,20].forEach(n => {
+    const el = document.getElementById('slvl-' + n);
+    if (!el) return;
+    const isSelected = n === pts;
+    el.style.background   = isSelected ? 'rgba(201,162,39,0.15)' : 'rgba(201,162,39,0.07)';
+    el.style.border       = isSelected ? '2px solid #c9a227'     : '1px solid rgba(201,162,39,0.2)';
+    el.style.boxShadow    = isSelected ? '0 0 0 2px rgba(201,162,39,0.3),0 6px 20px rgba(0,0,0,0.5)' : 'none';
+    el.style.transform    = isSelected ? 'translateY(-2px) scale(1.04)' : 'none';
+  });
+
+  // Brief pause then animate out and start game
+  setTimeout(() => {
+    hideSoloPickScreen();
+    setLevel(pts);
+    buildQueue();
+    renderProgressDots();
+    loadVerse();
+  }, 220);
+};
+
+function hideSoloPickScreen() {
+  const screen = document.getElementById('solo-pick-screen');
+  if (!screen) return;
+  screen.style.transition  = 'opacity 0.3s ease, transform 0.3s ease';
+  screen.style.opacity     = '0';
+  screen.style.transform   = 'scale(0.97)';
+  setTimeout(() => screen.style.display = 'none', 300);
+}
 
 // ── Level ─────────────────────────────────────────────────
 function setLevel(pts) {
