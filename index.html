@@ -1177,25 +1177,25 @@
     <section class="level-section">
       <p data-i18n="level-title">⚔️ Choose Your Battle ⚔️</p>
       <div class="level-row">
-        <div class="level-card" onclick="handleLevelSelect(5)">
+        <div class="level-card" id="lvl-5"  onclick="selectLevel(5)">
           <span class="level-icon">🗡️</span>
           <span class="level-points">5</span>
           <span class="level-pt-label">pts</span>
           <span data-i18n="level-squire">Squire</span>
         </div>
-        <div class="level-card" onclick="handleLevelSelect(10)">
+        <div class="level-card" id="lvl-10" onclick="selectLevel(10)">
           <span class="level-icon">⚔️</span>
           <span class="level-points">10</span>
           <span class="level-pt-label">pts</span>
           <span data-i18n="level-warrior">Warrior</span>
         </div>
-        <div class="level-card" onclick="handleLevelSelect(15)">
+        <div class="level-card" id="lvl-15" onclick="selectLevel(15)">
           <span class="level-icon">🛡️</span>
           <span class="level-points">15</span>
           <span class="level-pt-label">pts</span>
           <span data-i18n="level-knight">Knight</span>
         </div>
-        <div class="level-card" onclick="handleLevelSelect(20)">
+        <div class="level-card" id="lvl-20" onclick="selectLevel(20)">
           <span class="level-icon">👑</span>
           <span class="level-points">20</span>
           <span class="level-pt-label">pts</span>
@@ -1206,9 +1206,9 @@
 
     <!-- CTA Buttons -->
     <div class="btn-row">
-      <button class="btn-primary" onclick="startSoloGame()">⚔️ Play Solo</button>
-      <button class="btn-secondary" onclick="window.location.href='challenge.html'">👥 Multiplayer — Challenge Friends</button>
-      <button class="btn-ghost" onclick="showComingSoon('World Leaderboard')">📜 World Leaderboard</button>
+      <button class="btn-primary"    onclick="startSoloGame()">⚔️ Play Solo</button>
+      <button class="btn-secondary"  onclick="startMultiplayer()">👥 Challenge a Friend</button>
+      <button class="btn-ghost"      onclick="showComingSoon('World Leaderboard')">📜 World Leaderboard</button>
     </div>
 
     <!-- Donate -->
@@ -2137,20 +2137,63 @@ document.addEventListener('whamAuthChange', e => {
 
 
 <script>
-// Level select from home screen
-window.handleLevelSelect = function(pts) {
-  // If logged in → go to challenge screen with level pre-selected
-  // If guest → go directly to solo game
-  if (window._fbUser && !window._fbUser.isAnonymous) {
-    window.location.href = 'challenge.html';
-  } else {
-    window.location.href = 'game.html?level=' + pts;
+// ── Home screen game-flow wiring ──────────────────────────────────────────
+//
+//  selectLevel(pts)    — highlight chosen card, store selection
+//  startSoloGame()     — go to game.html with chosen level (guest OK)
+//  startMultiplayer()  — requires login → challenge.html?level=pts
+//
+// Game flow (mirrors Whamgame):
+//   Home → pick level → Play Solo  → game.html?level=N  (answer the verse)
+//   Home → pick level → Multiplayer → challenge.html?level=N (issue challenge to friend)
+// ─────────────────────────────────────────────────────────────────────────
+
+let _selectedLevel = 10; // default
+
+window.selectLevel = function(pts) {
+  _selectedLevel = pts;
+  // Highlight selected card, clear others
+  [5, 10, 15, 20].forEach(n => {
+    const el = document.getElementById('lvl-' + n);
+    if (el) el.classList.toggle('selected', n === pts);
+  });
+  // Brief haptic hint on mobile
+  if (navigator.vibrate) navigator.vibrate(18);
+};
+
+// Default level-10 card highlighted on load
+window.addEventListener('DOMContentLoaded', () => {
+  window.selectLevel(10);
+});
+
+window.startSoloGame = function() {
+  // Solo = guest or logged-in, goes straight to game screen
+  window.location.href = 'game.html?level=' + _selectedLevel;
+};
+
+window.startMultiplayer = function() {
+  // Multiplayer requires a real account (not anonymous)
+  const user = window._fbUser;
+  if (!user || user.isAnonymous) {
+    // Prompt login — store intended destination
+    sessionStorage.setItem('wb_after_login', 'challenge.html?level=' + _selectedLevel);
+    document.getElementById('login-modal-overlay').style.display = 'flex';
+    return;
+  }
+  window.location.href = 'challenge.html?level=' + _selectedLevel;
+};
+
+// Called after successful login (from lmSuccess / lmGuest in Firebase block)
+window._onLoginSuccess = function(user) {
+  const dest = sessionStorage.getItem('wb_after_login');
+  if (dest) {
+    sessionStorage.removeItem('wb_after_login');
+    window.location.href = dest;
   }
 };
 
-window.startSoloGame = function() {
-  window.location.href = 'game.html?level=10';
-};
+// Legacy — keep for any remaining call sites
+window.handleLevelSelect = window.selectLevel;
 </script>
 
 </body>
