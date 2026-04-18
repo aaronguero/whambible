@@ -2347,6 +2347,109 @@
 
   <!-- ── SCREEN: ANSWER (opponent answers the challenge) ───── -->
 
+
+  <!-- ══════════════════════════════════════════════════════
+       SCREEN: P1 YOUR TURN
+       After P2 answers, P1 is notified it's their turn
+       to answer the same verse they originally picked.
+       ══════════════════════════════════════════════════════ -->
+  <div id="screen-p1-your-turn" class="screen">
+    <div class="screen-inner" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;text-align:center;padding:24px 20px 40px;">
+
+      <!-- YOUR TURN badge -->
+      <div style="
+        background:linear-gradient(135deg,rgba(201,162,39,0.2),rgba(201,162,39,0.05));
+        border:1px solid rgba(201,162,39,0.4);
+        border-radius:50px;
+        padding:8px 20px;
+        font-family:'Cinzel',serif;
+        font-size:10px;letter-spacing:3px;
+        color:#c9a227;text-transform:uppercase;
+        margin-bottom:18px;
+        animation:pulse-gold 2s ease-in-out infinite;
+      ">⚔️ Your Turn</div>
+
+      <!-- Opponent answered label -->
+      <h1 id="p1yt-opp-name" style="font-family:'Cinzel',serif;font-size:20px;font-weight:900;color:#e2e8f0;letter-spacing:1px;margin:0 0 4px;">
+        Opponent
+      </h1>
+      <p style="font-family:'Crimson Text',serif;font-size:15px;font-style:italic;color:rgba(240,228,192,0.5);margin:0 0 24px;">
+        has answered — now it's your turn
+      </p>
+
+      <!-- Level badge -->
+      <div id="p1yt-level-badge" style="
+        display:inline-flex;align-items:center;gap:8px;
+        background:rgba(201,162,39,0.1);border:1px solid rgba(201,162,39,0.3);
+        border-radius:50px;padding:7px 18px;margin-bottom:24px;
+      ">
+        <span id="p1yt-level-icon" style="font-size:20px;">⚔️</span>
+        <span id="p1yt-level-name" style="font-family:'Cinzel',serif;font-size:13px;font-weight:800;color:#c9a227;">Warrior</span>
+        <span style="color:rgba(255,255,255,0.25);font-size:11px;">·</span>
+        <span id="p1yt-level-pts" style="font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:#e2e8f0;">10 pts</span>
+      </div>
+
+      <!-- Verse card — same verse P1 originally picked -->
+      <div style="
+        background:rgba(201,162,39,0.05);border:1px solid rgba(201,162,39,0.15);
+        border-radius:14px;padding:16px 20px;
+        width:100%;max-width:340px;margin-bottom:28px;
+        box-shadow:inset 0 0 40px rgba(0,0,0,0.3);
+      ">
+        <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;color:rgba(201,162,39,0.4);text-transform:uppercase;margin-bottom:8px;">
+          Your Challenge Verse
+        </div>
+        <p id="p1yt-verse-text" style="
+          font-family:'Crimson Text',serif;font-size:16px;font-style:italic;
+          color:rgba(240,228,192,0.8);line-height:1.5;margin:0 0 10px;
+        ">"Loading…"</p>
+        <div id="p1yt-verse-ref" style="
+          font-family:'Cinzel',serif;font-size:11px;font-weight:700;
+          color:rgba(201,162,39,0.6);
+        ">— — —</div>
+        <div style="margin-top:10px;font-size:12px;color:rgba(255,255,255,0.3);font-style:italic;">
+          Where is this verse found?
+        </div>
+      </div>
+
+      <!-- Score strip -->
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px;">
+        <div style="text-align:center;">
+          <div style="font-family:'Cinzel',serif;font-size:11px;color:#c9a227;font-weight:700;" id="p1yt-my-name">You</div>
+          <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:900;color:#e2e8f0;" id="p1yt-my-score">0</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.3);">pts</div>
+        </div>
+        <div style="font-family:'Cinzel',serif;font-size:14px;color:rgba(255,255,255,0.2);">VS</div>
+        <div style="text-align:center;">
+          <div style="font-family:'Cinzel',serif;font-size:11px;color:rgba(201,162,39,0.5);font-weight:700;" id="p1yt-opp-score-name">Opponent</div>
+          <div style="font-family:'Cinzel',serif;font-size:22px;font-weight:900;color:rgba(255,255,255,0.5);" id="p1yt-opp-score">0</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.3);">pts</div>
+        </div>
+      </div>
+
+      <!-- Answer button -->
+      <button id="p1yt-answer-btn" onclick="p1AcceptAndAnswer()" style="
+        width:100%;max-width:320px;
+        background:linear-gradient(135deg,#c9a227,#a07720);
+        border:none;border-radius:14px;
+        font-family:'Cinzel',serif;font-size:16px;font-weight:900;
+        color:#0f172a;letter-spacing:1px;padding:16px 24px;cursor:pointer;
+        box-shadow:0 8px 32px rgba(201,162,39,0.35);
+        transition:transform 0.1s,opacity 0.15s;margin-bottom:12px;
+      " onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''"
+         ontouchstart="this.style.transform='scale(0.97)'" ontouchend="this.style.transform=''">
+        ⚔️ Answer Now
+      </button>
+
+      <button onclick="showScreen('lobby')" style="
+        background:none;border:none;font-family:'Cinzel',serif;
+        font-size:12px;color:rgba(255,255,255,0.3);letter-spacing:1px;
+        cursor:pointer;padding:8px;
+      ">← Back to Battles</button>
+
+    </div>
+  </div>
+
   <!-- ══════════════════════════════════════════════════════
        SCREEN: ACCEPT CHALLENGE (Player 2 entry point)
        Shows who challenged you, level, verse preview.
@@ -3514,15 +3617,18 @@ function openGame(gameId, game) {
 
   if (isMyTurn) {
     if (game.status === 'waiting_for_answer') {
-      // Player 2 — show accept screen first
+      // Player 2 — show accept screen first, then answer
       loadAcceptScreen(game);
+    } else if (game.status === 'waiting_for_p1_answer') {
+      // Player 1 — it is your turn to answer the verse you picked
+      loadP1YourTurnScreen(game);
     } else {
-      // Player 1 — new round: go through level → verse stack → challenger flow
+      // Player 1 — pick level for new round
       startRoundChallenge(game);
     }
   } else {
     const oppName = game.playerNames?.[oppUid] || 'Opponent';
-    showToast('\u23F3 Waiting for ' + oppName + ' to answer');
+    showToast('\u23F3 Waiting for ' + oppName);
   }
 }
 
@@ -4227,7 +4333,154 @@ function renderAnswerChoices(verse, pts) {
 }
 
 // ── Submit answer ──────────────────────────────────────────
+// Called for BOTH P1 and P2 answers.
+// We track who answered via game.p1Answered / game.p2Answered fields.
+// P2 answers first → status: waiting_for_p1_answer, currentTurn: P1
+// P1 answers second → scores tallied, status: pick_level (or complete)
 async function submitAnswer(chosen, correct, pts, verse) {
+  const me      = window._fbUser;
+  if (!me || !_currentGameId) return;
+  const game    = _currentGame;
+  const myUid   = window._fbUser.uid;
+  const oppUid  = game.players.find(p => p !== myUid);
+  const isRight = chosen.book === correct.book &&
+                  chosen.chapter === correct.chapter &&
+                  chosen.verse === correct.verse;
+
+  window.stopAnswerTimer();
+  const earned = isRight ? pts : 0;
+
+  // WHAM SLAM animation if correct
+  if (isRight) {
+    if (typeof window.triggerWhamSlam === 'function') window.triggerWhamSlam(pts);
+    await new Promise(r => setTimeout(r, 1200));
+  } else {
+    await new Promise(r => setTimeout(r, 600));
+  }
+
+  const { db, doc, updateDoc, serverTimestamp, getDoc } = window._fb;
+
+  // Determine if this player is P1 (created game) or P2
+  const isP1   = game.createdBy === myUid;
+  const isP2   = !isP1;
+  const status = game.status;
+
+  // Scores
+  const myCurrentScore  = game.scores?.[myUid]  || 0;
+  const oppCurrentScore = game.scores?.[oppUid] || 0;
+  const newMyScore      = myCurrentScore + earned;
+
+  try {
+    if (isP2 && status === 'waiting_for_answer') {
+      // ── P2 just answered — now P1 must answer same verse ──
+      await updateDoc(doc(db, 'games', _currentGameId), {
+        ['scores.' + myUid]: newMyScore,
+        currentTurn:   oppUid,           // back to P1
+        status:        'waiting_for_p1_answer',
+        p2Answered:    true,
+        p2Earned:      earned,
+        p2Correct:     isRight,
+        updatedAt:     serverTimestamp()
+      });
+
+      _currentGame = Object.assign({}, game, {
+        scores:      Object.assign({}, game.scores, { [myUid]: newMyScore }),
+        currentTurn: oppUid,
+        status:      'waiting_for_p1_answer',
+        p2Answered:  true, p2Earned: earned, p2Correct: isRight
+      });
+
+      await updatePlayerStats(myUid, earned, isRight, false, newMyScore, oppCurrentScore);
+
+      // Push P1 — your turn to answer
+      try {
+        const oppSnap = await getDoc(doc(db, 'players', oppUid));
+        if (oppSnap.exists() && oppSnap.data().fcmToken) {
+          const myName = game.playerNames?.[myUid] || 'Opponent';
+          sendPushToOpponent(oppSnap.data().fcmToken,
+            '\u2694\uFE0F Your turn to answer!',
+            myName + ' answered — now it\u2019s your turn with the same verse!',
+            _currentGameId, myName);
+        }
+      } catch(e) { console.warn('push P1:', e); }
+
+      // Show P2 waiting result
+      showPostAnswerResult(isRight, pts, earned, correct, verse, newMyScore, oppCurrentScore, oppUid, true);
+
+    } else {
+      // ── P1 just answered — round complete, tally both ─────
+      const p2Earned = game.p2Earned || 0;
+      const newRound = (game.round || 1) + 1;
+      const isComplete = newRound > 10;
+
+      // P1 score already counted; P2 score was written when P2 answered
+      // Just flip turn to P2 for next round (P2 picks level next? No — P1 always picks)
+      // Whamgame: the challenger (P1) always picks the verse. P2 answers, P1 answers.
+      // After both answer, P1 picks again for next round.
+      await updateDoc(doc(db, 'games', _currentGameId), {
+        ['scores.' + myUid]: newMyScore,
+        currentTurn:  myUid,             // P1 picks level for next round
+        status:       isComplete ? 'complete' : 'pick_level',
+        p1Answered:   true,
+        p1Earned:     earned,
+        p1Correct:    isRight,
+        p2Answered:   false,
+        p2Earned:     null,
+        p2Correct:    null,
+        pendingVerse: null,
+        pendingLevel: null,
+        pendingName:  null,
+        pendingIcon:  null,
+        round:        newRound,
+        lastAnswer: {
+          uid: myUid, correct: isRight, earned,
+          verse: correct.book + ' ' + correct.chapter + ':' + correct.verse
+        },
+        updatedAt: serverTimestamp()
+      });
+
+      _currentGame = Object.assign({}, game, {
+        scores:      Object.assign({}, game.scores, { [myUid]: newMyScore }),
+        currentTurn: myUid,
+        status:      isComplete ? 'complete' : 'pick_level',
+        round:       newRound
+      });
+
+      await updatePlayerStats(myUid, earned, isRight, isComplete, newMyScore, (game.scores?.[oppUid] || 0));
+
+      if (isComplete) {
+        showGameComplete(_currentGame, myUid, oppUid, newMyScore, game.scores?.[oppUid] || 0, newRound - 1);
+      } else {
+        // Show both results then P1 picks next round
+        showPostAnswerResult(isRight, pts, earned, correct, verse, newMyScore, game.scores?.[oppUid] || 0, oppUid, false);
+      }
+
+      // Push P2 — P1 answered, round result
+      try {
+        const oppSnap = await getDoc(doc(db, 'players', oppUid));
+        if (oppSnap.exists() && oppSnap.data().fcmToken) {
+          const myName = game.playerNames?.[myUid] || 'Opponent';
+          if (isComplete) {
+            sendPushToOpponent(oppSnap.data().fcmToken,
+              '\uD83C\uDFC1 Battle Over!',
+              myName + ' played their final turn!',
+              _currentGameId, myName);
+          } else {
+            sendPushToOpponent(oppSnap.data().fcmToken,
+              '\uD83D\uDCCA Round result!',
+              myName + ' answered — check the scores!',
+              _currentGameId, myName);
+          }
+        }
+      } catch(e) { console.warn('push P2:', e); }
+    }
+
+  } catch(e) {
+    showToast('Error: ' + e.message);
+    console.error('submitAnswer:', e);
+  }
+}
+
   const me      = window._fbUser;
   if (!me || !_currentGameId) return;
   const game    = _currentGame;
@@ -4323,11 +4576,66 @@ async function submitAnswer(chosen, correct, pts, verse) {
   } catch(e) { console.warn('push error:', e); }
 }
 
+// ── P1 Your Turn screen loader ─────────────────────────────
+function loadP1YourTurnScreen(game) {
+  const myUid  = window._fbUser?.uid;
+  const oppUid = game.players?.find(p => p !== myUid);
+
+  const oppName  = game.playerNames?.[oppUid]  || 'Opponent';
+  const pts      = game.pendingLevel || 10;
+  const levelName= game.pendingName  || 'Warrior';
+  const levelIcon= game.pendingIcon  || '\u2694\uFE0F';
+  const verse    = game.pendingVerse || null;
+  const myScore  = game.scores?.[myUid]  || 0;
+  const oppScore = game.scores?.[oppUid] || 0;
+
+  const nameEl = document.getElementById('p1yt-opp-name');
+  if (nameEl) nameEl.textContent = oppName + ' answered';
+
+  const icoEl = document.getElementById('p1yt-level-icon');
+  if (icoEl) icoEl.textContent = levelIcon;
+
+  const lvlEl = document.getElementById('p1yt-level-name');
+  if (lvlEl) lvlEl.textContent = levelName;
+
+  const ptsEl = document.getElementById('p1yt-level-pts');
+  if (ptsEl) ptsEl.textContent = pts + ' pts';
+
+  if (verse) {
+    const vtEl = document.getElementById('p1yt-verse-text');
+    if (vtEl) vtEl.textContent = '"' + (verse.text || '').slice(0, 120) + (verse.text?.length > 120 ? '\u2026' : '') + '"';
+    const vrEl = document.getElementById('p1yt-verse-ref');
+    if (vrEl) vrEl.textContent = verse.book + ' ' + verse.chapter + ':' + verse.verse;
+  }
+
+  const myNameEl = document.getElementById('p1yt-my-name');
+  if (myNameEl) myNameEl.textContent = game.playerNames?.[myUid] || 'You';
+  const myScEl = document.getElementById('p1yt-my-score');
+  if (myScEl) myScEl.textContent = myScore;
+  const oppNEl = document.getElementById('p1yt-opp-score-name');
+  if (oppNEl) oppNEl.textContent = oppName;
+  const oppScEl = document.getElementById('p1yt-opp-score');
+  if (oppScEl) oppScEl.textContent = oppScore;
+
+  showScreen('p1-your-turn');
+}
+
+// ── P1 taps Answer Now ──────────────────────────────────────
+window.p1AcceptAndAnswer = function() {
+  const game = _currentGame;
+  if (!game) { showToast('Game not found'); return; }
+  const btn = document.getElementById('p1yt-answer-btn');
+  if (btn) { btn.textContent = '\u2694\uFE0F Loading\u2026'; btn.disabled = true; }
+  setTimeout(() => {
+    if (btn) { btn.textContent = '\u2694\uFE0F Answer Now'; btn.disabled = false; }
+    loadAnswerScreen(game);
+  }, 300);
+};
+
 // ── Post-answer result card ─────────────────────────────────
-// Shows: correct/wrong, score delta, verse reveal, then routes
-// Correct  → lobby (P1 gets push, picks level next round)
-// Wrong    → already went through recovery before submitAnswer
-function showPostAnswerResult(isRight, pts, earned, correct, verse, myScore, oppScore, oppUid) {
+// isWaiting=true  → P2 just answered, waiting for P1 (show "⏳ Opponent answering…")
+// isWaiting=false → P1 just answered, round fully done (show "⚔️ Pick next round")
+function showPostAnswerResult(isRight, pts, earned, correct, verse, myScore, oppScore, oppUid, isWaiting) {
   const game    = _currentGame;
   const myUid   = window._fbUser?.uid;
   const myName  = game.playerNames?.[myUid]  || 'You';
@@ -4351,16 +4659,37 @@ function showPostAnswerResult(isRight, pts, earned, correct, verse, myScore, opp
   document.getElementById('rr-p1-delta').style.color = isRight ? '#4ade80' : '#f87171';
   document.getElementById('rr-p1-total').textContent = myScore + ' pts';
   document.getElementById('rr-p2-total').textContent = oppScore + ' pts';
-  document.getElementById('rr-p2-delta').textContent = '\u23F3 Their turn to challenge';
-  document.getElementById('rr-p2-delta').style.color = 'rgba(255,255,255,0.35)';
+  const game    = _currentGame;
+  const myUid   = window._fbUser?.uid;
+  const myName  = game?.playerNames?.[myUid]  || 'You';
+  const oppName = game?.playerNames?.[oppUid] || 'Opponent';
+
+  if (isWaiting) {
+    // P2 answered — waiting for P1
+    document.getElementById('rr-p2-delta').textContent = '\u23F3 Opponent answering now\u2026';
+    document.getElementById('rr-p2-delta').style.color = 'rgba(255,255,255,0.35)';
+    document.getElementById('rr-title').textContent    = isRight ? '+' + pts + ' Points!' : 'Wrong Answer';
+  } else {
+    // P1 answered — round done, P1 picks next
+    document.getElementById('rr-p2-delta').textContent = '\u2694\uFE0F You pick the next round';
+    document.getElementById('rr-p2-delta').style.color = '#c9a227';
+    document.getElementById('rr-title').textContent    = 'Round Complete!';
+  }
 
   // Game code
   document.getElementById('share-code').textContent = _currentGameId.slice(0, 8).toUpperCase();
 
-  // Next button → lobby (P1 picks verse next)
+  // Next button
   const nextBtn = document.getElementById('rr-next-btn');
-  nextBtn.textContent = '\u2190 Back to Battles';
-  nextBtn.onclick = () => showScreen('lobby');
+  if (!isWaiting) {
+    // P1 — go pick next round
+    nextBtn.textContent = '\u2694\uFE0F Pick Next Round';
+    nextBtn.onclick = () => startRoundChallenge(_currentGame);
+  } else {
+    // P2 — back to lobby
+    nextBtn.textContent = '\u2190 Back to Battles';
+    nextBtn.onclick = () => showScreen('lobby');
+  }
 
   showScreen('round-result');
 }
