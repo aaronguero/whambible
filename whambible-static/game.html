@@ -3125,23 +3125,30 @@ window.papaHide = function() {
 // 500 ms — bump 1: correct btn shakes + gold flash
 // 900 ms — bump 2: repeat
 // 1500ms — papa retreats, buttons restore
-window.triggerPapaHint = function() {
-  // Access game state from game.js via global
-  if (window._gameState && window._gameState.answered) return;
+window.triggerPapaHint = function(mode) {
+  // mode: 'mp' = multiplayer answer screen, else solo
+  const isMp = (mode === 'mp');
+
+  // Solo guard — don't fire if already answered
+  if (!isMp && window._gameState && window._gameState.answered) return;
+
+  // Correct book + grid differ by mode
+  const gridId      = isMp ? 'ans-choices-grid' : 'choices-grid';
+  const correctBook = isMp
+    ? window._mpCurrentVerse?.book
+    : window._gameState?.currentVerse?.book;
 
   const wrap = document.getElementById('papa-wrap');
-  const grid = document.getElementById('choices-grid');
-  if (!wrap || !grid) return;
+  const grid = document.getElementById(gridId);
+  if (!wrap || !grid || !correctBook) return;
 
-  // Find correct button
-  const buttons  = Array.from(grid.querySelectorAll('.choice-btn'));
-  const correctBook = window._gameState ? window._gameState.currentVerse.book : null;
-  const correctBtn  = buttons.find(b =>
+  const buttons    = Array.from(grid.querySelectorAll('.choice-btn'));
+  const correctBtn = buttons.find(b =>
     b.querySelector('.choice-book')?.textContent === correctBook
   );
   if (!correctBtn) return;
 
-  // 0 ms: papa slides right, buttons shrink
+  // 0 ms: papa bounces in, buttons shrink
   wrap.classList.add('papa-hint');
   grid.classList.add('papa-enter');
 
@@ -3152,7 +3159,7 @@ window.triggerPapaHint = function() {
 
   function doBump(delay) {
     setTimeout(() => {
-      if (window._gameState && window._gameState.answered) return;
+      if (!isMp && window._gameState && window._gameState.answered) return;
       correctBtn.classList.add('papa-bump', 'papa-shaking');
       setTimeout(() => correctBtn.classList.remove('papa-shaking'), 240);
       setTimeout(() => correctBtn.classList.remove('papa-bump'),    400);
@@ -3162,7 +3169,7 @@ window.triggerPapaHint = function() {
   doBump(500);  // bump 1
   doBump(900);  // bump 2
 
-  // 1500 ms: papa retreats, buttons restore
+  // 1500 ms: papa retreats, all classes restore
   setTimeout(() => {
     wrap.classList.remove('papa-hint', 'papa-hinting');
     wrap.classList.add('papa-visible');
