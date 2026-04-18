@@ -1,3 +1,6 @@
+/* Recovery screen inherits global warm dark theme */
+html { background: linear-gradient(180deg, #1C0F04 0%, #2C1A08 40%, #3A2010 70%, #1C0F04 100%); }
+
 /* ===================================================
    WhamBible — Recovery Screen Styles
    WHAM SLAM: exact Whamgame.base44.app spec
@@ -6,7 +9,7 @@
 /* ── WHAM SLAM OVERLAY ─────────────────────────────────
    Exact Whamgame timing + style:
    Phase 0 (0ms):    bg=#fff, WHAM! 60px, audio fires
-   Phase 1 (300ms):  bg=#020617, WHAM! 96px + scale(1.08), verse ref appears
+   Phase 1 (300ms):  bg=#1C0F04, WHAM! 96px + scale(1.08), verse ref appears
    Phase 2 (1120ms): WHAM! opacity=0, verse ref fades
    Done   (1620ms):  onDone() fires → next screen
    ───────────────────────────────────────────────────── */
@@ -25,7 +28,7 @@
 .wham-slam-overlay.phase-0 { background: #ffffff; }
 /* Phase 1/2 bg = near-black */
 .wham-slam-overlay.phase-1,
-.wham-slam-overlay.phase-2 { background: #020617; }
+.wham-slam-overlay.phase-2 { background: #1C0F04; }
 
 /* WHAM! word */
 .wham-slam-word {
@@ -60,7 +63,7 @@
 
 /* Verse ref (shows at phase 1, fades at phase 2) */
 .wham-slam-ref {
-  color: #4ade80;
+  color: #56CC7F;
   font-size: 22px;
   font-weight: 800;
   letter-spacing: 2px;
@@ -105,9 +108,9 @@
   font-family: 'Cinzel', serif;
   font-size: 11px;
   letter-spacing: 2px;
-  color: rgba(201,162,39,0.8);
-  background: rgba(201,162,39,0.1);
-  border: 1px solid rgba(201,162,39,0.3);
+  color: rgba(212,146,26,0.8);
+  background: rgba(212,146,26,0.1);
+  border: 1px solid rgba(212,146,26,0.3);
   border-radius: 20px;
   padding: 5px 12px;
 }
@@ -116,7 +119,7 @@
   font-family: 'Cinzel', serif;
   font-size: 12px;
   font-weight: 700;
-  color: #c93030;
+  color: #9B1C1C;
   letter-spacing: 1px;
 }
 
@@ -151,13 +154,13 @@
   font-family: 'Cinzel', serif;
   font-size: 11px;
   letter-spacing: 1px;
-  color: rgba(201,162,39,0.5);
+  color: rgba(212,146,26,0.5);
   text-align: center;
   text-transform: uppercase;
   line-height: 1.8;
 }
 .scroll-instruction strong {
-  color: rgba(201,162,39,0.8);
+  color: rgba(212,146,26,0.8);
   font-weight: 700;
 }
 
@@ -186,7 +189,7 @@
   font-family: 'Cinzel', serif;
   font-size: 9px;
   letter-spacing: 3px;
-  color: rgba(201,162,39,0.4);
+  color: rgba(212,146,26,0.4);
   text-transform: uppercase;
 }
 
@@ -201,7 +204,7 @@
     rgba(10,5,0,0.98)  0%,
     rgba(30,18,3,0.98) 50%,
     rgba(10,5,0,0.98)  100%);
-  border: 1px solid rgba(201,162,39,0.3);
+  border: 1px solid rgba(212,146,26,0.3);
   box-shadow:
     inset 0 0 24px rgba(0,0,0,0.6),
     0 4px 16px rgba(0,0,0,0.4);
@@ -228,7 +231,7 @@
   justify-content: center;
   font-family: 'Cinzel', serif;
   font-size: 12px;
-  color: rgba(201,162,39,0.3);
+  color: rgba(212,146,26,0.3);
   padding: 0 5px;
   text-align: center;
   line-height: 1.15;
@@ -240,15 +243,15 @@
   transition: color 0.12s, font-size 0.12s, font-weight 0.12s;
 }
 /* near-1 row (adjacent to selected) */
-.scroll-item.near1 { color: rgba(201,162,39,0.55); font-size: 12.5px; }
+.scroll-item.near1 { color: rgba(212,146,26,0.55); font-size: 12.5px; }
 /* near-2 row */
-.scroll-item.near2 { color: rgba(201,162,39,0.3);  font-size: 11.5px; }
+.scroll-item.near2 { color: rgba(212,146,26,0.3);  font-size: 11.5px; }
 /* selected row */
 .scroll-item.selected {
   color: #f0e4c0;
   font-size: 14px;
   font-weight: 700;
-  text-shadow: 0 0 12px rgba(201,162,39,0.7);
+  text-shadow: 0 0 12px rgba(212,146,26,0.7);
 }
 
 /* ── Gradient fade top & bottom ────────────────── */
@@ -276,9 +279,9 @@
   left: 0; right: 0;
   top: var(--wh-center);          /* 84px */
   height: var(--wh-item);         /* 42px */
-  background: rgba(201,162,39,0.07);
-  border-top:    1px solid rgba(201,162,39,0.45);
-  border-bottom: 1px solid rgba(201,162,39,0.45);
+  background: rgba(212,146,26,0.07);
+  border-top:    1px solid rgba(212,146,26,0.45);
+  border-bottom: 1px solid rgba(212,146,26,0.45);
   z-index: 4;
   pointer-events: none;
 }
@@ -306,7 +309,7 @@
 }
 .timer-track {
   fill: none;
-  stroke: rgba(201,162,39,0.1);
+  stroke: rgba(212,146,26,0.1);
   stroke-width: 4;
 }
 .timer-progress {
@@ -318,7 +321,7 @@
   stroke-dashoffset: 0;
   transition: stroke-dashoffset 0.1s linear, stroke 0.3s;
 }
-.timer-progress.danger { stroke: #c93030; }
+.timer-progress.danger { stroke: #9B1C1C; }
 .timer-number {
   position: absolute;
   inset: 0;
@@ -330,12 +333,12 @@
   font-weight: 700;
   color: var(--gold);
 }
-.timer-number.danger { color: #c93030; }
+.timer-number.danger { color: #9B1C1C; }
 .timer-label {
   font-family: 'Cinzel', serif;
   font-size: 9px;
   letter-spacing: 2px;
-  color: rgba(201,162,39,0.3);
+  color: rgba(212,146,26,0.3);
   text-transform: uppercase;
 }
 
@@ -356,7 +359,7 @@
   transform: translateX(-50%);
   z-index: 900;
   background: linear-gradient(135deg, rgba(40,25,5,0.98), rgba(20,12,2,0.98));
-  border: 1px solid rgba(201,162,39,0.4);
+  border: 1px solid rgba(212,146,26,0.4);
   border-radius: 12px;
   padding: 12px 16px;
   display: flex;
