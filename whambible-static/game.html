@@ -339,6 +339,10 @@
   transform-origin: bottom left;
   transition: left 0.38s cubic-bezier(0.34,1.56,0.64,1); /* bouncy slide */
 }
+/* ── Hide Papa on phones in landscape — prevents layout breakage ── */
+@media (max-height: 500px) and (orientation: landscape) {
+  #papa-wrap { display: none !important; }
+}
 /* Visible state — set by JS; also restores orientation after hint flip */
 #papa-wrap.papa-visible {
   left: -10px;
@@ -3177,6 +3181,27 @@ window.triggerPapaHint = function(mode) {
     buttons.forEach(b => b.classList.remove('papa-bump', 'papa-shaking'));
   }, 1500);
 };
+
+// ── Hide Papa on phone landscape rotation ──────────────────
+(function() {
+  function handleOrientation() {
+    const isLandscapePhone = window.innerHeight < 500 && window.innerWidth > window.innerHeight;
+    const wrap = document.getElementById('papa-wrap');
+    if (!wrap) return;
+    if (isLandscapePhone) {
+      // Clear all active Papa states instantly so no ghost animations linger
+      wrap.className = '';   // strip all classes
+      wrap.style.left = '-200px';
+    }
+  }
+  window.addEventListener('resize', handleOrientation);
+  if (screen.orientation) {
+    screen.orientation.addEventListener('change', handleOrientation);
+  } else {
+    window.addEventListener('orientationchange', handleOrientation);
+  }
+  handleOrientation(); // run once on load
+})();
 
 // ── Papa hooks into game events ────────────────────────────
 (function() {
