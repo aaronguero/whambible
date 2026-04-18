@@ -502,8 +502,11 @@ function startTimer() {
     const pct = (state.timeLeft / TIME_LIMIT) * 100;
     bar.style.width = pct + '%';
     if (pct < 30) bar.className = 'timer-bar danger';
-    // ── Squire hint: trigger at exactly 10 s remaining ──
-    if (!_hintFired && state.pointsPerVerse === 5 && state.timeLeft <= 10 && state.timeLeft > 9.8) {
+    // ── Papa hint thresholds by level ──
+    // Squire(5pt)=10s  Warrior(10pt)=13s  Knight(15pt)=15s  Champion(20pt)=17s
+    const _hintAt = { 5: 10, 10: 13, 15: 15, 20: 17 };
+    const _ht = _hintAt[state.pointsPerVerse];
+    if (!_hintFired && _ht && state.timeLeft <= _ht && state.timeLeft > (_ht - 0.2)) {
       _hintFired = true;
       if (typeof window.triggerPapaHint === 'function') window.triggerPapaHint();
     }
