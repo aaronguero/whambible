@@ -537,6 +537,48 @@
   animation: papaBumpShake 0.22s ease-out forwards !important;
 }
 
+
+/* ── CVP multiplayer bubbles ── */
+.cvp-mp-bubble {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid rgba(201,162,39,0.22);
+  background: rgba(201,162,39,0.05);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  color: rgba(201,162,39,0.3);
+  cursor: pointer;
+  transition: all 0.18s;
+  min-height: 46px;
+  gap: 2px;
+}
+.cvp-mp-bubble.has-verse {
+  border-color: rgba(201,162,39,0.6);
+  background: rgba(201,162,39,0.12);
+  color: #c9a227;
+}
+.cvp-mp-bubble.selected-verse {
+  border: 2px solid #c9a227;
+  background: rgba(201,162,39,0.22);
+  box-shadow: 0 0 10px rgba(201,162,39,0.35);
+}
+.cvp-mp-bubble .bub-num {
+  font-size: 9px;
+  color: rgba(201,162,39,0.35);
+  font-weight: 700;
+}
+.cvp-mp-bubble.has-verse .bub-num { color: rgba(201,162,39,0.6); }
+.cvp-mp-bubble .bub-ref {
+  font-size: 7px;
+  color: rgba(201,162,39,0.55);
+  text-align: center;
+  line-height: 1.1;
+  padding: 0 2px;
+  word-break: break-all;
+}
+
 </style>
 <style>
 /* == LANG WHEEL == */
@@ -2437,6 +2479,20 @@
           <div class="level-info"><span class="level-title">CHAMPION</span><span class="level-sub">Hardest · Rare verses</span></div>
           <div class="level-pts-wrap"><span class="level-points">20</span><span class="level-pt-label">PTS</span></div>
         </div>
+        <!-- Custom Verse Pack -->
+        <button class="level-card" id="cvp-mp-btn" onclick="mpOpenCustomVersePack()" style="
+          border: 1px dashed rgba(201,162,39,0.4);
+          background: rgba(201,162,39,0.04);
+          margin-top: 4px;">
+          <span class="level-icon">📦</span>
+          <div class="level-info">
+            <span class="level-title" style="color:rgba(201,162,39,0.65);">CUSTOM VERSE PACK</span>
+            <span class="level-sub">Challenge with your saved verse</span>
+          </div>
+          <div class="level-pts-wrap">
+            <span style="font-size:18px;">▶</span>
+          </div>
+        </button>
       </div>
 
       <div class="round-label" id="round-label">Round 1</div>
@@ -4196,7 +4252,7 @@ function loadPickLevelScreen(game) {
 }
 
 // ── Pick level → update Firestore, send push, go to waiting ─
-window.pickLevel = async function(pts, name, icon) {
+window.pickLevel = async function(pts, name, icon, customVerse) {
   if (!_currentGameId || !window._fbUser) return;
   const me     = window._fbUser;
   const game   = _currentGame;
@@ -4204,14 +4260,24 @@ window.pickLevel = async function(pts, name, icon) {
 
   try {
     const { db, doc, updateDoc, serverTimestamp } = window._fb;
-    await updateDoc(doc(db,'games',_currentGameId), {
+    // Build update — include custom verse data if provided
+    const updatePayload = {
       currentTurn:   oppUid,
       status:        'waiting_for_answer',
       pendingLevel:  pts,
       pendingName:   name,
       pendingIcon:   icon,
       updatedAt:     serverTimestamp()
-    });
+    };
+    if (customVerse) {
+      updatePayload.pendingCustomVerse = {
+        book:    customVerse.book,
+        chapter: customVerse.chapter,
+        verse:   customVerse.verse,
+        text:    customVerse.text || ''
+      };
+    }
+    await updateDoc(doc(db,'games',_currentGameId), updatePayload);
 
     // Show share code / waiting
     document.getElementById('share-code').textContent = _currentGameId.slice(0,8).toUpperCase();
@@ -4252,6 +4318,18 @@ async function loadAnswerScreen(game) {
 
   document.getElementById('challenge-from-label').textContent = `${icon} ${oppName} challenged you!`;
   document.getElementById('challenge-pts-badge').textContent  = `${pts} pts`;
+
+  // ── Custom verse injection (set by challenger via CVP) ──
+  if (game.pendingCustomVerse && game.pendingCustomVerse.book) {
+    const cv = game.pendingCustomVerse;
+    window._mpCurrentVerse = {
+      id:      'custom',
+      book:    cv.book,
+      chapter: cv.chapter,
+      verse:   cv.verse,
+      text:    cv.text || ''
+    };
+  }
 
   // Load verse from game or pick random
   let verse = game.pendingVerse;
@@ -4844,6 +4922,92 @@ window.triggerPapaHint = function() {
   handleOrientation();
 })();
 
+
+// ══ Custom Verse Pack — multiplayer level screen ══════════
+
+window._cvpMpSlots    = [];
+window._cvpMpSelected = null;
+
+window.mpOpenCustomVersePack = function() {
+  // Load slots from localStorage
+  try {
+    window._cvpMpSlots = JSON.parse(localStorage.getItem('whamVersePack') || 'null') || Array(10).fill(null);
+  } catch(e) { window._cvpMpSlots = Array(10).fill(null); }
+
+  const grid1 = document.getElementById('cvp-mp-grid');
+  const grid2 = document.getElementById('cvp-mp-row2');
+  grid1.innerHTML = '';
+  grid2.innerHTML = '';
+
+  for (let i = 0; i < 10; i++) {
+    const slot   = window._cvpMpSlots[i];
+    const bubble = document.createElement('div');
+    bubble.className = 'cvp-mp-bubble' + (slot && slot.book ? ' has-verse' : '');
+    bubble.id = 'cvp-mp-bub-' + i;
+    bubble.onclick = () => cvpMpBubbleTap(i);
+    bubble.innerHTML = `<span class="bub-num">${i+1}</span><span class="bub-ref">${slot && slot.book ? slot.book.slice(0,3)+' '+slot.chapter+':'+slot.verse : ''}</span>`;
+    (i < 5 ? grid1 : grid2).appendChild(bubble);
+  }
+
+  // reset state
+  window._cvpMpSelected = null;
+  document.getElementById('cvp-mp-play-btn').style.opacity = '0.4';
+  document.getElementById('cvp-mp-play-btn').style.pointerEvents = 'none';
+  document.getElementById('cvp-mp-preview').style.display = 'none';
+
+  showScreen('cvp-mp');
+};
+
+window.cvpMpBubbleTap = function(idx) {
+  const slot = window._cvpMpSlots[idx];
+  if (!slot || !slot.book) return;
+
+  // deselect all
+  for (let i = 0; i < 10; i++) {
+    const b = document.getElementById('cvp-mp-bub-' + i);
+    if (b) b.classList.remove('selected-verse');
+  }
+  document.getElementById('cvp-mp-bub-' + idx).classList.add('selected-verse');
+  window._cvpMpSelected = idx;
+
+  // show preview
+  const ref  = slot.book + ' ' + slot.chapter + ':' + slot.verse;
+  const prev = document.getElementById('cvp-mp-preview');
+  document.getElementById('cvp-mp-preview-ref').textContent  = ref;
+  document.getElementById('cvp-mp-preview-text').textContent = slot.text || '(No preview available)';
+  prev.style.display = 'block';
+
+  // enable play
+  const btn = document.getElementById('cvp-mp-play-btn');
+  btn.style.opacity       = '1';
+  btn.style.pointerEvents = 'all';
+};
+
+window.mpPlayCustomVerse = function() {
+  if (window._cvpMpSelected === null) return;
+  const slot = window._cvpMpSlots[window._cvpMpSelected];
+  if (!slot || !slot.book) return;
+
+  // Build a synthetic verse object matching WHAM_VERSES format
+  const customVerse = {
+    id:      'custom_' + window._cvpMpSelected,
+    book:    slot.book,
+    chapter: parseInt(slot.chapter),
+    verse:   parseInt(slot.verse),
+    text:    slot.text || '',
+    pts:     20,     // custom verses play at champion difficulty for scoring
+    custom:  true
+  };
+
+  // Store as the selected verse — override the normal verse selection flow
+  window._mpCustomVerse = customVerse;
+
+  // Trigger pickLevel flow with pts=20 (Champion) using the custom verse
+  if (typeof pickLevel === 'function') {
+    pickLevel(20, 'Champion', '👑', customVerse);
+  }
+};
+
 </script>
 
 
@@ -4959,6 +5123,56 @@ window.triggerPapaHint = function() {
     <img id="papa-img"
       src="https://media.base44.com/images/public/69c5c3fce2ed0e50ba525a44/3f5d4294c_image.png"
       alt="Papa" />
+  </div>
+
+
+  <!-- ══ SCREEN: CUSTOM VERSE PACK (multiplayer) ══════════════ -->
+  <div id="screen-cvp-mp" class="screen" style="display:none;">
+    <div class="screen-inner">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:32px;margin-bottom:6px;">📦</div>
+        <h1 style="font-family:'Cinzel',serif;font-size:20px;font-weight:900;color:#c9a227;letter-spacing:2px;margin:0 0 4px;">
+          Custom Verse Pack
+        </h1>
+        <p style="font-family:'Crimson Text',serif;font-size:14px;font-style:italic;color:rgba(240,228,192,0.5);margin:0;">
+          Select a verse to challenge your opponent
+        </p>
+      </div>
+
+      <!-- 2 rows × 5 bubbles -->
+      <div id="cvp-mp-grid" style="
+        display:grid; grid-template-columns:repeat(5,1fr);
+        gap:8px; margin-bottom:8px; width:100%;">
+      </div>
+      <div id="cvp-mp-row2" style="
+        display:grid; grid-template-columns:repeat(5,1fr);
+        gap:8px; margin-bottom:16px; width:100%;">
+      </div>
+
+      <!-- Selected verse preview -->
+      <div id="cvp-mp-preview" style="
+        display:none; margin-bottom:16px; padding:14px;
+        background:rgba(201,162,39,0.07); border:1px solid rgba(201,162,39,0.25);
+        border-radius:12px;">
+        <div id="cvp-mp-preview-ref" style="
+          font-family:'Cinzel',serif; font-size:13px; color:#c9a227; margin-bottom:6px;"></div>
+        <div id="cvp-mp-preview-text" style="
+          font-size:13px; color:rgba(255,255,255,0.7); font-style:italic; line-height:1.5;"></div>
+      </div>
+
+      <!-- Actions -->
+      <button id="cvp-mp-play-btn" onclick="mpPlayCustomVerse()" style="
+        width:100%; padding:14px 0;
+        background:linear-gradient(135deg,#c9a227,#a07720);
+        border:none; border-radius:12px;
+        font-family:'Cinzel',serif; font-size:15px; font-weight:900;
+        color:#0f172a; cursor:pointer; margin-bottom:10px;
+        opacity:0.4; pointer-events:none;
+        transition:opacity 0.15s;">
+        ⚔️ Challenge With This Verse
+      </button>
+      <button class="btn-ghost" style="width:100%;" onclick="showScreen('pick-level')">← Back</button>
+    </div>
   </div>
 
 </body>

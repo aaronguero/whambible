@@ -313,6 +313,121 @@
   font-size: 15px; color: #64748b; font-style: italic;
 }
 
+
+/* ══ Custom Verse Pack — recovery screen bubbles ══ */
+#cvp-recovery-wrap {
+  margin: 14px 0 0;
+  padding: 0 4px;
+}
+#cvp-recovery-label {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: rgba(201,162,39,0.4);
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 8px;
+}
+#cvp-bubbles-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.cvp-bubble {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid rgba(201,162,39,0.22);
+  background: rgba(201,162,39,0.05);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  color: rgba(201,162,39,0.3);
+  cursor: pointer;
+  transition: all 0.18s;
+  overflow: hidden;
+  flex-direction: column;
+  gap: 1px;
+  min-height: 44px;
+}
+.cvp-bubble.has-verse {
+  border-color: rgba(201,162,39,0.6);
+  background: rgba(201,162,39,0.12);
+  color: #c9a227;
+}
+.cvp-bubble.has-verse:active {
+  transform: scale(0.94);
+  background: rgba(201,162,39,0.22);
+}
+.cvp-bubble .bub-num {
+  font-size: 9px;
+  color: rgba(201,162,39,0.35);
+  font-weight: 700;
+}
+.cvp-bubble.has-verse .bub-num { color: rgba(201,162,39,0.6); }
+.cvp-bubble .bub-ref {
+  font-size: 7px;
+  color: rgba(201,162,39,0.5);
+  text-align: center;
+  line-height: 1.1;
+  padding: 0 2px;
+  word-break: break-all;
+}
+.cvp-bubble.selected-verse {
+  border: 2px solid #c9a227;
+  background: rgba(201,162,39,0.22);
+  box-shadow: 0 0 10px rgba(201,162,39,0.35);
+}
+/* Row 2 bubbles */
+#cvp-bubbles-row2 {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  margin-bottom: 10px;
+}
+/* Find + Play row */
+#cvp-action-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+#cvp-find-btn {
+  flex: 1;
+  background: rgba(201,162,39,0.1);
+  border: 1px solid rgba(201,162,39,0.35);
+  border-radius: 10px;
+  color: #c9a227;
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 9px 0;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+#cvp-find-btn:hover { background: rgba(201,162,39,0.2); }
+#cvp-play-btn {
+  flex: 1;
+  background: linear-gradient(135deg, #c9a227, #a07720);
+  border: none;
+  border-radius: 10px;
+  color: #0f172a;
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 9px 0;
+  cursor: pointer;
+  opacity: 0.4;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+#cvp-play-btn.active {
+  opacity: 1;
+  pointer-events: all;
+}
+
 </style>
 </head>
 <body>
@@ -564,6 +679,35 @@
       </button>
 
     </section>
+
+    <!-- ══ Custom Verse Pack Bubbles ══ -->
+    <section class="scroll-section" style="padding-top:0;">
+      <div id="cvp-recovery-wrap">
+        <div id="cvp-recovery-label">📦 Custom Verse Pack — tap to select, play to inject</div>
+        <!-- Row 1: slots 1-5 -->
+        <div id="cvp-bubbles-grid">
+          <div class="cvp-bubble" id="cvp-bub-0" onclick="cvpBubbleTap(0)"><span class="bub-num">1</span><span class="bub-ref"></span></div>
+          <div class="cvp-bubble" id="cvp-bub-1" onclick="cvpBubbleTap(1)"><span class="bub-num">2</span><span class="bub-ref"></span></div>
+          <div class="cvp-bubble" id="cvp-bub-2" onclick="cvpBubbleTap(2)"><span class="bub-num">3</span><span class="bub-ref"></span></div>
+          <div class="cvp-bubble" id="cvp-bub-3" onclick="cvpBubbleTap(3)"><span class="bub-num">4</span><span class="bub-ref"></span></div>
+          <div class="cvp-bubble" id="cvp-bub-4" onclick="cvpBubbleTap(4)"><span class="bub-num">5</span><span class="bub-ref"></span></div>
+        </div>
+        <!-- Row 2: slots 6-10 -->
+        <div id="cvp-bubbles-row2">
+          <div class="cvp-bubble" id="cvp-bub-5" onclick="cvpBubbleTap(5)"><span class="bub-num">6</span><span class="bub-ref"></span></div>
+          <div class="cvp-bubble" id="cvp-bub-6" onclick="cvpBubbleTap(6)"><span class="bub-num">7</span><span class="bub-ref"></span></div>
+          <div class="cvp-bubble" id="cvp-bub-7" onclick="cvpBubbleTap(7)"><span class="bub-num">8</span><span class="bub-ref"></span></div>
+          <div class="cvp-bubble" id="cvp-bub-8" onclick="cvpBubbleTap(8)"><span class="bub-num">9</span><span class="bub-ref"></span></div>
+          <div class="cvp-bubble" id="cvp-bub-9" onclick="cvpBubbleTap(9)"><span class="bub-num">10</span><span class="bub-ref"></span></div>
+        </div>
+        <!-- Find Verse + Play buttons -->
+        <div id="cvp-action-row">
+          <button id="cvp-find-btn" onclick="cvpFindVerse()">🔍 Find Verse</button>
+          <button id="cvp-play-btn" id="cvp-play-btn" onclick="cvpPlayCustomVerse()">▶ Play</button>
+        </div>
+      </div>
+    </section>
+
   </main>
 
   <script src="verses.js"></script>
@@ -616,8 +760,18 @@
         whamPlaceholder('🎓 Learning Center — coming soon');
         break;
       case 'versePack':
-        // PLACEHOLDER: custom verse pack builder
-        whamPlaceholder('📦 Custom Verse Pack — coming soon');
+        // Scroll down to CVP bubbles panel and highlight it
+        (function() {
+          const wrap = document.getElementById('cvp-recovery-wrap');
+          if (wrap) {
+            wrap.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            wrap.style.transition = 'box-shadow 0.3s ease';
+            wrap.style.boxShadow  = '0 0 20px rgba(201,162,39,0.4)';
+            setTimeout(() => { wrap.style.boxShadow = ''; }, 1200);
+          }
+          cvpLoadBubbles();
+          whamMenuToggle(); // close menu
+        })();
         break;
       case 'myScores':
         // PLACEHOLDER: personal match history screen
@@ -749,6 +903,90 @@ document.addEventListener('whamAuthChange', e => {
   if (loginBtn)  loginBtn.style.display  = user ? 'none' : 'flex';
   if (logoutBtn) logoutBtn.style.display = user ? 'flex' : 'none';
 });
+
+// ══ Custom Verse Pack — bubble logic on recovery screen ══════
+
+window._cvpSlots     = [];
+window._cvpSelected  = null;  // index of selected bubble
+
+function cvpLoadBubbles() {
+  try {
+    window._cvpSlots = JSON.parse(localStorage.getItem('whamVersePack') || 'null') || Array(10).fill(null);
+  } catch(e) { window._cvpSlots = Array(10).fill(null); }
+
+  for (let i = 0; i < 10; i++) {
+    const bub  = document.getElementById('cvp-bub-' + i);
+    const slot = window._cvpSlots[i];
+    if (!bub) continue;
+    const refEl = bub.querySelector('.bub-ref');
+    if (slot && slot.book) {
+      bub.classList.add('has-verse');
+      refEl.textContent = slot.book.slice(0, 3) + ' ' + slot.chapter + ':' + slot.verse;
+    } else {
+      bub.classList.remove('has-verse', 'selected-verse');
+      refEl.textContent = '';
+    }
+  }
+  // reset selection
+  window._cvpSelected = null;
+  document.getElementById('cvp-play-btn').classList.remove('active');
+}
+
+window.cvpBubbleTap = function(idx) {
+  const slot = window._cvpSlots[idx];
+  if (!slot || !slot.book) return; // empty slot — ignore
+
+  // deselect all
+  for (let i = 0; i < 10; i++) {
+    const b = document.getElementById('cvp-bub-' + i);
+    if (b) b.classList.remove('selected-verse');
+  }
+  // select this one
+  document.getElementById('cvp-bub-' + idx).classList.add('selected-verse');
+  window._cvpSelected = idx;
+  document.getElementById('cvp-play-btn').classList.add('active');
+};
+
+window.cvpFindVerse = function() {
+  // Open the Bible Verses wheel modal so player can pick any verse, then save to pack
+  if (typeof bvOpen === 'function') {
+    bvOpen();
+  } else {
+    alert('Bible Verse picker not available on this screen.');
+  }
+};
+
+window.cvpPlayCustomVerse = function() {
+  if (window._cvpSelected === null) return;
+  const slot = window._cvpSlots[window._cvpSelected];
+  if (!slot || !slot.book) return;
+
+  // Build a verse object matching WHAM_VERSES format
+  const customVerse = {
+    id:      'custom_' + window._cvpSelected,
+    book:    slot.book,
+    chapter: parseInt(slot.chapter),
+    verse:   parseInt(slot.verse),
+    text:    slot.text || '',
+    pts:     0,  // free play — no level restriction
+    custom:  true
+  };
+
+  // Override the current recovery verse with the custom one
+  // Store in sessionStorage so recovery.js can pick it up
+  sessionStorage.setItem('wham_custom_verse_inject', JSON.stringify(customVerse));
+
+  // Reload recovery with the custom verse injected (keep existing pts + return params)
+  const params = new URLSearchParams(window.location.search);
+  const pts    = params.get('pts') || '0';
+  const ret    = params.get('return') || '';
+  const ref    = encodeURIComponent(slot.book + ' ' + slot.chapter + ':' + slot.verse);
+  window.location.href = 'recovery.html?verse=custom&pts=' + pts + '&return=' + encodeURIComponent(ret) + '&customRef=' + ref;
+};
+
+// Load bubbles on page ready
+document.addEventListener('DOMContentLoaded', cvpLoadBubbles);
+
 </script>
 
 </body>
