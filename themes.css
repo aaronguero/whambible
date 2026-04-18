@@ -1,0 +1,195 @@
+/* ===== WhamBible Theme System ===== */
+
+/* ── Theme Toggle Button ── */
+#theme-toggle {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 9999;
+  background: rgba(201,162,39,0.15);
+  border: 1px solid rgba(201,162,39,0.5);
+  border-radius: 20px;
+  padding: 6px 13px;
+  color: rgba(201,162,39,0.9);
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  user-select: none;
+  backdrop-filter: blur(4px);
+}
+#theme-toggle:hover {
+  background: rgba(201,162,39,0.28);
+  border-color: #c9a227;
+  color: #f5d87a;
+}
+
+/* ════════════════════════════════════════
+   OPTION A — WARM PARCHMENT
+   Lifts background, full-brightness text
+════════════════════════════════════════ */
+body.theme-a {
+  background: linear-gradient(180deg, #2a1505 0%, #3d2008 30%, #4a2a0a 60%, #3d2008 100%) !important;
+  color: #fff5d6 !important;
+}
+
+body.theme-a .bg-overlay {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(201,162,39,0.25) 0%, transparent 60%),
+    radial-gradient(ellipse at 20% 50%, rgba(200,120,30,0.14) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 50%, rgba(200,120,30,0.14) 0%, transparent 50%) !important;
+}
+
+body.theme-a .verse-card,
+body.theme-a .menu-panel,
+body.theme-a .modal-box,
+body.theme-a .auth-modal-box {
+  background: linear-gradient(135deg, rgba(70,42,10,0.98) 0%, rgba(55,32,7,0.98) 100%) !important;
+  border: 1px solid rgba(201,162,39,0.65) !important;
+  box-shadow: 0 4px 30px rgba(0,0,0,0.45), inset 0 1px 0 rgba(201,162,39,0.25) !important;
+}
+
+body.theme-a .verse-text,
+body.theme-a .modal-body,
+body.theme-a p,
+body.theme-a li {
+  color: #fff5d6 !important;
+}
+
+body.theme-a .verse-label,
+body.theme-a .verse-ref,
+body.theme-a .tagline,
+body.theme-a .level-title,
+body.theme-a .level-name,
+body.theme-a .level-pt-label,
+body.theme-a .footer,
+body.theme-a .lang-btn,
+body.theme-a .footer p {
+  color: rgba(245,216,122,0.92) !important;
+  opacity: 1 !important;
+}
+
+body.theme-a .lang-btn {
+  background: rgba(201,162,39,0.18) !important;
+  border-color: rgba(201,162,39,0.5) !important;
+}
+body.theme-a .lang-btn.active,
+body.theme-a .lang-btn:hover {
+  background: rgba(201,162,39,0.35) !important;
+  border-color: #c9a227 !important;
+  color: #fff5d6 !important;
+}
+
+body.theme-a .level-card {
+  background: rgba(201,162,39,0.12) !important;
+  border: 1px solid rgba(201,162,39,0.4) !important;
+}
+body.theme-a .level-card:hover,
+body.theme-a .level-card.selected {
+  background: rgba(201,162,39,0.26) !important;
+  border-color: #c9a227 !important;
+}
+body.theme-a .level-points { color: #f5d87a !important; }
+
+body.theme-a .btn-secondary {
+  border-color: rgba(201,162,39,0.85) !important;
+  color: #f5d87a !important;
+}
+body.theme-a .btn-ghost {
+  background: rgba(201,162,39,0.14) !important;
+  border-color: rgba(201,162,39,0.45) !important;
+  color: rgba(245,216,122,0.92) !important;
+}
+
+body.theme-a .menu-item,
+body.theme-a .menu-item span {
+  color: #fff5d6 !important;
+}
+
+/* ════════════════════════════════════════
+   OPTION B — DEEP SCROLL
+   Dark bg, solid card fills, 0.9+ opacity
+════════════════════════════════════════ */
+body.theme-b {
+  background: linear-gradient(180deg, #0a0500 0%, #130b01 40%, #1c1103 70%, #130b01 100%) !important;
+  color: #f0e4c0 !important;
+}
+
+body.theme-b .bg-overlay {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(201,162,39,0.18) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 100%, rgba(100,50,0,0.35) 0%, transparent 60%) !important;
+}
+
+body.theme-b .verse-card,
+body.theme-b .menu-panel,
+body.theme-b .modal-box,
+body.theme-b .auth-modal-box {
+  background: rgba(60,38,10,0.98) !important;
+  border: 1px solid #c9a227 !important;
+  box-shadow: 0 4px 30px rgba(0,0,0,0.7), 0 0 0 1px rgba(201,162,39,0.2), inset 0 1px 0 rgba(201,162,39,0.18) !important;
+}
+
+body.theme-b .verse-text,
+body.theme-b .modal-body,
+body.theme-b p,
+body.theme-b li {
+  color: #f5ecce !important;
+}
+
+body.theme-b .verse-label,
+body.theme-b .verse-ref,
+body.theme-b .tagline,
+body.theme-b .level-title,
+body.theme-b .level-name,
+body.theme-b .level-pt-label,
+body.theme-b .footer p {
+  color: rgba(201,162,39,0.92) !important;
+  opacity: 1 !important;
+}
+
+body.theme-b .lang-btn {
+  background: rgba(201,162,39,0.14) !important;
+  border: 1px solid rgba(201,162,39,0.45) !important;
+  color: rgba(201,162,39,0.88) !important;
+}
+body.theme-b .lang-btn.active,
+body.theme-b .lang-btn:hover {
+  background: rgba(201,162,39,0.3) !important;
+  border-color: #c9a227 !important;
+  color: #f5d87a !important;
+}
+
+body.theme-b .level-card {
+  background: rgba(50,30,5,0.95) !important;
+  border: 1px solid #c9a227 !important;
+}
+body.theme-b .level-card:hover,
+body.theme-b .level-card.selected {
+  background: rgba(80,50,10,0.98) !important;
+  border-color: #f5d87a !important;
+  box-shadow: 0 0 0 2px rgba(201,162,39,0.5), 0 6px 24px rgba(0,0,0,0.6) !important;
+}
+body.theme-b .level-points { color: #f5d87a !important; }
+
+body.theme-b .btn-secondary {
+  border: 2px solid #c9a227 !important;
+  color: #f5d87a !important;
+}
+body.theme-b .btn-ghost {
+  background: rgba(50,30,5,0.95) !important;
+  border: 1px solid #c9a227 !important;
+  color: rgba(245,216,122,0.9) !important;
+}
+
+body.theme-b .divider {
+  background: linear-gradient(90deg, transparent, #c9a227, transparent) !important;
+  opacity: 0.7;
+}
+
+body.theme-b .menu-item,
+body.theme-b .menu-item span {
+  color: #f0e4c0 !important;
+}
