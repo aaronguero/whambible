@@ -473,6 +473,70 @@
 .nc-title { font-family: 'Cinzel',serif; font-size: 20px; font-weight: 700; color: #c9a227; margin: 0 0 4px; }
 .nc-sub   { font-size: 13px; color: rgba(255,255,255,0.45); margin: 0 0 18px; }
 
+
+/* ══════════════════════════════════════════
+   PAPA AVATAR — multiplayer answer screen
+   ══════════════════════════════════════════ */
+#papa-wrap {
+  position: fixed;
+  bottom: 0;
+  left: -200px;
+  z-index: 50;
+  pointer-events: none;
+  width: 140px;
+  transform-origin: bottom left;
+  transition: left 0.38s cubic-bezier(0.34,1.56,0.64,1);
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  #papa-wrap { display: none !important; }
+}
+#papa-wrap.papa-visible { left: -10px; transform: scaleX(1); }
+#papa-wrap.papa-hint    { left: 20px;  transform: scaleX(-1); }
+#papa-img {
+  width: 140px;
+  display: block;
+  mix-blend-mode: multiply;
+  filter: drop-shadow(0 4px 18px rgba(0,0,0,0.6));
+  animation: papaIdle 3.2s ease-in-out infinite;
+  transform-origin: bottom center;
+  transition: filter 0.3s ease;
+}
+@keyframes papaIdle {
+  0%,100% { transform: translateY(0px) rotate(0deg); }
+  30%      { transform: translateY(-6px) rotate(0.4deg); }
+  60%      { transform: translateY(-3px) rotate(-0.3deg); }
+}
+#papa-wrap.papa-hinting #papa-img {
+  animation: papaHintLean 0.38s ease-out forwards;
+}
+@keyframes papaHintLean {
+  0%   { transform: translateY(0) rotate(0deg) scaleX(1); }
+  60%  { transform: translateY(-10px) rotate(-6deg) scaleX(1.05); }
+  100% { transform: translateY(-8px) rotate(-5deg) scaleX(1.04); }
+}
+.choices-grid.papa-enter .choice-btn {
+  transform: scale(0.93);
+  transition: transform 0.32s ease;
+}
+.choices-grid .choice-btn {
+  transition: transform 0.32s ease, background 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+.choice-btn.papa-bump {
+  border-color: rgba(201,162,39,0.9) !important;
+  background: linear-gradient(135deg, rgba(80,55,8,0.98) 0%, rgba(60,40,5,0.98) 100%) !important;
+  box-shadow: 0 0 18px rgba(201,162,39,0.5), 0 2px 10px rgba(0,0,0,0.3) !important;
+}
+@keyframes papaBumpShake {
+  0%,100% { transform: scale(0.93) translateX(0); }
+  20%     { transform: scale(0.93) translateX(-5px); }
+  40%     { transform: scale(0.93) translateX(4px); }
+  60%     { transform: scale(0.93) translateX(-3px); }
+  80%     { transform: scale(0.93) translateX(2px); }
+}
+.choice-btn.papa-shaking {
+  animation: papaBumpShake 0.22s ease-out forwards !important;
+}
+
 </style>
 <style>
 /* == LANG WHEEL == */
@@ -4169,11 +4233,13 @@ async function loadAnswerScreen(game) {
   document.getElementById('ans-verse-body').textContent = `"${verse.text || ''}"`;
   renderAnswerChoices(verse, pts);
   showScreen('answer');
+  // Expose verse for Papa hint targeting
+  window._mpCurrentVerse = verse;
   window.startAnswerTimer(20, () => {
     // Timeout — auto-submit wrong
     window.stopAnswerTimer();
     submitAnswer({book:'',chapter:0,verse:0}, {book:'X',chapter:0,verse:0}, pts, verse);
-  });
+  }, pts);
 }
 
 // ── Pick random verse from verses.js pool ─────────────────
@@ -4680,6 +4746,70 @@ function psToast(msg) {
   t.textContent = msg; t.style.opacity = '1';
   clearTimeout(t._t); t._t = setTimeout(()=>{ t.style.opacity='0'; }, 2200);
 }
+
+// ══ PAPA AVATAR — hint system ══════════════════════════════
+
+// ── triggerPapaHint for multiplayer answer screen ──
+window.triggerPapaHint = function() {
+  const wrap = document.getElementById('papa-wrap');
+  const grid = document.getElementById('ans-choices-grid');
+  if (!wrap || !grid) return;
+
+  const correctBook = window._mpCurrentVerse?.book;
+  if (!correctBook) return;
+
+  const buttons    = Array.from(grid.querySelectorAll('.choice-btn'));
+  const correctBtn = buttons.find(b =>
+    b.querySelector('.choice-book')?.textContent === correctBook
+  );
+  if (!correctBtn) return;
+
+  // 0ms: papa slides in, buttons shrink
+  wrap.classList.add('papa-hint');
+  grid.classList.add('papa-enter');
+
+  // 200ms: papa leans forward
+  setTimeout(() => wrap.classList.add('papa-hinting'), 200);
+
+  function doBump(delay) {
+    setTimeout(() => {
+      correctBtn.classList.add('papa-bump', 'papa-shaking');
+      setTimeout(() => correctBtn.classList.remove('papa-shaking'), 240);
+      setTimeout(() => correctBtn.classList.remove('papa-bump'),    400);
+    }, delay);
+  }
+  doBump(500);
+  doBump(900);
+
+  // 1500ms: papa retreats
+  setTimeout(() => {
+    wrap.classList.remove('papa-hint', 'papa-hinting');
+    wrap.classList.add('papa-visible');
+    grid.classList.remove('papa-enter');
+    buttons.forEach(b => b.classList.remove('papa-bump', 'papa-shaking'));
+  }, 1500);
+};
+
+// ── Hide Papa on phone landscape rotation ──
+(function() {
+  function handleOrientation() {
+    const isLandscapePhone = window.innerHeight < 500 && window.innerWidth > window.innerHeight;
+    const wrap = document.getElementById('papa-wrap');
+    if (!wrap) return;
+    if (isLandscapePhone) {
+      wrap.className = '';
+      wrap.style.left = '-200px';
+    }
+  }
+  window.addEventListener('resize', handleOrientation);
+  if (screen.orientation) {
+    screen.orientation.addEventListener('change', handleOrientation);
+  } else {
+    window.addEventListener('orientationchange', handleOrientation);
+  }
+  handleOrientation();
+})();
+
 </script>
 
 
@@ -4788,6 +4918,14 @@ function psToast(msg) {
     </div>
   </div>
 </div>
+
+
+  <!-- ══ PAPA AVATAR ══════════════════════════════════════ -->
+  <div id="papa-wrap">
+    <img id="papa-img"
+      src="https://media.base44.com/images/public/69c5c3fce2ed0e50ba525a44/3f5d4294c_image.png"
+      alt="Papa" />
+  </div>
 
 </body>
 </html>
