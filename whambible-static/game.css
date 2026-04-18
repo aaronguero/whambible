@@ -198,18 +198,19 @@
 
 .choice-btn {
   width: 100%;
-  /* Fixed height — all buttons identical shape */
-  height: 64px;
-  padding: 0 16px;
+  min-height: 76px;
+  padding: 12px 14px;
   background: linear-gradient(135deg, rgba(35,22,4,0.95) 0%, rgba(25,15,3,0.95) 100%);
   border: 1px solid rgba(201,162,39,0.3);
   border-radius: 10px;
   cursor: pointer;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 14px;
+  justify-content: center;
+  gap: 5px;
   transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.15s;
-  text-align: left;
+  text-align: center;
   box-shadow: 0 2px 10px rgba(0,0,0,0.3);
   animation: choiceIn 0.35s ease-out both;
   overflow: hidden;
@@ -257,8 +258,8 @@
 .choice-btn:disabled { cursor: default; }
 
 .choice-letter {
-  width: 30px;
-  height: 30px;
+  width: 26px;
+  height: 26px;
   flex-shrink: 0;
   border-radius: 50%;
   background: rgba(201,162,39,0.12);
@@ -267,39 +268,37 @@
   align-items: center;
   justify-content: center;
   font-family: 'Cinzel', serif;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--gold);
   transition: background 0.2s, border-color 0.2s, color 0.2s;
 }
 
-/* Text column — clamp, never wrap, never resize */
+/* Text block — centered under the letter badge */
 .choice-text-wrap {
-  flex: 1;
-  min-width: 0; /* allow flex child to shrink below content width */
+  width: 100%;
   overflow: hidden;
+  text-align: center;
 }
 
 .choice-book {
   font-family: 'Cinzel', serif;
-  font-size: 13px;   /* uniform size — long names like "1 Thessalonians" stay on one line */
+  font-size: 15px;
   font-weight: 700;
   color: #f0e4c0;
   display: block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  white-space: normal;        /* allow wrap for long book names */
+  line-height: 1.25;
+  letter-spacing: 0.3px;
 }
 
 .choice-ref {
   font-family: 'Crimson Text', serif;
-  font-size: 12px;
-  color: rgba(201,162,39,0.6);
+  font-size: 14px;
+  color: rgba(201,162,39,0.7);
   display: block;
   margin-top: 1px;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* ── Answer states — applied ONLY after tap ── */
