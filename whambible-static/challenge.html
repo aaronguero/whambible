@@ -3617,13 +3617,10 @@ function openGame(gameId, game) {
 
   if (isMyTurn) {
     if (game.status === 'waiting_for_answer') {
-      // Player 2 — show accept screen first, then answer
+      // My turn to answer a challenge sent by opponent
       loadAcceptScreen(game);
-    } else if (game.status === 'waiting_for_p1_answer') {
-      // Player 1 — it is your turn to answer the verse you picked
-      loadP1YourTurnScreen(game);
     } else {
-      // Player 1 — pick level for new round
+      // My turn to challenge — pick level → fresh verse pool → push opponent
       startRoundChallenge(game);
     }
   } else {
@@ -3707,42 +3704,44 @@ let _ncVerse    = null;
 let _ncOppDoc   = null;  // selected opponent Firestore doc
 let _scSearchTid = null;
 
-// ── Round N challenge entry — P1 picks level for existing game
+// ── Round challenge entry — current player picks level + verse, pushes opponent
+// Works for both P1 and P2 — whoever answered last becomes the next challenger.
 function startRoundChallenge(game) {
   _currentGameId = game.id || _currentGameId;
   _currentGame   = game;
-  _ncVerse = null; _ncOppDoc = null;
+  _ncVerse  = null;   // force fresh verse pick every round
 
-  const myUid = window._fbUser?.uid;
+  const myUid  = window._fbUser?.uid;
   const oppUid = game.players?.find(p => p !== myUid);
 
-  // Pre-fill opponent so verse stack goes straight to answer (no challenger select)
+  // Pre-fill opponent (existing game) — skip select-challenger screen
   _ncOppDoc = {
     id:          oppUid,
     displayName: game.playerNames?.[oppUid] || 'Opponent',
     photoURL:    game.playerPhotos?.[oppUid] || '',
-    fcmToken:    null  // will be fetched at issue time
+    fcmToken:    null  // fetched fresh at issue time from Firestore
   };
 
-  // Highlight rank-match level
-  const me = window._fbUser;
-  if (me) {
-    const { db, doc, getDoc } = window._fb;
-    getDoc(doc(db, 'players', me.uid)).then(snap => {
-      const score = snap.exists() ? (snap.data().score || 0) : 0;
-      const rankLevel = score >= 500 ? 20 : score >= 200 ? 15 : score >= 100 ? 10 : score >= 50 ? 5 : 10;
-      highlightMpLevel(rankLevel);
-    }).catch(() => highlightMpLevel(10));
-  } else {
-    highlightMpLevel(10);
-  }
-
-  // Show VS strip with live scores
-  document.getElementById('vs-p1-name').textContent  = game.playerNames?.[myUid]  || 'You';
-  document.getElementById('vs-p2-name').textContent  = game.playerNames?.[oppUid] || 'Opponent';
+  // VS strip — show current scores and round
+  const myName  = game.playerNames?.[myUid]  || 'You';
+  const oppName = game.playerNames?.[oppUid] || 'Opponent';
+  document.getElementById('vs-p1-name').textContent  = myName;
+  document.getElementById('vs-p2-name').textContent  = oppName;
   document.getElementById('vs-p1-score').textContent = game.scores?.[myUid]  || 0;
   document.getElementById('vs-p2-score').textContent = game.scores?.[oppUid] || 0;
   document.getElementById('round-label').textContent = 'Round ' + (game.round || 1);
+  document.getElementById('pick-turn-name').textContent = myName;
+
+  // Suggest level matching player rank
+  const me = window._fbUser;
+  if (me && window._fb) {
+    const { db, doc, getDoc } = window._fb;
+    getDoc(doc(db, 'players', me.uid)).then(snap => {
+      const score = snap.exists() ? (snap.data().score || 0) : 0;
+      const suggested = score >= 500 ? 20 : score >= 200 ? 15 : score >= 100 ? 10 : score >= 50 ? 5 : 10;
+      if (typeof highlightMpLevel === 'function') highlightMpLevel(suggested);
+    }).catch(() => { if (typeof highlightMpLevel === 'function') highlightMpLevel(10); });
+  }
 
   showScreen('mp-level');
 }
@@ -3797,9 +3796,23 @@ window.mpPickLevel = function(pts, name, icon) {
   }, 180);
 };
 
-// ── Build verse stack — 10 random verses in 2×5 grid ──────
+// ── Build verse stack — 10 fresh verses filtered by level class ──
+// Level 5  → most-searched top 25%  (well-known, easy)
+// Level 10 → mid pool 25–60%
+// Level 15 → deeper pool 60–85%
+// Level 20 → full pool (any verse, hardest)
 function buildVerseStack() {
-  const pool  = (window.WHAM_VERSES || []);
+  const allVerses = window.WHAM_VERSES || [];
+  const total     = allVerses.length;
+
+  // Slice pool by level difficulty so each fresh round pulls appropriate verses
+  let pool;
+  if      (_ncLevel <= 5)  pool = allVerses.slice(0, Math.ceil(total * 0.25));
+  else if (_ncLevel <= 10) pool = allVerses.slice(Math.floor(total * 0.10), Math.ceil(total * 0.60));
+  else if (_ncLevel <= 15) pool = allVerses.slice(Math.floor(total * 0.35), Math.ceil(total * 0.85));
+  else                     pool = allVerses; // level 20 — full pool
+
+  // Always shuffle fresh so same level never shows same 10 cards twice in a row
   const picks = [...pool].sort(() => Math.random() - 0.5).slice(0, 10);
   const grid  = document.getElementById('verse-stack-grid');
   if (!grid) return;
@@ -4333,24 +4346,27 @@ function renderAnswerChoices(verse, pts) {
 }
 
 // ── Submit answer ──────────────────────────────────────────
-// Called for BOTH P1 and P2 answers.
-// We track who answered via game.p1Answered / game.p2Answered fields.
-// P2 answers first → status: waiting_for_p1_answer, currentTurn: P1
-// P1 answers second → scores tallied, status: pick_level (or complete)
+// Symmetric: whoever was challenged answers, then THEY become
+// the next challenger. Roles alternate every round.
 async function submitAnswer(chosen, correct, pts, verse) {
-  const me      = window._fbUser;
+  const me     = window._fbUser;
   if (!me || !_currentGameId) return;
-  const game    = _currentGame;
-  const myUid   = window._fbUser.uid;
-  const oppUid  = game.players.find(p => p !== myUid);
+  const game   = _currentGame;
+  const myUid  = me.uid;
+  const oppUid = game.players.find(p => p !== myUid);
+
   const isRight = chosen.book === correct.book &&
                   chosen.chapter === correct.chapter &&
                   chosen.verse === correct.verse;
 
   window.stopAnswerTimer();
-  const earned = isRight ? pts : 0;
+  const earned     = isRight ? pts : 0;
+  const newMyScore = (game.scores?.[myUid]  || 0) + earned;
+  const oppScore   = game.scores?.[oppUid] || 0;
+  const newRound   = (game.round || 1) + 1;
+  const isComplete = newRound > 10;
 
-  // WHAM SLAM animation if correct
+  // WHAM SLAM on correct
   if (isRight) {
     if (typeof window.triggerWhamSlam === 'function') window.triggerWhamSlam(pts);
     await new Promise(r => setTimeout(r, 1200));
@@ -4358,160 +4374,13 @@ async function submitAnswer(chosen, correct, pts, verse) {
     await new Promise(r => setTimeout(r, 600));
   }
 
-  const { db, doc, updateDoc, serverTimestamp, getDoc } = window._fb;
-
-  // Determine if this player is P1 (created game) or P2
-  const isP1   = game.createdBy === myUid;
-  const isP2   = !isP1;
-  const status = game.status;
-
-  // Scores
-  const myCurrentScore  = game.scores?.[myUid]  || 0;
-  const oppCurrentScore = game.scores?.[oppUid] || 0;
-  const newMyScore      = myCurrentScore + earned;
-
   try {
-    if (isP2 && status === 'waiting_for_answer') {
-      // ── P2 just answered — now P1 must answer same verse ──
-      await updateDoc(doc(db, 'games', _currentGameId), {
-        ['scores.' + myUid]: newMyScore,
-        currentTurn:   oppUid,           // back to P1
-        status:        'waiting_for_p1_answer',
-        p2Answered:    true,
-        p2Earned:      earned,
-        p2Correct:     isRight,
-        updatedAt:     serverTimestamp()
-      });
+    const { db, doc, updateDoc, getDoc, serverTimestamp } = window._fb;
 
-      _currentGame = Object.assign({}, game, {
-        scores:      Object.assign({}, game.scores, { [myUid]: newMyScore }),
-        currentTurn: oppUid,
-        status:      'waiting_for_p1_answer',
-        p2Answered:  true, p2Earned: earned, p2Correct: isRight
-      });
-
-      await updatePlayerStats(myUid, earned, isRight, false, newMyScore, oppCurrentScore);
-
-      // Push P1 — your turn to answer
-      try {
-        const oppSnap = await getDoc(doc(db, 'players', oppUid));
-        if (oppSnap.exists() && oppSnap.data().fcmToken) {
-          const myName = game.playerNames?.[myUid] || 'Opponent';
-          sendPushToOpponent(oppSnap.data().fcmToken,
-            '\u2694\uFE0F Your turn to answer!',
-            myName + ' answered — now it\u2019s your turn with the same verse!',
-            _currentGameId, myName);
-        }
-      } catch(e) { console.warn('push P1:', e); }
-
-      // Show P2 waiting result
-      showPostAnswerResult(isRight, pts, earned, correct, verse, newMyScore, oppCurrentScore, oppUid, true);
-
-    } else {
-      // ── P1 just answered — round complete, tally both ─────
-      const p2Earned = game.p2Earned || 0;
-      const newRound = (game.round || 1) + 1;
-      const isComplete = newRound > 10;
-
-      // P1 score already counted; P2 score was written when P2 answered
-      // Just flip turn to P2 for next round (P2 picks level next? No — P1 always picks)
-      // Whamgame: the challenger (P1) always picks the verse. P2 answers, P1 answers.
-      // After both answer, P1 picks again for next round.
-      await updateDoc(doc(db, 'games', _currentGameId), {
-        ['scores.' + myUid]: newMyScore,
-        currentTurn:  myUid,             // P1 picks level for next round
-        status:       isComplete ? 'complete' : 'pick_level',
-        p1Answered:   true,
-        p1Earned:     earned,
-        p1Correct:    isRight,
-        p2Answered:   false,
-        p2Earned:     null,
-        p2Correct:    null,
-        pendingVerse: null,
-        pendingLevel: null,
-        pendingName:  null,
-        pendingIcon:  null,
-        round:        newRound,
-        lastAnswer: {
-          uid: myUid, correct: isRight, earned,
-          verse: correct.book + ' ' + correct.chapter + ':' + correct.verse
-        },
-        updatedAt: serverTimestamp()
-      });
-
-      _currentGame = Object.assign({}, game, {
-        scores:      Object.assign({}, game.scores, { [myUid]: newMyScore }),
-        currentTurn: myUid,
-        status:      isComplete ? 'complete' : 'pick_level',
-        round:       newRound
-      });
-
-      await updatePlayerStats(myUid, earned, isRight, isComplete, newMyScore, (game.scores?.[oppUid] || 0));
-
-      if (isComplete) {
-        showGameComplete(_currentGame, myUid, oppUid, newMyScore, game.scores?.[oppUid] || 0, newRound - 1);
-      } else {
-        // Show both results then P1 picks next round
-        showPostAnswerResult(isRight, pts, earned, correct, verse, newMyScore, game.scores?.[oppUid] || 0, oppUid, false);
-      }
-
-      // Push P2 — P1 answered, round result
-      try {
-        const oppSnap = await getDoc(doc(db, 'players', oppUid));
-        if (oppSnap.exists() && oppSnap.data().fcmToken) {
-          const myName = game.playerNames?.[myUid] || 'Opponent';
-          if (isComplete) {
-            sendPushToOpponent(oppSnap.data().fcmToken,
-              '\uD83C\uDFC1 Battle Over!',
-              myName + ' played their final turn!',
-              _currentGameId, myName);
-          } else {
-            sendPushToOpponent(oppSnap.data().fcmToken,
-              '\uD83D\uDCCA Round result!',
-              myName + ' answered — check the scores!',
-              _currentGameId, myName);
-          }
-        }
-      } catch(e) { console.warn('push P2:', e); }
-    }
-
-  } catch(e) {
-    showToast('Error: ' + e.message);
-    console.error('submitAnswer:', e);
-  }
-}
-
-  const me      = window._fbUser;
-  if (!me || !_currentGameId) return;
-  const game    = _currentGame;
-  const oppUid  = game.players.find(p => p !== me.uid);
-  const isRight = chosen.book === correct.book &&
-                  chosen.chapter === correct.chapter &&
-                  chosen.verse === correct.verse;
-
-  window.stopAnswerTimer();
-  const earned     = isRight ? pts : 0;
-  const newMyScore = (game.scores?.[me.uid]  || 0) + earned;
-  const newOppScore = game.scores?.[oppUid] || 0;
-  const newRound   = (game.round || 1) + 1;
-  const isComplete = newRound > 10;
-
-  // ── 1. WHAM SLAM animation on correct ─────────────────────
-  if (isRight) {
-    if (typeof window.triggerWhamSlam === 'function') {
-      window.triggerWhamSlam(pts);
-    }
-    await new Promise(r => setTimeout(r, 1200));
-  } else {
-    await new Promise(r => setTimeout(r, 600));
-  }
-
-  // ── 2. Write result to Firestore ───────────────────────────
-  try {
-    const { db, doc, updateDoc, serverTimestamp } = window._fb;
+    // After answering, the answerer becomes the next challenger
     await updateDoc(doc(db, 'games', _currentGameId), {
-      ['scores.' + me.uid]: newMyScore,
-      currentTurn:  oppUid,
+      ['scores.' + myUid]: newMyScore,
+      currentTurn:  myUid,                          // answerer picks next round
       status:       isComplete ? 'complete' : 'pick_level',
       pendingVerse: null,
       pendingLevel: null,
@@ -4519,177 +4388,81 @@ async function submitAnswer(chosen, correct, pts, verse) {
       pendingIcon:  null,
       round:        newRound,
       lastAnswer: {
-        uid:     me.uid,
-        correct: isRight,
-        earned,
-        verse:   correct.book + ' ' + correct.chapter + ':' + correct.verse
+        uid: myUid, correct: isRight, earned,
+        verse: correct.book + ' ' + correct.chapter + ':' + correct.verse
       },
       updatedAt: serverTimestamp()
     });
 
-    // Update local game state so round-result renders correctly
     _currentGame = Object.assign({}, game, {
-      scores:      Object.assign({}, game.scores, { [me.uid]: newMyScore }),
-      currentTurn: oppUid,
+      scores:      Object.assign({}, game.scores, { [myUid]: newMyScore }),
+      currentTurn: myUid,
       status:      isComplete ? 'complete' : 'pick_level',
       round:       newRound
     });
 
-  } catch(e) {
-    showToast('Save error: ' + e.message);
-    console.error('submitAnswer save:', e);
-    return;
-  }
+    await updatePlayerStats(myUid, earned, isRight, isComplete, newMyScore, oppScore);
 
-  // ── 3. Update player stats ─────────────────────────────────
-  await updatePlayerStats(me.uid, earned, isRight, isComplete, newMyScore, newOppScore);
-
-  // ── 4. Show result then route ──────────────────────────────
-  if (isComplete) {
-    showGameComplete(_currentGame, me.uid, oppUid, newMyScore, newOppScore, newRound - 1);
-  } else {
-    showPostAnswerResult(isRight, pts, earned, correct, verse, newMyScore, newOppScore, oppUid);
-  }
-
-  // ── 5. Push P1 — their turn to pick level ─────────────────
-  try {
-    const { db: db2, doc: d2, getDoc } = window._fb;
-    const oppSnap = await getDoc(d2(db2, 'players', oppUid));
-    if (oppSnap.exists() && oppSnap.data().fcmToken) {
-      const myName = game.playerNames?.[me.uid] || 'Opponent';
-      if (isComplete) {
-        sendPushToOpponent(
-          oppSnap.data().fcmToken,
-          '\uD83C\uDFC1 Battle Over!',
-          myName + ' played their final turn — check the result!',
-          _currentGameId, myName
-        );
-      } else {
-        sendPushToOpponent(
-          oppSnap.data().fcmToken,
-          '\u2694\uFE0F Your turn to challenge!',
-          myName + ' answered — pick your next verse!',
-          _currentGameId, myName
-        );
-      }
+    if (isComplete) {
+      showGameComplete(_currentGame, myUid, oppUid, newMyScore, oppScore, newRound - 1);
+    } else {
+      showPostAnswerResult(isRight, pts, earned, correct, verse, newMyScore, oppScore, oppUid);
     }
-  } catch(e) { console.warn('push error:', e); }
-}
 
-// ── P1 Your Turn screen loader ─────────────────────────────
-function loadP1YourTurnScreen(game) {
-  const myUid  = window._fbUser?.uid;
-  const oppUid = game.players?.find(p => p !== myUid);
+    // Push opponent — let them know the round result
+    try {
+      const oppSnap = await getDoc(doc(db, 'players', oppUid));
+      if (oppSnap.exists() && oppSnap.data().fcmToken) {
+        const myName = game.playerNames?.[myUid] || 'Opponent';
+        if (isComplete) {
+          sendPushToOpponent(oppSnap.data().fcmToken,
+            '\uD83C\uDFC1 Battle Over!',
+            myName + ' played their final answer!',
+            _currentGameId, myName);
+        } else {
+          sendPushToOpponent(oppSnap.data().fcmToken,
+            '\uD83D\uDCCA Round result!',
+            myName + ' answered — check the scores!',
+            _currentGameId, myName);
+        }
+      }
+    } catch(e) { console.warn('push opp:', e); }
 
-  const oppName  = game.playerNames?.[oppUid]  || 'Opponent';
-  const pts      = game.pendingLevel || 10;
-  const levelName= game.pendingName  || 'Warrior';
-  const levelIcon= game.pendingIcon  || '\u2694\uFE0F';
-  const verse    = game.pendingVerse || null;
-  const myScore  = game.scores?.[myUid]  || 0;
-  const oppScore = game.scores?.[oppUid] || 0;
-
-  const nameEl = document.getElementById('p1yt-opp-name');
-  if (nameEl) nameEl.textContent = oppName + ' answered';
-
-  const icoEl = document.getElementById('p1yt-level-icon');
-  if (icoEl) icoEl.textContent = levelIcon;
-
-  const lvlEl = document.getElementById('p1yt-level-name');
-  if (lvlEl) lvlEl.textContent = levelName;
-
-  const ptsEl = document.getElementById('p1yt-level-pts');
-  if (ptsEl) ptsEl.textContent = pts + ' pts';
-
-  if (verse) {
-    const vtEl = document.getElementById('p1yt-verse-text');
-    if (vtEl) vtEl.textContent = '"' + (verse.text || '').slice(0, 120) + (verse.text?.length > 120 ? '\u2026' : '') + '"';
-    const vrEl = document.getElementById('p1yt-verse-ref');
-    if (vrEl) vrEl.textContent = verse.book + ' ' + verse.chapter + ':' + verse.verse;
+  } catch(e) {
+    showToast('Error: ' + e.message);
+    console.error('submitAnswer:', e);
   }
-
-  const myNameEl = document.getElementById('p1yt-my-name');
-  if (myNameEl) myNameEl.textContent = game.playerNames?.[myUid] || 'You';
-  const myScEl = document.getElementById('p1yt-my-score');
-  if (myScEl) myScEl.textContent = myScore;
-  const oppNEl = document.getElementById('p1yt-opp-score-name');
-  if (oppNEl) oppNEl.textContent = oppName;
-  const oppScEl = document.getElementById('p1yt-opp-score');
-  if (oppScEl) oppScEl.textContent = oppScore;
-
-  showScreen('p1-your-turn');
 }
 
-// ── P1 taps Answer Now ──────────────────────────────────────
-window.p1AcceptAndAnswer = function() {
-  const game = _currentGame;
-  if (!game) { showToast('Game not found'); return; }
-  const btn = document.getElementById('p1yt-answer-btn');
-  if (btn) { btn.textContent = '\u2694\uFE0F Loading\u2026'; btn.disabled = true; }
-  setTimeout(() => {
-    if (btn) { btn.textContent = '\u2694\uFE0F Answer Now'; btn.disabled = false; }
-    loadAnswerScreen(game);
-  }, 300);
-};
-
-// ── Post-answer result card ─────────────────────────────────
-// isWaiting=true  → P2 just answered, waiting for P1 (show "⏳ Opponent answering…")
-// isWaiting=false → P1 just answered, round fully done (show "⚔️ Pick next round")
-function showPostAnswerResult(isRight, pts, earned, correct, verse, myScore, oppScore, oppUid, isWaiting) {
+// ── Post-answer result card ────────────────────────────────
+// Answerer sees their score, verse reveal, then picks next challenge
+function showPostAnswerResult(isRight, pts, earned, correct, verse, myScore, oppScore, oppUid) {
   const game    = _currentGame;
   const myUid   = window._fbUser?.uid;
-  const myName  = game.playerNames?.[myUid]  || 'You';
-  const oppName = game.playerNames?.[oppUid] || 'Opponent';
+  const myName  = game?.playerNames?.[myUid]  || 'You';
+  const oppName = game?.playerNames?.[oppUid] || 'Opponent';
 
-  // Result icon + title
   document.getElementById('rr-icon').textContent  = isRight ? '\u2705' : '\u274C';
-  document.getElementById('rr-title').textContent = isRight
-    ? '+' + pts + ' Points!'
-    : 'Wrong Answer';
+  document.getElementById('rr-title').textContent = isRight ? '+' + pts + ' Points!' : 'Wrong Answer';
 
-  // Verse reveal
-  document.getElementById('rr-verse-ref').textContent  =
-    correct.book + ' ' + correct.chapter + ':' + correct.verse;
-  document.getElementById('rr-verse-text').textContent = verse.text || '';
+  document.getElementById('rr-verse-ref').textContent  = correct.book + ' ' + correct.chapter + ':' + correct.verse;
+  document.getElementById('rr-verse-text').textContent = verse?.text || '';
 
-  // Score strip
   document.getElementById('rr-p1-name').textContent  = myName;
   document.getElementById('rr-p2-name').textContent  = oppName;
   document.getElementById('rr-p1-delta').textContent = isRight ? '+' + pts : '+0';
   document.getElementById('rr-p1-delta').style.color = isRight ? '#4ade80' : '#f87171';
   document.getElementById('rr-p1-total').textContent = myScore + ' pts';
   document.getElementById('rr-p2-total').textContent = oppScore + ' pts';
-  const game    = _currentGame;
-  const myUid   = window._fbUser?.uid;
-  const myName  = game?.playerNames?.[myUid]  || 'You';
-  const oppName = game?.playerNames?.[oppUid] || 'Opponent';
+  document.getElementById('rr-p2-delta').textContent = '\u23F3 Waiting for your next challenge';
+  document.getElementById('rr-p2-delta').style.color = 'rgba(255,255,255,0.35)';
 
-  if (isWaiting) {
-    // P2 answered — waiting for P1
-    document.getElementById('rr-p2-delta').textContent = '\u23F3 Opponent answering now\u2026';
-    document.getElementById('rr-p2-delta').style.color = 'rgba(255,255,255,0.35)';
-    document.getElementById('rr-title').textContent    = isRight ? '+' + pts + ' Points!' : 'Wrong Answer';
-  } else {
-    // P1 answered — round done, P1 picks next
-    document.getElementById('rr-p2-delta').textContent = '\u2694\uFE0F You pick the next round';
-    document.getElementById('rr-p2-delta').style.color = '#c9a227';
-    document.getElementById('rr-title').textContent    = 'Round Complete!';
-  }
-
-  // Game code
   document.getElementById('share-code').textContent = _currentGameId.slice(0, 8).toUpperCase();
 
-  // Next button
+  // You answered → you pick next challenge
   const nextBtn = document.getElementById('rr-next-btn');
-  if (!isWaiting) {
-    // P1 — go pick next round
-    nextBtn.textContent = '\u2694\uFE0F Pick Next Round';
-    nextBtn.onclick = () => startRoundChallenge(_currentGame);
-  } else {
-    // P2 — back to lobby
-    nextBtn.textContent = '\u2190 Back to Battles';
-    nextBtn.onclick = () => showScreen('lobby');
-  }
+  nextBtn.textContent = '\u2694\uFE0F Pick Your Challenge';
+  nextBtn.onclick = () => startRoundChallenge(_currentGame);
 
   showScreen('round-result');
 }
