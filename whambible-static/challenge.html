@@ -984,6 +984,151 @@
 }
 #bv-save-pack-btn:hover { background: rgba(201,162,39,0.22); }
 
+
+/* ══════════════════════════════════════════════
+   NEW CHALLENGE FLOW — Level / Verse / Challenger
+   ══════════════════════════════════════════════ */
+
+/* Verse stack card */
+.vs-card {
+  background: rgba(201,162,39,0.06);
+  border: 1px solid rgba(201,162,39,0.18);
+  border-radius: 12px;
+  padding: 12px 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-align: center;
+  transition: all 0.18s ease;
+  min-height: 80px;
+  position: relative;
+  overflow: hidden;
+}
+.vs-card:hover, .vs-card:active {
+  background: rgba(201,162,39,0.14);
+  border-color: #c9a227;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+}
+.vs-card.selected {
+  background: rgba(201,162,39,0.18);
+  border: 2px solid #c9a227;
+  box-shadow: 0 0 0 2px rgba(201,162,39,0.25), 0 8px 24px rgba(0,0,0,0.5);
+}
+.vs-card-ref {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: #c9a227;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+}
+.vs-card-snippet {
+  font-family: 'Crimson Text', serif;
+  font-size: 10px;
+  font-style: italic;
+  color: rgba(240,228,192,0.45);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Recent opponent row */
+.recent-opp-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(201,162,39,0.12);
+  border-radius: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.recent-opp-row:hover, .recent-opp-row:active {
+  background: rgba(201,162,39,0.08);
+  border-color: rgba(201,162,39,0.35);
+}
+.recent-opp-avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: rgba(201,162,39,0.15);
+  border: 1px solid rgba(201,162,39,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.recent-opp-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.recent-opp-info { flex: 1; min-width: 0; }
+.recent-opp-name {
+  font-family: 'Cinzel', serif;
+  font-size: 13px; font-weight: 700;
+  color: #e2e8f0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.recent-opp-meta {
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+  margin-top: 2px;
+}
+.recent-opp-challenge-btn {
+  background: linear-gradient(135deg,#c9a227,#a07720);
+  border: none;
+  border-radius: 8px;
+  color: #0f172a;
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 7px 12px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.recent-opp-challenge-btn:active { transform: scale(0.96); opacity: 0.85; }
+
+/* Search result row */
+.sc-result-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(201,162,39,0.15);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.sc-result-row:hover { background: rgba(201,162,39,0.09); }
+.sc-result-row.selected {
+  border-color: #c9a227;
+  background: rgba(201,162,39,0.12);
+}
+.sc-result-name {
+  flex: 1;
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  color: #e2e8f0;
+  font-weight: 600;
+}
+.sc-result-email {
+  font-size: 11px;
+  color: rgba(255,255,255,0.3);
+}
+
+/* mp level card highlight */
+.level-card.rank-match {
+  border: 2px solid #c9a227 !important;
+  background: rgba(201,162,39,0.14) !important;
+  box-shadow: 0 0 0 3px rgba(201,162,39,0.25), 0 8px 24px rgba(0,0,0,0.5) !important;
+}
 </style>
 </head>
 <body>
@@ -1964,7 +2109,7 @@
         </div>
 
         <!-- New Challenge button -->
-        <button class="btn-challenge-new" onclick="showNewChallenge()">
+        <button class="btn-challenge-new" onclick="startNewChallenge()">
           ⚔️ Issue New Challenge
         </button>
 
@@ -2002,6 +2147,142 @@
       <div id="nc-err" style="color:#f87171;font-size:12px;min-height:16px;margin-bottom:8px;text-align:center;"></div>
       <button class="btn-primary" style="width:100%" onclick="ncIssueChallenge()">Send Challenge ⚔️</button>
       <button class="btn-ghost" style="width:100%;margin-top:8px" onclick="hideNewChallenge()">Cancel</button>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════════════════════════════
+       SCREEN: MP LEVEL SELECT
+       Player picks their challenge level — highlights their rank level
+       ══════════════════════════════════════════════════════ -->
+  <div id="screen-mp-level" class="screen">
+    <div class="screen-inner">
+
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="font-size:36px;margin-bottom:6px;">⚔️</div>
+        <h1 style="font-family:'Cinzel',serif;font-size:22px;font-weight:900;color:#c9a227;letter-spacing:2px;margin:0 0 4px;">
+          Choose Level
+        </h1>
+        <p style="font-family:'Crimson Text',serif;font-size:15px;font-style:italic;color:rgba(240,228,192,0.55);margin:0;">
+          Select your challenge difficulty
+        </p>
+      </div>
+
+      <div class="level-row" id="mp-level-row" style="margin-bottom:28px;">
+        <div class="level-card" id="mplvl-5"  onclick="mpPickLevel(5,'Squire','🗡️')">
+          <span class="level-icon">🗡️</span>
+          <span class="level-points">5</span>
+          <span class="level-pt-label">pts</span>
+          <span class="level-name">Squire</span>
+        </div>
+        <div class="level-card" id="mplvl-10" onclick="mpPickLevel(10,'Warrior','⚔️')">
+          <span class="level-icon">⚔️</span>
+          <span class="level-points">10</span>
+          <span class="level-pt-label">pts</span>
+          <span class="level-name">Warrior</span>
+        </div>
+        <div class="level-card" id="mplvl-15" onclick="mpPickLevel(15,'Knight','🛡️')">
+          <span class="level-icon">🛡️</span>
+          <span class="level-points">15</span>
+          <span class="level-pt-label">pts</span>
+          <span class="level-name">Knight</span>
+        </div>
+        <div class="level-card" id="mplvl-20" onclick="mpPickLevel(20,'Champion','👑')">
+          <span class="level-icon">👑</span>
+          <span class="level-points">20</span>
+          <span class="level-pt-label">pts</span>
+          <span class="level-name">Champion</span>
+        </div>
+      </div>
+
+      <button class="btn-ghost" onclick="showScreen('lobby')">← Back</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SCREEN: VERSE STACK
+       2 rows × 5 random verses — player picks one to challenge with
+       ══════════════════════════════════════════════════════ -->
+  <div id="screen-verse-stack" class="screen">
+    <div class="screen-inner">
+
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:3px;color:rgba(201,162,39,0.5);text-transform:uppercase;margin-bottom:6px;">
+          Choose Your Challenge
+        </div>
+        <h1 style="font-family:'Cinzel',serif;font-size:20px;font-weight:900;color:#c9a227;letter-spacing:1px;margin:0 0 4px;">
+          Pick a Verse
+        </h1>
+        <p style="font-family:'Crimson Text',serif;font-size:14px;font-style:italic;color:rgba(240,228,192,0.45);margin:0;">
+          Select the verse your opponent must identify
+        </p>
+      </div>
+
+      <!-- 2 rows × 5 verse cards -->
+      <div id="verse-stack-grid" style="
+        display:grid;
+        grid-template-columns:repeat(5,1fr);
+        grid-template-rows:1fr 1fr;
+        gap:10px;
+        margin-bottom:24px;
+      "></div>
+
+      <div style="text-align:center;">
+        <button class="btn-ghost" onclick="showScreen('mp-level')">← Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SCREEN: SELECT CHALLENGER
+       Last 5 recent opponents + search window
+       ══════════════════════════════════════════════════════ -->
+  <div id="screen-select-challenger" class="screen">
+    <div class="screen-inner">
+
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:30px;margin-bottom:6px;">🎯</div>
+        <h1 style="font-family:'Cinzel',serif;font-size:20px;font-weight:900;color:#c9a227;letter-spacing:1px;margin:0 0 4px;">
+          Select Opponent
+        </h1>
+        <p style="font-family:'Crimson Text',serif;font-size:14px;font-style:italic;color:rgba(240,228,192,0.45);margin:0;">
+          Challenge a recent opponent or search
+        </p>
+      </div>
+
+      <!-- Recent opponents -->
+      <div style="margin-bottom:20px;">
+        <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;color:rgba(201,162,39,0.45);text-transform:uppercase;margin-bottom:10px;">
+          Recent Opponents
+        </div>
+        <div id="recent-opponents-list" style="display:flex;flex-direction:column;gap:8px;">
+          <div style="color:rgba(255,255,255,0.25);font-size:13px;font-family:'Crimson Text',serif;font-style:italic;text-align:center;padding:12px;">
+            Loading recent opponents…
+          </div>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+        <div style="flex:1;height:1px;background:rgba(201,162,39,0.15);"></div>
+        <span style="font-family:'Cinzel',serif;font-size:10px;color:rgba(201,162,39,0.35);letter-spacing:2px;">OR SEARCH</span>
+        <div style="flex:1;height:1px;background:rgba(201,162,39,0.15);"></div>
+      </div>
+
+      <!-- Search -->
+      <div style="margin-bottom:8px;">
+        <input type="text" id="sc-search-input" class="lm-input"
+          placeholder="Name or email…"
+          oninput="scSearchDebounce()"
+          style="margin-bottom:8px;" />
+        <div id="sc-search-results" style="display:none;flex-direction:column;gap:6px;margin-bottom:10px;"></div>
+        <div id="sc-search-status" style="font-size:12px;color:rgba(255,255,255,0.3);font-style:italic;min-height:16px;text-align:center;margin-bottom:8px;"></div>
+        <button class="btn-primary" style="width:100%" onclick="scIssueWithSearch()">
+          ⚔️ Challenge This Player
+        </button>
+      </div>
+
+      <button class="btn-ghost" style="margin-top:10px;width:100%" onclick="showScreen('verse-stack')">← Back</button>
     </div>
   </div>
 
@@ -3145,6 +3426,317 @@ function openGame(gameId, game) {
 }
 
 // ── Show new challenge modal ───────────────────────────────
+
+// ══════════════════════════════════════════════════════════
+// NEW CHALLENGE FLOW: Level → Verse Stack → Select Challenger
+// ══════════════════════════════════════════════════════════
+
+// State for the new challenge flow
+let _ncLevel    = 10;
+let _ncLevelName= 'Warrior';
+let _ncLevelIcon= '⚔️';
+let _ncVerse    = null;
+let _ncOppDoc   = null;  // selected opponent Firestore doc
+let _scSearchTid = null;
+
+// ── Entry point — replaces old showNewChallenge ────────────
+window.startNewChallenge = function() {
+  _ncLevel = 10; _ncLevelName = 'Warrior'; _ncLevelIcon = '⚔️';
+  _ncVerse = null; _ncOppDoc = null;
+
+  // Highlight the card that matches player's current rank
+  const me = window._fbUser;
+  if (me) {
+    const { db, doc, getDoc } = window._fb;
+    getDoc(doc(db,'players',me.uid)).then(snap => {
+      const score = snap.exists() ? (snap.data().score || 0) : 0;
+      const rankLevel = score >= 500 ? 20 : score >= 200 ? 15 : score >= 100 ? 10 : score >= 50 ? 5 : 10;
+      highlightMpLevel(rankLevel);
+    }).catch(() => highlightMpLevel(10));
+  } else {
+    highlightMpLevel(10);
+  }
+
+  showScreen('mp-level');
+};
+
+function highlightMpLevel(matchPts) {
+  [5,10,15,20].forEach(n => {
+    const el = document.getElementById('mplvl-' + n);
+    if (!el) return;
+    if (n === matchPts) {
+      el.classList.add('rank-match');
+    } else {
+      el.classList.remove('rank-match');
+    }
+  });
+}
+
+// ── Player picks level → go to verse stack ────────────────
+window.mpPickLevel = function(pts, name, icon) {
+  _ncLevel = pts; _ncLevelName = name; _ncLevelIcon = icon;
+
+  // Briefly highlight selected
+  [5,10,15,20].forEach(n => {
+    const el = document.getElementById('mplvl-' + n);
+    if (el) el.classList.toggle('rank-match', n === pts);
+  });
+
+  // Build verse stack then transition
+  setTimeout(() => {
+    buildVerseStack();
+    showScreen('verse-stack');
+  }, 180);
+};
+
+// ── Build verse stack — 10 random verses in 2×5 grid ──────
+function buildVerseStack() {
+  const pool  = (window.WHAM_VERSES || []);
+  const picks = [...pool].sort(() => Math.random() - 0.5).slice(0, 10);
+  const grid  = document.getElementById('verse-stack-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  picks.forEach((v, i) => {
+    const card = document.createElement('div');
+    card.className = 'vs-card';
+    card.id = 'vscard-' + i;
+    card.innerHTML = \`
+      <div class="vs-card-ref">\${v.book}<br>\${v.chapter}:\${v.verse}</div>
+      <div class="vs-card-snippet">"\${(v.text||'').slice(0,50)}…"</div>
+    \`;
+    card.onclick = () => {
+      // Highlight selection
+      grid.querySelectorAll('.vs-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      _ncVerse = v;
+      // Brief pulse then advance
+      setTimeout(() => {
+        loadRecentOpponents();
+        showScreen('select-challenger');
+      }, 220);
+    };
+    grid.appendChild(card);
+  });
+}
+
+// ── Load recent opponents (last 5 unique from games collection) ──
+async function loadRecentOpponents() {
+  const listEl = document.getElementById('recent-opponents-list');
+  if (!listEl) return;
+  listEl.innerHTML = '<div style="color:rgba(255,255,255,0.25);font-size:13px;font-family:Crimson Text,serif;font-style:italic;text-align:center;padding:12px;">Loading…</div>';
+
+  const me = window._fbUser;
+  if (!me) { listEl.innerHTML = '<div style="color:rgba(255,255,255,0.25);font-size:13px;text-align:center;padding:12px;">Sign in to see recent opponents</div>'; return; }
+
+  try {
+    const { db, collection, query, where, orderBy, limit, getDocs, doc, getDoc } = window._fb;
+
+    // Query games where I was a player, last 20
+    const q = query(
+      collection(db,'games'),
+      where('players','array-contains', me.uid),
+      orderBy('updatedAt','desc'),
+      limit(20)
+    );
+    const snap = await getDocs(q);
+
+    // Extract unique opponents
+    const seen = new Set();
+    const opps = [];
+    for (const d of snap.docs) {
+      const g = d.data();
+      const oppUid = (g.players || []).find(p => p !== me.uid);
+      if (!oppUid || seen.has(oppUid)) continue;
+      seen.add(oppUid);
+      opps.push({ uid: oppUid, name: g.playerNames?.[oppUid] || 'Warrior', photo: g.playerPhotos?.[oppUid] || '', gameId: d.id, updatedAt: g.updatedAt });
+      if (opps.length >= 5) break;
+    }
+
+    if (opps.length === 0) {
+      listEl.innerHTML = '<div style="color:rgba(255,255,255,0.25);font-size:13px;font-family:Crimson Text,serif;font-style:italic;text-align:center;padding:12px;">No recent opponents yet — search below</div>';
+      return;
+    }
+
+    listEl.innerHTML = '';
+    opps.forEach(opp => {
+      const row = document.createElement('div');
+      row.className = 'recent-opp-row';
+      const avatarHtml = opp.photo
+        ? \`<img src="\${opp.photo}" alt="" />\`
+        : '👤';
+      row.innerHTML = \`
+        <div class="recent-opp-avatar">\${avatarHtml}</div>
+        <div class="recent-opp-info">
+          <div class="recent-opp-name">\${opp.name}</div>
+          <div class="recent-opp-meta">Recent opponent</div>
+        </div>
+        <button class="recent-opp-challenge-btn" onclick="scIssueWithOpponent(\${JSON.stringify({uid:opp.uid,displayName:opp.name,photoURL:opp.photo}).replace(/"/g,'&quot;')})">
+          ⚔️ Challenge
+        </button>
+      \`;
+      listEl.appendChild(row);
+    });
+
+  } catch(e) {
+    console.warn('recent opponents:', e);
+    listEl.innerHTML = '<div style="color:rgba(255,255,255,0.25);font-size:13px;text-align:center;padding:12px;">Could not load recent opponents</div>';
+  }
+}
+
+// ── Search debounce ────────────────────────────────────────
+window.scSearchDebounce = function() {
+  clearTimeout(_scSearchTid);
+  _scSearchTid = setTimeout(scRunSearch, 380);
+};
+
+async function scRunSearch() {
+  const val    = (document.getElementById('sc-search-input')?.value || '').trim();
+  const resEl  = document.getElementById('sc-search-results');
+  const statEl = document.getElementById('sc-search-status');
+  if (!resEl || !statEl) return;
+
+  if (val.length < 2) {
+    resEl.style.display = 'none';
+    statEl.textContent  = '';
+    _ncOppDoc = null;
+    return;
+  }
+
+  statEl.textContent = 'Searching…';
+  resEl.style.display = 'none';
+  resEl.innerHTML = '';
+  _ncOppDoc = null;
+
+  const me = window._fbUser;
+  const { db, collection, query, where, getDocs } = window._fb;
+
+  let results = [];
+  try {
+    // Search by email
+    const q1 = query(collection(db,'players'), where('email','==',val));
+    const s1  = await getDocs(q1);
+    s1.forEach(d => { if (d.id !== me.uid) results.push({ id: d.id, ...d.data() }); });
+  } catch(e) {}
+  try {
+    // Search by displayName
+    const q2 = query(collection(db,'players'), where('displayName','==',val));
+    const s2  = await getDocs(q2);
+    s2.forEach(d => { if (d.id !== me.uid && !results.find(r => r.id === d.id)) results.push({ id: d.id, ...d.data() }); });
+  } catch(e) {}
+
+  if (results.length === 0) {
+    statEl.textContent = 'No players found — challenge by email anyway';
+    // Allow challenge by raw email
+    _ncOppDoc = { id: 'pending_' + Date.now(), displayName: val, email: val, photoURL: '' };
+    return;
+  }
+
+  statEl.textContent = '';
+  resEl.style.display = 'flex';
+  results.slice(0,5).forEach(r => {
+    const row = document.createElement('div');
+    row.className = 'sc-result-row';
+    row.innerHTML = \`
+      <div class="recent-opp-avatar" style="width:30px;height:30px;font-size:14px;">\${r.photoURL ? \`<img src="\${r.photoURL}" alt="" />\` : '👤'}</div>
+      <div class="sc-result-name">\${r.displayName || r.email || 'Player'}</div>
+      <div class="sc-result-email">\${r.email || ''}</div>
+    \`;
+    row.onclick = () => {
+      resEl.querySelectorAll('.sc-result-row').forEach(rw => rw.classList.remove('selected'));
+      row.classList.add('selected');
+      _ncOppDoc = r;
+      statEl.textContent = \`✅ \${r.displayName || r.email} selected\`;
+    };
+    resEl.appendChild(row);
+  });
+}
+
+// ── Issue challenge with search selection ──────────────────
+window.scIssueWithSearch = async function() {
+  if (!_ncOppDoc) { showToast('Select a player first'); return; }
+  await _createChallengeGame(_ncOppDoc);
+};
+
+// ── Issue challenge from recent opponent row ───────────────
+window.scIssueWithOpponent = async function(opp) {
+  await _createChallengeGame(opp);
+};
+
+// ── Create the game in Firestore ───────────────────────────
+async function _createChallengeGame(oppDoc) {
+  const me = window._fbUser;
+  if (!me || !_ncVerse) { showToast('Missing verse or auth'); return; }
+
+  const { db, collection, addDoc, serverTimestamp } = window._fb;
+  const myName   = me.displayName || me.email || 'Warrior';
+  const myPhoto  = me.photoURL || '';
+  const oppUid   = oppDoc.id || ('pending_' + Date.now());
+  const oppName  = oppDoc.displayName || oppDoc.email || 'Opponent';
+  const oppPhoto = oppDoc.photoURL || '';
+
+  try {
+    showToast('⚔️ Issuing challenge…');
+    const gameRef = await addDoc(collection(db,'games'), {
+      players:      [me.uid, oppUid],
+      playerNames:  { [me.uid]: myName, [oppUid]: oppName },
+      playerPhotos: { [me.uid]: myPhoto, [oppUid]: oppPhoto },
+      scores:       { [me.uid]: 0, [oppUid]: 0 },
+      currentTurn:  oppUid,              // opponent answers first
+      status:       'waiting_for_answer',
+      pendingLevel: _ncLevel,
+      pendingName:  _ncLevelName,
+      pendingIcon:  _ncLevelIcon,
+      pendingVerse: _ncVerse,
+      round:        1,
+      createdAt:    serverTimestamp(),
+      updatedAt:    serverTimestamp(),
+      createdBy:    me.uid
+    });
+
+    _currentGameId = gameRef.id;
+    _currentGame   = {
+      id: gameRef.id,
+      players: [me.uid, oppUid],
+      playerNames: { [me.uid]: myName, [oppUid]: oppName },
+      playerPhotos: { [me.uid]: myPhoto, [oppUid]: oppPhoto },
+      scores: { [me.uid]: 0, [oppUid]: 0 },
+      currentTurn: oppUid, status: 'waiting_for_answer',
+      pendingLevel: _ncLevel, pendingVerse: _ncVerse,
+      pendingName: _ncLevelName, pendingIcon: _ncLevelIcon, round: 1
+    };
+
+    // Show waiting screen (round-result repurposed)
+    document.getElementById('share-code').textContent  = gameRef.id.slice(0,8).toUpperCase();
+    document.getElementById('rr-p1-name').textContent  = myName;
+    document.getElementById('rr-p2-name').textContent  = oppName;
+    document.getElementById('rr-p1-total').textContent = '0 pts';
+    document.getElementById('rr-p2-total').textContent = '0 pts';
+    document.getElementById('rr-p1-delta').textContent = \`\${_ncLevelIcon} \${_ncLevelName} challenge sent\`;
+    document.getElementById('rr-p2-delta').textContent = '⏳ Waiting to answer…';
+    document.getElementById('rr-icon').textContent     = _ncLevelIcon;
+    document.getElementById('rr-title').textContent    = \`\${_ncLevelName} Challenge Sent!\`;
+    document.getElementById('rr-next-btn').textContent = '← Back to Battles';
+    document.getElementById('rr-next-btn').onclick     = () => showScreen('lobby');
+    document.getElementById('rr-verse-ref').textContent = \`\${_ncVerse.book} \${_ncVerse.chapter}:\${_ncVerse.verse}\`;
+    document.getElementById('rr-verse-text').textContent = \`"\${_ncVerse.text || ''}"\`;
+    showScreen('round-result');
+
+    // Push notification to opponent
+    if (oppDoc.fcmToken) {
+      sendPushToOpponent(oppDoc.fcmToken,
+        '⚔️ WhamBible Challenge!',
+        \`\${myName} sent you a \${_ncLevel}pt \${_ncLevelName} challenge!\`,
+        gameRef.id, myName);
+    }
+    showToast(\`\${_ncLevelIcon} Challenge issued to \${oppName}!\`);
+
+  } catch(e) {
+    showToast('Error: ' + e.message);
+    console.error('createChallengeGame:', e);
+  }
+}
+
 window.showNewChallenge = function() {
   const modal = document.getElementById('new-challenge-modal');
   if (modal) { modal.style.display = 'flex'; }
