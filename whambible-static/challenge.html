@@ -1187,7 +1187,49 @@
   color: rgba(255,255,255,0.3);
 }
 
-/* mp level card highlight */
+/* ── Level cards — stacked rectangles ── */
+.level-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+}
+.level-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+  border-radius: 10px;
+  border: 1px solid rgba(201,162,39,0.25);
+  background: rgba(201,162,39,0.07);
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+}
+.level-card:active {
+  transform: scale(0.98);
+}
+.level-icon   { font-size: 26px; flex-shrink: 0; }
+.level-info   { flex: 1; text-align: left; }
+.level-title  { font-family:'Cinzel',serif; font-size:13px; font-weight:700; color:rgba(201,162,39,0.75); letter-spacing:1px; display:block; }
+.level-sub    { font-family:'Crimson Text',serif; font-size:12px; color:rgba(240,228,192,0.45); font-style:italic; display:block; }
+.level-pts-wrap { text-align: right; flex-shrink: 0; }
+.level-points { font-family:'Cinzel',serif; font-size:26px; font-weight:900; color:#c9a227; display:block; }
+.level-pt-label { font-family:'Cinzel',serif; font-size:10px; color:rgba(201,162,39,0.45); letter-spacing:2px; display:block; margin-top:-4px; }
+/* Warrior highlight (active/featured) */
+.level-card.warrior-featured {
+  border: 2px solid #c9a227;
+  background: rgba(201,162,39,0.13);
+  box-shadow: 0 0 14px rgba(201,162,39,0.25), 0 4px 16px rgba(0,0,0,0.4);
+}
+.level-card.warrior-featured .level-title { color: #c9a227; }
+.level-card.warrior-featured .level-sub   { color: rgba(240,228,192,0.6); }
+.level-card.warrior-featured .level-points { color: #f0e4c0; }
+/* rank-match highlight */
 .level-card.rank-match {
   border: 2px solid #c9a227 !important;
   background: rgba(201,162,39,0.14) !important;
@@ -2233,29 +2275,25 @@
       </div>
 
       <div class="level-row" id="mp-level-row" style="margin-bottom:28px;">
-        <div class="level-card" id="mplvl-5"  onclick="mpPickLevel(5,'Squire','🗡️')">
+        <div class="level-card" id="mplvl-5" onclick="mpPickLevel(5,'Squire','🗡️')">
           <span class="level-icon">🗡️</span>
-          <span class="level-points">5</span>
-          <span class="level-pt-label">pts</span>
-          <span class="level-name">Squire</span>
+          <div class="level-info"><span class="level-title">SQUIRE</span><span class="level-sub">Easiest · Common verses</span></div>
+          <div class="level-pts-wrap"><span class="level-points">5</span><span class="level-pt-label">PTS</span></div>
         </div>
-        <div class="level-card" id="mplvl-10" onclick="mpPickLevel(10,'Warrior','⚔️')">
+        <div class="level-card warrior-featured" id="mplvl-10" onclick="mpPickLevel(10,'Warrior','⚔️')">
           <span class="level-icon">⚔️</span>
-          <span class="level-points">10</span>
-          <span class="level-pt-label">pts</span>
-          <span class="level-name">Warrior</span>
+          <div class="level-info"><span class="level-title">WARRIOR</span><span class="level-sub">Moderate · Popular verses</span></div>
+          <div class="level-pts-wrap"><span class="level-points">10</span><span class="level-pt-label">PTS</span></div>
         </div>
         <div class="level-card" id="mplvl-15" onclick="mpPickLevel(15,'Knight','🛡️')">
           <span class="level-icon">🛡️</span>
-          <span class="level-points">15</span>
-          <span class="level-pt-label">pts</span>
-          <span class="level-name">Knight</span>
+          <div class="level-info"><span class="level-title">KNIGHT</span><span class="level-sub">Hard · Deeper verses</span></div>
+          <div class="level-pts-wrap"><span class="level-points">15</span><span class="level-pt-label">PTS</span></div>
         </div>
         <div class="level-card" id="mplvl-20" onclick="mpPickLevel(20,'Champion','👑')">
           <span class="level-icon">👑</span>
-          <span class="level-points">20</span>
-          <span class="level-pt-label">pts</span>
-          <span class="level-name">Champion</span>
+          <div class="level-info"><span class="level-title">CHAMPION</span><span class="level-sub">Hardest · Rare verses</span></div>
+          <div class="level-pts-wrap"><span class="level-points">20</span><span class="level-pt-label">PTS</span></div>
         </div>
       </div>
 
@@ -2381,27 +2419,23 @@
       <div class="level-row" style="margin-bottom:20px">
         <div class="level-card" onclick="pickLevel(5,'Squire','🗡️')">
           <span class="level-icon">🗡️</span>
-          <span class="level-points">5</span>
-          <span class="level-pt-label">pts</span>
-          <span class="level-name">Squire</span>
+          <div class="level-info"><span class="level-title">SQUIRE</span><span class="level-sub">Easiest · Common verses</span></div>
+          <div class="level-pts-wrap"><span class="level-points">5</span><span class="level-pt-label">PTS</span></div>
         </div>
-        <div class="level-card" onclick="pickLevel(10,'Warrior','⚔️')">
+        <div class="level-card warrior-featured" onclick="pickLevel(10,'Warrior','⚔️')">
           <span class="level-icon">⚔️</span>
-          <span class="level-points">10</span>
-          <span class="level-pt-label">pts</span>
-          <span class="level-name">Warrior</span>
+          <div class="level-info"><span class="level-title">WARRIOR</span><span class="level-sub">Moderate · Popular verses</span></div>
+          <div class="level-pts-wrap"><span class="level-points">10</span><span class="level-pt-label">PTS</span></div>
         </div>
         <div class="level-card" onclick="pickLevel(15,'Knight','🛡️')">
           <span class="level-icon">🛡️</span>
-          <span class="level-points">15</span>
-          <span class="level-pt-label">pts</span>
-          <span class="level-name">Knight</span>
+          <div class="level-info"><span class="level-title">KNIGHT</span><span class="level-title"></span><span class="level-sub">Hard · Deeper verses</span></div>
+          <div class="level-pts-wrap"><span class="level-points">15</span><span class="level-pt-label">PTS</span></div>
         </div>
         <div class="level-card" onclick="pickLevel(20,'Champion','👑')">
           <span class="level-icon">👑</span>
-          <span class="level-points">20</span>
-          <span class="level-pt-label">pts</span>
-          <span class="level-name">Champion</span>
+          <div class="level-info"><span class="level-title">CHAMPION</span><span class="level-sub">Hardest · Rare verses</span></div>
+          <div class="level-pts-wrap"><span class="level-points">20</span><span class="level-pt-label">PTS</span></div>
         </div>
       </div>
 
