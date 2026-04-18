@@ -24,6 +24,8 @@ let state = {
   timerInterval:  null,
   timeLeft:       TIME_LIMIT,
 };
+// Expose to game.html inline scripts (papa hint, etc.)
+window._gameState = state;
 
 
 // ── Rank → Default Level Helper ──────────────────────────
@@ -297,6 +299,8 @@ function loadVerse() {
   fb.textContent = '';
   fb.className   = 'feedback-bar';
 
+  _hintFired = false;      // fresh verse — allow hint once
+  if (typeof window.papaMakeVisible === 'function') window.papaMakeVisible();
   buildChoices(v);
   startTimer();
 }
@@ -498,6 +502,11 @@ function startTimer() {
     const pct = (state.timeLeft / TIME_LIMIT) * 100;
     bar.style.width = pct + '%';
     if (pct < 30) bar.className = 'timer-bar danger';
+    // ── Squire hint: trigger at exactly 10 s remaining ──
+    if (!_hintFired && state.pointsPerVerse === 5 && state.timeLeft <= 10 && state.timeLeft > 9.8) {
+      _hintFired = true;
+      if (typeof window.triggerPapaHint === 'function') window.triggerPapaHint();
+    }
     if (state.timeLeft <= 0) { clearTimer(); timeUp(); }
   }, 100);
 }
