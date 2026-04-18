@@ -578,6 +578,24 @@
   padding: 0 2px;
   word-break: break-all;
 }
+.cvp-mp-del-btn {
+  position: absolute;
+  top: -4px; right: -4px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  border: 1px solid rgba(248,113,113,0.5);
+  background: rgba(15,23,42,0.9);
+  color: rgba(248,113,113,0.8);
+  font-size: 9px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.cvp-mp-bubble.has-verse:hover .cvp-mp-del-btn { opacity: 1; }
+.cvp-mp-bubble { position: relative; }
 
 </style>
 <style>
@@ -4945,7 +4963,18 @@ window.mpOpenCustomVersePack = function() {
     bubble.className = 'cvp-mp-bubble' + (slot && slot.book ? ' has-verse' : '');
     bubble.id = 'cvp-mp-bub-' + i;
     bubble.onclick = () => cvpMpBubbleTap(i);
-    bubble.innerHTML = `<span class="bub-num">${i+1}</span><span class="bub-ref">${slot && slot.book ? slot.book.slice(0,3)+' '+slot.chapter+':'+slot.verse : ''}</span>`;
+    if (slot && slot.book) {
+      bubble.innerHTML = `<span class="bub-num">${i+1}</span><span class="bub-ref">${slot.book.slice(0,3)} ${slot.chapter}:${slot.verse}</span>`;
+      // Add a small ✕ delete badge
+      const delBtn = document.createElement('button');
+      delBtn.className = 'cvp-mp-del-btn';
+      delBtn.textContent = '✕';
+      delBtn.title = 'Delete slot ' + (i+1);
+      delBtn.onclick = (e) => { e.stopPropagation(); cvpMpDeleteSlot(i); };
+      bubble.appendChild(delBtn);
+    } else {
+      bubble.innerHTML = `<span class="bub-num">${i+1}</span><span class="bub-ref"></span>`;
+    }
     (i < 5 ? grid1 : grid2).appendChild(bubble);
   }
 
@@ -4981,6 +5010,24 @@ window.cvpMpBubbleTap = function(idx) {
   const btn = document.getElementById('cvp-mp-play-btn');
   btn.style.opacity       = '1';
   btn.style.pointerEvents = 'all';
+};
+
+window.cvpMpDeleteSlot = function(idx) {
+  try {
+    const pack = JSON.parse(localStorage.getItem('whamVersePack') || 'null') || Array(10).fill(null);
+    pack[idx] = null;
+    localStorage.setItem('whamVersePack', JSON.stringify(pack));
+    window._cvpMpSlots = pack;
+    // If deleted slot was selected, reset
+    if (window._cvpMpSelected === idx) {
+      window._cvpMpSelected = null;
+      document.getElementById('cvp-mp-play-btn').style.opacity = '0.4';
+      document.getElementById('cvp-mp-play-btn').style.pointerEvents = 'none';
+      document.getElementById('cvp-mp-preview').style.display = 'none';
+    }
+    // Re-render grid
+    mpOpenCustomVersePack();
+  } catch(e) { console.warn('CVP delete error', e); }
 };
 
 window.mpPlayCustomVerse = function() {

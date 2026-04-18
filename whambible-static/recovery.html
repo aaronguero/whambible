@@ -381,6 +381,24 @@
   background: rgba(201,162,39,0.22);
   box-shadow: 0 0 10px rgba(201,162,39,0.35);
 }
+/* Delete badge on filled recovery bubbles */
+.cvp-bub-del {
+  position: absolute;
+  top: -4px; right: -4px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  border: 1px solid rgba(248,113,113,0.5);
+  background: rgba(15,23,42,0.9);
+  color: rgba(248,113,113,0.8);
+  font-size: 9px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.cvp-bubble.has-verse:hover .cvp-bub-del { opacity: 1; }
 /* Row 2 bubbles */
 #cvp-bubbles-row2 {
   display: grid;
@@ -922,9 +940,20 @@ function cvpLoadBubbles() {
     if (slot && slot.book) {
       bub.classList.add('has-verse');
       refEl.textContent = slot.book.slice(0, 3) + ' ' + slot.chapter + ':' + slot.verse;
+      // Add delete badge if not already there
+      if (!bub.querySelector('.cvp-bub-del')) {
+        const del = document.createElement('button');
+        del.className = 'cvp-bub-del';
+        del.textContent = '✕';
+        del.title = 'Delete slot ' + (i + 1);
+        del.onclick = (e) => { e.stopPropagation(); cvpRecovDelSlot(i); };
+        bub.appendChild(del);
+      }
     } else {
       bub.classList.remove('has-verse', 'selected-verse');
       refEl.textContent = '';
+      const old = bub.querySelector('.cvp-bub-del');
+      if (old) old.remove();
     }
   }
   // reset selection
@@ -982,6 +1011,21 @@ window.cvpPlayCustomVerse = function() {
   const ret    = params.get('return') || '';
   const ref    = encodeURIComponent(slot.book + ' ' + slot.chapter + ':' + slot.verse);
   window.location.href = 'recovery.html?verse=custom&pts=' + pts + '&return=' + encodeURIComponent(ret) + '&customRef=' + ref;
+};
+
+window.cvpRecovDelSlot = function(idx) {
+  try {
+    const pack = JSON.parse(localStorage.getItem('whamVersePack') || 'null') || Array(10).fill(null);
+    pack[idx] = null;
+    localStorage.setItem('whamVersePack', JSON.stringify(pack));
+    window._cvpSlots = pack;
+    // Deselect if it was selected
+    if (window._cvpSelected === idx) {
+      window._cvpSelected = null;
+      document.getElementById('cvp-play-btn').classList.remove('active');
+    }
+    cvpLoadBubbles();
+  } catch(e) { console.warn('CVP del error', e); }
 };
 
 // Load bubbles on page ready
