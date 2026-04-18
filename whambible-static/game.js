@@ -11,9 +11,9 @@ let _whamAudio = null;
 
 // ── State ────────────────────────────────────────────────
 let state = {
-  pointsPerVerse: 10,
-  levelName:      'Warrior',
-  levelIcon:      '⚔️',
+  pointsPerVerse: 5,          // overridden by getPlayerDefaultLevel() on init
+  levelName:      'Squire',   // overridden by getPlayerDefaultLevel() on init
+  levelIcon:      '🗡️',       // overridden by getPlayerDefaultLevel() on init
   queue:          [],
   currentIndex:   0,
   currentVerse:   null,
@@ -24,6 +24,40 @@ let state = {
   timerInterval:  null,
   timeLeft:       TIME_LIMIT,
 };
+
+
+// ── Rank → Default Level Helper ──────────────────────────
+// Maps a player's lifetime score to their rank and the corresponding
+// suggested challenge level. Called at init to pre-select the right card.
+function rankFromScore(score) {
+  if (score >= 500) return { pts: 20, name: 'Champion', icon: '👑' };
+  if (score >= 200) return { pts: 15, name: 'Knight',   icon: '🛡️' };
+  if (score >= 100) return { pts: 10, name: 'Warrior',  icon: '⚔️' };
+  if (score >= 50)  return { pts:  5, name: 'Squire',   icon: '🗡️' };
+  return                    { pts:  5, name: 'Squire',   icon: '🗡️' }; // Scribe → 5
+}
+
+// Returns a Promise that resolves to the player's rank-level object.
+// Reads Firestore if logged in, otherwise uses local solo high-score.
+async function getPlayerDefaultLevel() {
+  try {
+    const fb   = window._fb;
+    const auth = fb && fb.auth;
+    const user = auth && auth.currentUser;
+    if (user) {
+      const { db, doc, getDoc } = fb;
+      const snap = await getDoc(doc(db, 'players', user.uid));
+      if (snap.exists()) {
+        const s = snap.data().score || 0;
+        return rankFromScore(s);
+      }
+    }
+  } catch(e) { /* offline / not authed — fall through */ }
+
+  // Fallback: best solo score stored in localStorage
+  const localBest = parseInt(localStorage.getItem('wb_best_solo_score') || '0', 10);
+  return rankFromScore(localBest);
+}
 
 // ── Init ─────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
@@ -37,7 +71,12 @@ window.addEventListener('DOMContentLoaded', () => {
   // ── Returning from recovery screen — skip pick screen ────
   if (!isNaN(retIndex) && recovered !== null) {
     hideSoloPickScreen();
-    setLevel(isNaN(lvl) ? 10 : lvl);
+    // Use the level from URL param; if missing, resolve from rank
+    if (!isNaN(lvl) && lvl > 0) {
+      setLevel(lvl);
+    } else {
+      getPlayerDefaultLevel().then(rl => setLevel(rl.pts));
+    }
     buildQueue();
     renderProgressDots();
     _queueBuilt = true; // mark queue as built so next answer doesn't rebuild
@@ -71,8 +110,10 @@ window.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  // Default: show pick screen with Warrior pre-highlighted
-  // (already styled in HTML)
+  // Fresh entry — pre-highlight the card matching the player's rank-level
+  getPlayerDefaultLevel().then(rankLevel => {
+    preHighlightLevelCard(rankLevel.pts);
+  });
 });
 
 // ── Solo Level Pick ───────────────────────────────────────
@@ -108,6 +149,25 @@ window.soloPickLevel = function(pts, name, icon) {
     }
   }, 220);
 };
+
+
+// Pre-highlight a level card (visual only — does NOT start the game)
+function preHighlightLevelCard(pts) {
+  [5,10,15,20].forEach(n => {
+    const el = document.getElementById('slvl-' + n);
+    if (!el) return;
+    const isSelected = n === pts;
+    el.style.background = isSelected ? 'rgba(201,162,39,0.15)' : 'rgba(201,162,39,0.07)';
+    el.style.border     = isSelected ? '2px solid #c9a227'     : '1px solid rgba(201,162,39,0.2)';
+    el.style.boxShadow  = isSelected ? '0 0 0 2px rgba(201,162,39,0.3),0 6px 20px rgba(0,0,0,0.5)' : 'none';
+    el.style.transform  = isSelected ? 'translateY(-2px) scale(1.04)' : 'none';
+  });
+  // Also update the HUD label to match (will be overwritten when player confirms)
+  const levels = {5:{name:'Squire',icon:'🗡️'},10:{name:'Warrior',icon:'⚔️'},15:{name:'Knight',icon:'🛡️'},20:{name:'Champion',icon:'👑'}};
+  const l = levels[pts] || levels[5];
+  const el = document.getElementById('hud-level');
+  if (el) el.textContent = `${l.icon} ${l.name} · ${pts}pts`;
+}
 
 // Show pick screen between verses (does NOT rebuild queue)
 function showLevelSelectBetweenVerses() {
@@ -487,6 +547,12 @@ function showGameOver() {
       msRecordSolo(state.score, levelLabel.replace(/[^0-9a-zA-Z ·]/g,'').trim());
     }
   } catch(e) {}
+
+  // Persist best solo score locally (used as rank fallback when not logged in)
+  try {
+    const prev = parseInt(localStorage.getItem('wb_best_solo_score') || '0', 10);
+    if (state.score > prev) localStorage.setItem('wb_best_solo_score', String(state.score));
+  } catch(e) {}
 }
 
 window.restartGame = function () {
@@ -496,7 +562,8 @@ window.restartGame = function () {
   sessionStorage.removeItem('wb_solo_score');
   document.getElementById('gameover-overlay').style.display = 'none';
   updateScoreDisplay();
-  // Show level select to start fresh
+  // Show level select — pre-highlight rank-appropriate level again
+  getPlayerDefaultLevel().then(rl => preHighlightLevelCard(rl.pts));
   const screen = document.getElementById('solo-pick-screen');
   if (screen) {
     const heading = screen.querySelector('h1');
