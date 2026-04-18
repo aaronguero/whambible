@@ -1,22 +1,47 @@
 /* ===== WhamBible Global Styles ===== */
+/* Color palette inspired by bold hand-painted murals:
+   Terracotta arches · Sunburst golds · Sky blues · Forest greens · Deep crimson */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --gold: #c9a227;
-  --gold-light: #f5d87a;
-  --gold-dark: #a07818;
-  --amber: #e07b20;
-  --bg-dark: #2d1205;
-  --bg-mid: #3a1a06;
-  --bg-card: rgba(255,245,210,0.97);
-  --text-warm: #fff8e7;
-  --red-donate: rgba(180,50,20,0.85);
+  /* === CORE PALETTE (mural-inspired) === */
+  --gold:          #D4921A;   /* sunburst arch gold */
+  --gold-light:    #F5C842;   /* bright noon gold */
+  --gold-dark:     #9B6A0D;   /* deep amber shadow */
+  --terra:         #8B3A1A;   /* terracotta brick */
+  --terra-light:   #C05A2A;   /* warm adobe red */
+  --sky:           #4A9CC8;   /* open sky blue */
+  --sky-light:     #7BBFDF;   /* sky highlight */
+  --forest:        #2E7040;   /* deep jungle green */
+  --forest-light:  #4EA855;   /* vibrant leaf green */
+  --crimson:       #9B1C1C;   /* royal crimson */
+  --crimson-light: #DC3545;   /* bright danger red */
+  --parchment:     #F2E4C4;   /* aged scroll parchment */
+  --parchment-dim: #C8B48A;   /* worn parchment shadow */
+  --ink:           #1C0F04;   /* dark ink / deepest bg */
+  --ink-mid:       #2C1A08;   /* mid background */
+  --ink-card:      rgba(35, 18, 5, 0.96);  /* card surface */
+  --ink-card2:     rgba(50, 28, 8, 0.92);  /* card surface alt */
+
+  /* === LEGACY ALIASES (keeps old code working) === */
+  --amber:         var(--terra-light);
+  --bg-dark:       var(--ink);
+  --bg-mid:        var(--ink-mid);
+  --bg-card:       var(--ink-card);
+  --text-warm:     var(--parchment);
+  --red-donate:    rgba(155, 28, 28, 0.9);
 }
 
 html, body {
   min-height: 100vh;
-  background: linear-gradient(180deg, #2d1205 0%, #3a1a06 30%, #4a2208 60%, #3a1a06 100%);
-  color: #2a1205;
+  background:
+    linear-gradient(180deg,
+      #1C0F04 0%,
+      #2C1A08 25%,
+      #3A2010 50%,
+      #2C1A08 75%,
+      #1C0F04 100%);
+  color: var(--parchment);
   font-family: 'Crimson Text', Georgia, serif;
   overflow-x: hidden;
 }
@@ -25,9 +50,10 @@ html, body {
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(ellipse at 50% 0%, rgba(245,216,122,0.22) 0%, transparent 60%),
-    radial-gradient(ellipse at 20% 50%, rgba(180,100,20,0.08) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 50%, rgba(180,100,20,0.08) 0%, transparent 50%);
+    radial-gradient(ellipse at 50% 0%,   rgba(212,146,26,0.20) 0%, transparent 55%),
+    radial-gradient(ellipse at 15% 40%,  rgba(74,156,200,0.08) 0%, transparent 45%),
+    radial-gradient(ellipse at 85% 40%,  rgba(46,112,64,0.08)  0%, transparent 45%),
+    radial-gradient(ellipse at 50% 100%, rgba(139,58,26,0.15)  0%, transparent 50%);
   pointer-events: none;
   z-index: 0;
 }
@@ -44,11 +70,11 @@ html, body {
 }
 
 .lang-btn {
-  background: rgba(201,162,39,0.1);
-  border: 1px solid rgba(245,216,122,0.6);
+  background: rgba(212,146,26,0.10);
+  border: 1px solid rgba(212,146,26,0.28);
   border-radius: 20px;
   padding: 4px 10px;
-  color: rgba(245,216,122,0.95);
+  color: rgba(212,146,26,0.65);
   font-size: 11px;
   font-family: inherit;
   cursor: pointer;
@@ -58,8 +84,8 @@ html, body {
 
 .lang-btn.active,
 .lang-btn:hover {
-  background: rgba(245,216,122,0.6);
-  border-color: rgba(201,162,39,0.7);
+  background: rgba(212,146,26,0.22);
+  border-color: rgba(212,146,26,0.75);
   color: var(--gold-light);
 }
 
@@ -88,7 +114,7 @@ html, body {
   width: 260px;
   height: 260px;
   object-fit: contain;
-  filter: drop-shadow(0 0 30px rgba(245,216,122,0.85));
+  filter: drop-shadow(0 0 32px rgba(212,146,26,0.55)) drop-shadow(0 0 12px rgba(74,156,200,0.2));
   animation: float 4s ease-in-out infinite;
 }
 
@@ -98,7 +124,7 @@ html, body {
 }
 
 .tagline {
-  color: rgba(201,162,39,0.8);
+  color: rgba(212,146,26,0.85);
   font-family: 'Cinzel', serif;
   font-size: 12px;
   letter-spacing: 2px;
@@ -111,23 +137,48 @@ html, body {
 .divider {
   width: 80%;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(245,216,122,0.85), transparent);
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(212,146,26,0.6) 30%,
+    rgba(74,156,200,0.4) 50%,
+    rgba(212,146,26,0.6) 70%,
+    transparent);
   margin: 16px 0;
 }
 
 /* ===== Verse Card ===== */
 .verse-card {
   width: 100%;
-  background: linear-gradient(135deg, rgba(255,245,210,0.97) 0%, rgba(245,230,185,0.97) 100%);
-  border: 1px solid rgba(245,216,122,0.7);
+  background: linear-gradient(135deg, rgba(35,18,5,0.97) 0%, rgba(28,15,4,0.97) 100%);
+  border: 1px solid rgba(212,146,26,0.45);
   border-radius: 12px;
   padding: 20px 24px;
-  box-shadow: 0 4px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(201,162,39,0.15);
+  box-shadow:
+    0 4px 30px rgba(0,0,0,0.55),
+    inset 0 1px 0 rgba(212,146,26,0.18),
+    inset 0 -1px 0 rgba(139,58,26,0.15);
   margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle parchment texture stripe */
+.verse-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 28px,
+    rgba(212,146,26,0.025) 28px,
+    rgba(212,146,26,0.025) 29px
+  );
+  pointer-events: none;
 }
 
 .verse-label {
-  color: rgba(245,216,122,0.95);
+  color: rgba(212,146,26,0.65);
   font-family: 'Cinzel', serif;
   font-size: 10px;
   letter-spacing: 2px;
@@ -136,7 +187,7 @@ html, body {
 }
 
 .verse-text {
-  color: #2a1205;
+  color: var(--parchment);
   font-size: 16px;
   line-height: 1.75;
   font-style: italic;
@@ -144,7 +195,7 @@ html, body {
 }
 
 .verse-ref {
-  color: rgba(201,162,39,0.8);
+  color: rgba(212,146,26,0.85);
   font-family: 'Cinzel', serif;
   font-size: 12px;
   text-align: right;
@@ -158,7 +209,7 @@ html, body {
 }
 
 .level-title {
-  color: rgba(245,216,122,0.95);
+  color: rgba(212,146,26,0.65);
   font-family: 'Cinzel', serif;
   font-size: 10px;
   letter-spacing: 2px;
@@ -174,8 +225,8 @@ html, body {
 
 .level-card {
   flex: 1;
-  background: rgba(245,216,122,0.12);
-  border: 1px solid rgba(245,216,122,0.55);
+  background: rgba(212,146,26,0.07);
+  border: 1px solid rgba(212,146,26,0.22);
   border-radius: 10px;
   padding: 12px 4px;
   text-align: center;
@@ -188,26 +239,25 @@ html, body {
 }
 
 .level-card:hover {
-  background: rgba(245,216,122,0.22);
-  border-color: rgba(201,162,39,0.55);
+  background: rgba(212,146,26,0.18);
+  border-color: rgba(212,146,26,0.58);
   transform: translateY(-3px);
-  box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.45);
 }
 
-/* Selected state — persists until another card is tapped */
 .level-card.selected {
-  border-color: #c9a227;
-  background: rgba(245,216,122,0.2);
-  box-shadow: 0 0 0 2px rgba(245,216,122,0.7), 0 6px 24px rgba(0,0,0,0.5);
+  border-color: var(--gold);
+  background: rgba(212,146,26,0.16);
+  box-shadow: 0 0 0 2px rgba(212,146,26,0.4), 0 6px 24px rgba(0,0,0,0.5);
   transform: translateY(-3px) scale(1.04);
 }
 .level-card.selected .level-icon   { transform: scale(1.18); display: inline-block; }
-.level-card.selected .level-points { color: #f0e4c0; text-shadow: 0 0 10px rgba(245,216,122,0.95); }
+.level-card.selected .level-points { color: var(--parchment); text-shadow: 0 0 10px rgba(212,146,26,0.6); }
 
-.level-icon { font-size: 18px; }
-.level-points { color: #3a1a06; font-size: 20px; font-weight: bold; font-family: 'Cinzel', serif; }
-.level-pt-label { color: rgba(245,216,122,0.85); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; }
-.level-name { color: rgba(245,216,122,0.95); font-size: 9px; margin-top: 2px; font-family: 'Cinzel', serif; }
+.level-icon   { font-size: 18px; }
+.level-points { color: var(--gold); font-size: 20px; font-weight: bold; font-family: 'Cinzel', serif; }
+.level-pt-label { color: rgba(212,146,26,0.52); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; }
+.level-name   { color: rgba(212,146,26,0.62); font-size: 9px; margin-top: 2px; font-family: 'Cinzel', serif; }
 
 /* ===== Buttons ===== */
 .btn-row {
@@ -218,37 +268,38 @@ html, body {
   margin-bottom: 16px;
 }
 
+/* Primary — sunburst gold */
 .btn-primary {
   width: 100%;
   padding: 16px 24px;
-  background: linear-gradient(135deg, #c9a227 0%, #a07818 50%, #c9a227 100%);
+  background: linear-gradient(135deg, #D4921A 0%, #9B6A0D 50%, #D4921A 100%);
   background-size: 200% 100%;
   border: none;
   border-radius: 8px;
-  color: #3a1a06;
+  color: #1C0F04;
   font-size: 16px;
   font-weight: 700;
   font-family: 'Cinzel', serif;
   letter-spacing: 2px;
   text-transform: uppercase;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(245,216,122,0.7), inset 0 1px 0 rgba(255,255,255,0.2);
+  box-shadow: 0 4px 20px rgba(212,146,26,0.45), inset 0 1px 0 rgba(255,255,255,0.22);
   transition: all 0.2s;
 }
-
 .btn-primary:hover {
   background-position: right center;
   transform: translateY(-2px);
-  box-shadow: 0 8px 28px rgba(201,162,39,0.55);
+  box-shadow: 0 8px 28px rgba(212,146,26,0.60);
 }
 
+/* Secondary — sky blue outline (multiplayer / challenge) */
 .btn-secondary {
   width: 100%;
   padding: 14px 24px;
-  background: transparent;
-  border: 2px solid rgba(245,216,122,0.95);
+  background: rgba(74,156,200,0.10);
+  border: 2px solid rgba(74,156,200,0.65);
   border-radius: 8px;
-  color: #3a1a06;
+  color: var(--sky-light);
   font-size: 14px;
   font-weight: 700;
   font-family: 'Cinzel', serif;
@@ -257,19 +308,21 @@ html, body {
   cursor: pointer;
   transition: all 0.2s;
 }
-
 .btn-secondary:hover {
-  background: rgba(201,162,39,0.1);
+  background: rgba(74,156,200,0.20);
+  border-color: var(--sky);
   transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(74,156,200,0.25);
 }
 
+/* Ghost */
 .btn-ghost {
   width: 100%;
   padding: 12px 24px;
-  background: rgba(245,216,122,0.12);
-  border: 1px solid rgba(245,216,122,0.55);
+  background: rgba(212,146,26,0.07);
+  border: 1px solid rgba(212,146,26,0.24);
   border-radius: 8px;
-  color: rgba(201,162,39,0.7);
+  color: rgba(212,146,26,0.72);
   font-size: 13px;
   font-family: 'Cinzel', serif;
   letter-spacing: 1px;
@@ -277,20 +330,21 @@ html, body {
   cursor: pointer;
   transition: all 0.2s;
 }
-
 .btn-ghost:hover {
-  background: rgba(201,162,39,0.12);
+  background: rgba(212,146,26,0.14);
   transform: translateY(-1px);
 }
 
+/* Donate — rich crimson */
 .btn-donate {
   display: block;
   width: 100%;
   padding: 14px 24px;
-  background: linear-gradient(135deg, rgba(180,50,20,0.85) 0%, rgba(140,30,10,0.95) 100%);
-  border: 1px solid rgba(220,80,40,0.5);
+  background: linear-gradient(135deg, #9B1C1C 0%, #6B1010 50%, #9B1C1C 100%);
+  background-size: 200% 100%;
+  border: 1px solid rgba(220,80,60,0.55);
   border-radius: 8px;
-  color: #ffd0b0;
+  color: #FFD0B0;
   font-size: 14px;
   font-weight: 700;
   font-family: 'Cinzel', serif;
@@ -298,19 +352,19 @@ html, body {
   text-align: center;
   text-decoration: none;
   cursor: pointer;
-  box-shadow: 0 2px 15px rgba(180,50,20,0.3);
+  box-shadow: 0 2px 15px rgba(155,28,28,0.35);
   margin-bottom: 24px;
   transition: all 0.2s;
 }
-
 .btn-donate:hover {
+  background-position: right center;
   transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(180,50,20,0.5);
+  box-shadow: 0 6px 24px rgba(155,28,28,0.55);
 }
 
 /* ===== Footer ===== */
 .footer {
-  color: rgba(245,216,122,0.7);
+  color: rgba(212,146,26,0.32);
   font-size: 10px;
   letter-spacing: 1px;
   text-align: center;
@@ -324,22 +378,25 @@ html, body {
   bottom: 30px;
   left: 50%;
   transform: translateX(-50%) translateY(100px);
-  background: rgba(201,162,39,0.95);
-  color: #3a1a06;
+  background: linear-gradient(135deg, #D4921A, #9B6A0D);
+  color: #1C0F04;
   padding: 12px 24px;
   border-radius: 8px;
   font-family: 'Cinzel', serif;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 1px;
-  z-index: 999;
+  z-index: 9999;
   transition: transform 0.3s ease;
   pointer-events: none;
+  box-shadow: 0 4px 20px rgba(212,146,26,0.5);
 }
+.toast.show { transform: translateX(-50%) translateY(0); }
 
-.toast.show {
-  transform: translateX(-50%) translateY(0);
-}
+/* ===== Scroll-bar ===== */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: var(--ink); }
+::-webkit-scrollbar-thumb { background: rgba(212,146,26,0.4); border-radius: 4px; }
 
 /* ===== Responsive ===== */
 @media (max-width: 360px) {
