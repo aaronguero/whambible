@@ -4682,5 +4682,112 @@ function psToast(msg) {
 }
 </script>
 
+
+<!-- ══ HOW TO PLAY OVERLAY ══════════════════════════════════ -->
+<div id="htp-overlay" style="display:none;" onclick="htpOverlayClick(event)">
+  <div id="htp-modal">
+    <div id="htp-header">
+      <span style="font-size:22px;">📜</span>
+      <h2>How to Play</h2>
+      <button id="htp-close" onclick="htpClose()">✕</button>
+    </div>
+    <div id="htp-body">
+
+      <div class="htp-step">
+        <div class="htp-icon">⚔️</div>
+        <div>
+          <strong>Issue a Challenge</strong>
+          <p>Find an opponent and send them a challenge. You are the <em>Challenger</em> for the whole game.</p>
+        </div>
+      </div>
+
+      <div class="htp-step">
+        <div class="htp-icon">🎯</div>
+        <div>
+          <strong>Pick a Level</strong>
+          <p>Choose 5, 10, 15, or 20 points. Harder levels use rarer verses — and pay out more!</p>
+        </div>
+      </div>
+
+      <div class="htp-step">
+        <div class="htp-icon">📖</div>
+        <div>
+          <strong>Answer the Verse</strong>
+          <p>Your opponent sees the verse and picks the correct Book, Chapter, and Verse from 4 options.</p>
+        </div>
+      </div>
+
+      <div class="htp-step">
+        <div class="htp-icon">🌀</div>
+        <div>
+          <strong>Scroll Recovery</strong>
+          <p>Miss an answer? Spin the recovery scroll within 7 seconds to still earn 5 bonus points.</p>
+        </div>
+      </div>
+
+      <div class="htp-step">
+        <div class="htp-icon">🏆</div>
+        <div>
+          <strong>10 Rounds — Best Score Wins</strong>
+          <p>After 10 rounds the player with the most points claims victory!</p>
+        </div>
+      </div>
+
+      <div style="margin:16px 0 8px;">
+        <div class="htp-score-table">
+          <div class="htp-score-row htp-score-header"><span>Level</span><span>Points</span><span>Recovery</span></div>
+          <div class="htp-score-row"><span>🌱 Easy</span><span class="htp-pts-gold">5 pts</span><span class="htp-pts-gold">+5</span></div>
+          <div class="htp-score-row"><span>⚡ Medium</span><span class="htp-pts-gold">10 pts</span><span class="htp-pts-gold">+5</span></div>
+          <div class="htp-score-row"><span>🔥 Hard</span><span class="htp-pts-gold">15 pts</span><span class="htp-pts-gold">+5</span></div>
+          <div class="htp-score-row"><span>💀 Legend</span><span class="htp-pts-gold">20 pts</span><span class="htp-pts-gold">+5</span></div>
+          <div class="htp-score-row"><span>❌ Wrong (no recovery)</span><span class="htp-pts-zero">0 pts</span><span class="htp-pts-zero">—</span></div>
+        </div>
+      </div>
+
+      <div style="margin:16px 0 8px;">
+        <div class="htp-score-table">
+          <div class="htp-score-row htp-score-header"><span>Rank</span><span>Points Needed</span></div>
+          <div class="htp-score-row"><span>📜 Scribe</span><span>0 pts</span></div>
+          <div class="htp-score-row"><span>🛡 Squire</span><span>50 pts</span></div>
+          <div class="htp-score-row"><span>⚔️ Warrior</span><span>100 pts</span></div>
+          <div class="htp-score-row"><span>🏇 Knight</span><span>200 pts</span></div>
+          <div class="htp-score-row"><span>🏆 Champion</span><span>500 pts</span></div>
+        </div>
+      </div>
+
+      <button onclick="htpClose()" style="width:100%;margin-top:8px;padding:12px;background:linear-gradient(135deg,#c9a227,#a07818);border:none;border-radius:10px;color:#1a0f02;font-family:'Cinzel',serif;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:1px;">Got It! ⚔️</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ INVITE OVERLAY ═══════════════════════════════════════ -->
+<div id="invite-overlay" style="display:none;" onclick="inviteOverlayClick(event)">
+  <div id="invite-modal">
+    <div id="invite-header">
+      <span style="font-size:22px;">📣</span>
+      <h2>Invite a Friend</h2>
+      <button id="invite-close" onclick="inviteClose()">✕</button>
+    </div>
+    <div id="invite-body">
+      <p class="invite-tagline">Challenge someone to a Bible verse battle!</p>
+
+      <div class="invite-link-wrap">
+        <input id="invite-link-input" class="invite-link-input" type="text" readonly value="https://whambible.org" />
+        <button class="invite-copy-btn" onclick="inviteCopy()">📋 Copy</button>
+      </div>
+
+      <div class="invite-share-row">
+        <button class="invite-share-btn" onclick="inviteShare('whatsapp')">💬 WhatsApp</button>
+        <button class="invite-share-btn" onclick="inviteShare('sms')">📱 SMS</button>
+        <button class="invite-share-btn" onclick="inviteShare('native')">↗️ Share</button>
+      </div>
+
+      <p class="invite-note">Your friend will need to create an account to accept the challenge.</p>
+
+      <button onclick="inviteClose()" style="width:100%;margin-top:4px;padding:12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:rgba(255,255,255,0.7);font-size:14px;cursor:pointer;">Close</button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>
