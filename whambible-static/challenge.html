@@ -2346,6 +2346,104 @@
   </div>
 
   <!-- ── SCREEN: ANSWER (opponent answers the challenge) ───── -->
+
+  <!-- ══════════════════════════════════════════════════════
+       SCREEN: ACCEPT CHALLENGE (Player 2 entry point)
+       Shows who challenged you, level, verse preview.
+       Accept button fires straight to answer screen.
+       ══════════════════════════════════════════════════════ -->
+  <div id="screen-accept-challenge" class="screen">
+    <div class="screen-inner" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;text-align:center;padding:24px 20px 40px;">
+
+      <!-- Challenger avatar -->
+      <div id="ac-challenger-avatar" style="
+        width:72px;height:72px;border-radius:50%;
+        background:rgba(201,162,39,0.15);
+        border:2px solid rgba(201,162,39,0.4);
+        display:flex;align-items:center;justify-content:center;
+        font-size:34px;margin-bottom:14px;overflow:hidden;
+        box-shadow:0 0 28px rgba(201,162,39,0.25);
+      ">👤</div>
+
+      <!-- Challenger name -->
+      <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:3px;color:rgba(201,162,39,0.5);text-transform:uppercase;margin-bottom:6px;">
+        Incoming Challenge
+      </div>
+      <h1 id="ac-challenger-name" style="font-family:'Cinzel',serif;font-size:22px;font-weight:900;color:#c9a227;letter-spacing:1px;margin:0 0 4px;">
+        Warrior
+      </h1>
+      <p style="font-family:'Crimson Text',serif;font-size:15px;font-style:italic;color:rgba(240,228,192,0.5);margin:0 0 24px;">
+        has challenged you!
+      </p>
+
+      <!-- Level badge -->
+      <div id="ac-level-badge" style="
+        display:inline-flex;align-items:center;gap:8px;
+        background:rgba(201,162,39,0.12);
+        border:1px solid rgba(201,162,39,0.35);
+        border-radius:50px;padding:8px 20px;
+        margin-bottom:24px;
+      ">
+        <span id="ac-level-icon" style="font-size:22px;">⚔️</span>
+        <span id="ac-level-name" style="font-family:'Cinzel',serif;font-size:14px;font-weight:800;color:#c9a227;letter-spacing:1px;">Warrior</span>
+        <span style="color:rgba(255,255,255,0.3);font-size:12px;">·</span>
+        <span id="ac-level-pts" style="font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:#e2e8f0;">10 pts</span>
+      </div>
+
+      <!-- Verse teaser card -->
+      <div id="ac-verse-card" style="
+        background:rgba(201,162,39,0.05);
+        border:1px solid rgba(201,162,39,0.15);
+        border-radius:14px;padding:16px 20px;
+        width:100%;max-width:340px;margin-bottom:32px;
+        box-shadow:inset 0 0 40px rgba(0,0,0,0.3);
+      ">
+        <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;color:rgba(201,162,39,0.45);text-transform:uppercase;margin-bottom:8px;">
+          Your Challenge Verse
+        </div>
+        <p id="ac-verse-text" style="
+          font-family:'Crimson Text',serif;font-size:16px;font-style:italic;
+          color:rgba(240,228,192,0.8);line-height:1.5;margin:0 0 10px;
+        ">"Loading verse…"</p>
+        <div id="ac-verse-ref" style="
+          font-family:'Cinzel',serif;font-size:11px;font-weight:700;
+          color:rgba(201,162,39,0.6);letter-spacing:0.5px;
+        ">— — —</div>
+        <div style="margin-top:10px;font-size:12px;color:rgba(255,255,255,0.3);font-style:italic;">
+          Where is this verse found?
+        </div>
+      </div>
+
+      <!-- 20-second timer hint -->
+      <div style="font-size:12px;color:rgba(255,255,255,0.28);font-style:italic;margin-bottom:24px;">
+        You'll have 20 seconds to answer
+      </div>
+
+      <!-- Accept button -->
+      <button id="ac-accept-btn" onclick="acceptChallenge()" style="
+        width:100%;max-width:320px;
+        background:linear-gradient(135deg,#c9a227,#a07720);
+        border:none;border-radius:14px;
+        font-family:'Cinzel',serif;font-size:16px;font-weight:900;
+        color:#0f172a;letter-spacing:1px;
+        padding:16px 24px;cursor:pointer;
+        box-shadow:0 8px 32px rgba(201,162,39,0.35);
+        transition:transform 0.1s,opacity 0.15s;
+        margin-bottom:12px;
+      " onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" ontouchstart="this.style.transform='scale(0.97)'" ontouchend="this.style.transform=''">
+        ⚔️ Accept Challenge
+      </button>
+
+      <button onclick="showScreen('lobby')" style="
+        background:none;border:none;
+        font-family:'Cinzel',serif;font-size:12px;
+        color:rgba(255,255,255,0.3);letter-spacing:1px;
+        cursor:pointer;padding:8px;
+      ">← Back to Battles</button>
+
+    </div>
+  </div>
+
   <div id="screen-answer" class="screen">
     <div class="screen-inner">
 
@@ -3403,8 +3501,8 @@ async function renderActiveGames(games, myUid) {
 function openGame(gameId, game) {
   _currentGameId = gameId;
   _currentGame   = game;
-  const myUid   = window._fbUser?.uid;
-  const oppUid  = game.players?.find(p => p !== myUid);
+  const myUid    = window._fbUser?.uid;
+  const oppUid   = game.players?.find(p => p !== myUid);
   const isMyTurn = game.currentTurn === myUid;
 
   if (game.status === 'complete') {
@@ -3416,14 +3514,78 @@ function openGame(gameId, game) {
 
   if (isMyTurn) {
     if (game.status === 'waiting_for_answer') {
-      loadAnswerScreen(game);
+      // Player 2 — show accept screen first
+      loadAcceptScreen(game);
     } else {
+      // Player 1 — pick level for next round
       loadPickLevelScreen(game);
     }
   } else {
-    showToast('⏳ Waiting for opponent’s move');
+    const oppName = game.playerNames?.[oppUid] || 'Opponent';
+    showToast('\u23F3 Waiting for ' + oppName + ' to answer');
   }
 }
+
+// ── Load accept-challenge screen (Player 2 entry point) ────
+function loadAcceptScreen(game) {
+  const myUid      = window._fbUser?.uid;
+  const oppUid     = game.players?.find(p => p !== myUid);
+  const challName  = game.playerNames?.[oppUid]  || 'Warrior';
+  const challPhoto = game.playerPhotos?.[oppUid] || '';
+  const pts        = game.pendingLevel || 10;
+  const levelName  = game.pendingName  || 'Warrior';
+  const levelIcon  = game.pendingIcon  || '\u2694\uFE0F';
+  const verse      = game.pendingVerse || null;
+
+  // Avatar
+  const avatarEl = document.getElementById('ac-challenger-avatar');
+  if (avatarEl) {
+    avatarEl.innerHTML = challPhoto
+      ? '<img src="' + challPhoto + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.textContent='\uD83D\uDC64'" />'
+      : '\uD83D\uDC64';
+  }
+
+  const nameEl = document.getElementById('ac-challenger-name');
+  if (nameEl) nameEl.textContent = challName;
+
+  const iconEl = document.getElementById('ac-level-icon');
+  if (iconEl) iconEl.textContent = levelIcon;
+
+  const lvlNameEl = document.getElementById('ac-level-name');
+  if (lvlNameEl) lvlNameEl.textContent = levelName;
+
+  const ptsEl = document.getElementById('ac-level-pts');
+  if (ptsEl) ptsEl.textContent = pts + ' pts';
+
+  if (verse) {
+    const vtEl = document.getElementById('ac-verse-text');
+    const txt  = verse.text || '';
+    if (vtEl) vtEl.textContent = '"' + txt.slice(0, 120) + (txt.length > 120 ? '\u2026' : '') + '"';
+    const vrEl = document.getElementById('ac-verse-ref');
+    if (vrEl) vrEl.textContent = verse.book + ' ' + verse.chapter + ':' + verse.verse;
+  } else {
+    const vtEl = document.getElementById('ac-verse-text');
+    if (vtEl) vtEl.textContent = '"A verse is waiting for you\u2026"';
+    const vrEl = document.getElementById('ac-verse-ref');
+    if (vrEl) vrEl.textContent = '';
+  }
+
+  showScreen('accept-challenge');
+}
+
+// ── Player 2 taps Accept — straight to answer screen ───────
+window.acceptChallenge = function() {
+  const game = _currentGame;
+  if (!game) { showToast('Game not found'); return; }
+
+  const btn = document.getElementById('ac-accept-btn');
+  if (btn) { btn.textContent = '\u2694\uFE0F Loading\u2026'; btn.disabled = true; }
+
+  setTimeout(() => {
+    if (btn) { btn.textContent = '\u2694\uFE0F Accept Challenge'; btn.disabled = false; }
+    loadAnswerScreen(game);
+  }, 350);
+};
 
 // ── Show new challenge modal ───────────────────────────────
 
