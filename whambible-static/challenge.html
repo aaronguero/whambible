@@ -3227,39 +3227,6 @@ window.BV_CHAPTERS_SHARED = {'Genesis': 50, 'Exodus': 40, 'Leviticus': 27, 'Numb
 
 <script>
 // ── Auth helpers ────────────────────────────────────────────
-window.whamSignInGoogle = async function() {
-  const { auth, signInWithPopup, GoogleAuthProvider } = window._fb;
-  try {
-    await signInWithPopup(auth, new GoogleAuthProvider());
-  } catch(e) { whamPlaceholder('Sign-in cancelled'); }
-};
-
-window.whamSignInEmail = async function(email, password) {
-  const { auth, signInWithEmailAndPassword } = window._fb;
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-  } catch(e) { whamPlaceholder('⚠️ ' + e.message); }
-};
-
-window.whamSignUpEmail = async function(email, password) {
-  const { auth, createUserWithEmailAndPassword } = window._fb;
-  try {
-    await createUserWithEmailAndPassword(auth, email, password);
-  } catch(e) { whamPlaceholder('⚠️ ' + e.message); }
-};
-
-window.whamSignInGuest = async function() {
-  const { auth, signInAnonymously } = window._fb;
-  try { await signInAnonymously(auth); }
-  catch(e) { whamPlaceholder('⚠️ ' + e.message); }
-};
-
-window.whamSignOut = async function() {
-  const { auth, signOut } = window._fb;
-  await signOut(auth);
-  window._fbUser = null;
-  whamPlaceholder('👋 Signed out');
-};
 
 // ── Verse pack cloud sync ───────────────────────────────────
 window.whamSyncVersePack = async function(uid) {
@@ -3278,13 +3245,7 @@ window.whamSyncVersePack = async function(uid) {
   }
 };
 
-window.whamPushVersePack = async function() {
-  if (!window._fb || !window._fbUser) return;
-  const { db, doc, setDoc, serverTimestamp } = window._fb;
-  const local = JSON.parse(localStorage.getItem('whamVersePack') || '[]');
-  await setDoc(doc(db, 'versePacks', window._fbUser.uid),
-    { uid: window._fbUser.uid, slots: local, updatedAt: serverTimestamp() });
-};
+;
 
 // ── Auth change → update profile UI ────────────────────────
 document.addEventListener('whamAuthChange', e => {
@@ -4470,30 +4431,7 @@ async function showGameComplete(game, myUid, oppUid, myScore, oppScore, rounds) 
 
 // Timer delegated to challenge.js startAnswerTimer()
 
-// ── Resume game by code ────────────────────────────────────
-window.resumeGame = async function() {
-  const codeEl = document.getElementById('game-code');
-  const code   = codeEl?.value?.trim();
-  if (!code || code.length < 6) { showToast('Enter a valid game code'); return; }
-
-  // Game IDs stored in Firestore — search by prefix
-  const { db, collection, query, where, getDocs } = window._fb;
-  try {
-    // Try direct doc ID lookup (first 8 chars)
-    const { getDoc, doc } = window._fb;
-    // We store full IDs — search active games for matching prefix
-    const snap = await getDocs(collection(db,'games'));
-    const match = snap.docs.find(d => d.id.toUpperCase().startsWith(code.toUpperCase()));
-    if (match) {
-      const game = { id: match.id, ...match.data() };
-      _currentGameId = match.id;
-      _currentGame   = game;
-      openGame(match.id, game);
-    } else {
-      showToast('Game not found. Check the code.');
-    }
-  } catch(e) { showToast('Error: ' + e.message); }
-};
+;
 
 // ── Screen switcher ────────────────────────────────────────
 function showScreen(id) {
