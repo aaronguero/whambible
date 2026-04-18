@@ -332,12 +332,28 @@
 #papa-wrap {
   position: fixed;
   bottom: 0;
-  left: -10px;
+  left: -200px;          /* hidden off-screen by default */
   z-index: 50;
   pointer-events: none;
   width: 140px;
   transform-origin: bottom left;
+  transition: left 0.38s cubic-bezier(0.34,1.56,0.64,1); /* bouncy slide */
 }
+/* ── Hide Papa on phones in landscape — prevents layout breakage ── */
+@media (max-height: 500px) and (orientation: landscape) {
+  #papa-wrap { display: none !important; }
+}
+/* Visible state — set by JS; also restores orientation after hint flip */
+#papa-wrap.papa-visible {
+  left: -10px;
+  transform: scaleX(1);
+}
+/* Hint mode — papa bounces in further so hand reaches toward buttons */
+#papa-wrap.papa-hint {
+  left: 20px;
+  transform: scaleX(-1);   /* flip papa to face RIGHT toward the buttons */
+}
+
 #papa-img {
   width: 140px;
   display: block;
@@ -351,6 +367,42 @@
   0%,100% { transform: translateY(0px) rotate(0deg); }
   30%      { transform: translateY(-6px) rotate(0.4deg); }
   60%      { transform: translateY(-3px) rotate(-0.3deg); }
+}
+
+/* ── Papa hint: arm-extend lean during hint sequence ── */
+#papa-wrap.papa-hinting #papa-img {
+  animation: papaHintLean 0.38s ease-out forwards;
+}
+@keyframes papaHintLean {
+  0%   { transform: translateY(0) rotate(0deg) scaleX(1); }
+  60%  { transform: translateY(-10px) rotate(-6deg) scaleX(1.05); }
+  100% { transform: translateY(-8px) rotate(-5deg) scaleX(1.04); }
+}
+
+/* ── Answer buttons: shrink when papa enters ── */
+.choices-grid.papa-enter .choice-btn {
+  transform: scale(0.93);
+  transition: transform 0.32s ease;
+}
+.choices-grid .choice-btn {
+  transition: transform 0.32s ease, background 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+
+/* ── Bump state on target button ── */
+.choice-btn.papa-bump {
+  border-color: rgba(201,162,39,0.9) !important;
+  background: linear-gradient(135deg, rgba(80,55,8,0.98) 0%, rgba(60,40,5,0.98) 100%) !important;
+  box-shadow: 0 0 18px rgba(201,162,39,0.5), 0 2px 10px rgba(0,0,0,0.3) !important;
+}
+@keyframes papaBumpShake {
+  0%,100% { transform: scale(0.93) translateX(0); }
+  20%     { transform: scale(0.93) translateX(-5px); }
+  40%     { transform: scale(0.93) translateX(4px); }
+  60%     { transform: scale(0.93) translateX(-3px); }
+  80%     { transform: scale(0.93) translateX(2px); }
+}
+.choice-btn.papa-shaking {
+  animation: papaBumpShake 0.22s ease-out forwards !important;
 }
 /* Correct answer */
 #papa-wrap.papa-correct #papa-img {
@@ -1000,8 +1052,13 @@
   gap: 10px;
   padding: 9px 0;
   border-bottom: 1px solid rgba(201,162,39,0.1);
+  cursor: pointer;
+  transition: background 0.15s;
+  border-radius: 6px;
+  padding-left: 4px;
 }
 .cvp-list-item:last-child { border-bottom: none; }
+.cvp-list-item:hover { background: rgba(201,162,39,0.06); }
 .cvp-list-num {
   width: 22px; height: 22px;
   background: rgba(201,162,39,0.15);
@@ -1031,6 +1088,29 @@
   font-style: italic;
   text-align: center;
   padding: 10px 0;
+}
+/* Delete button on each list row */
+.cvp-list-del {
+  flex-shrink: 0;
+  width: 26px; height: 26px;
+  border: 1px solid rgba(248,113,113,0.35);
+  border-radius: 50%;
+  background: rgba(248,113,113,0.08);
+  color: rgba(248,113,113,0.7);
+  font-size: 13px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+  line-height: 1;
+}
+.cvp-list-del:hover {
+  background: rgba(248,113,113,0.22);
+  border-color: rgba(248,113,113,0.7);
+  color: #f87171;
+}
+/* Tab filled-dot is already ::after — add ✕ overlay on hover via JS */
+.cvp-tab.has-verse {
+  position: relative;
 }
 
 /* BV modal — Save to Pack button */
@@ -1976,54 +2056,78 @@
       Choose your difficulty to begin
     </p>
 
-    <!-- Level Cards -->
+    <!-- Level Cards — stacked rectangles, easiest top → hardest bottom -->
     <div style="
-      display:grid; grid-template-columns:1fr 1fr;
-      gap:12px; width:100%; max-width:340px; margin-bottom:28px;">
+      display:flex; flex-direction:column;
+      gap:10px; width:100%; max-width:360px; margin-bottom:28px;">
 
+      <!-- Squire — easiest -->
       <div class="solo-lvl-card" id="slvl-5" onclick="soloPickLevel(5,'Squire','🗡️')" style="
-        background:rgba(201,162,39,0.07); border:1px solid rgba(201,162,39,0.2);
-        border-radius:14px; padding:20px 10px; text-align:center; cursor:pointer;
-        display:flex; flex-direction:column; align-items:center; gap:4px;
+        background:rgba(201,162,39,0.07); border:1px solid rgba(201,162,39,0.25);
+        border-radius:10px; padding:14px 20px; cursor:pointer;
+        display:flex; flex-direction:row; align-items:center; gap:16px;
         transition:all 0.2s;">
-        <span style="font-size:28px;">🗡️</span>
-        <span style="font-family:'Cinzel',serif; font-size:22px; font-weight:700; color:#c9a227;">5</span>
-        <span style="font-family:'Cinzel',serif; font-size:9px; letter-spacing:2px; color:rgba(201,162,39,0.45); text-transform:uppercase;">pts</span>
-        <span style="font-family:'Cinzel',serif; font-size:11px; color:rgba(201,162,39,0.7); margin-top:2px;">Squire</span>
+        <span style="font-size:26px; flex-shrink:0;">🗡️</span>
+        <div style="flex:1; text-align:left;">
+          <div style="font-family:'Cinzel',serif; font-size:13px; font-weight:700; color:rgba(201,162,39,0.75); letter-spacing:1px;">SQUIRE</div>
+          <div style="font-family:'Crimson Text',serif; font-size:12px; color:rgba(240,228,192,0.45); font-style:italic;">Easiest · Common verses</div>
+        </div>
+        <div style="text-align:right; flex-shrink:0;">
+          <span style="font-family:'Cinzel',serif; font-size:26px; font-weight:900; color:#c9a227;">5</span>
+          <span style="font-family:'Cinzel',serif; font-size:10px; color:rgba(201,162,39,0.45); display:block; margin-top:-4px; letter-spacing:2px;">PTS</span>
+        </div>
       </div>
 
+      <!-- Warrior -->
       <div class="solo-lvl-card" id="slvl-10" onclick="soloPickLevel(10,'Warrior','⚔️')" style="
         background:rgba(201,162,39,0.12); border:2px solid #c9a227;
-        border-radius:14px; padding:20px 10px; text-align:center; cursor:pointer;
-        display:flex; flex-direction:column; align-items:center; gap:4px;
+        border-radius:10px; padding:14px 20px; cursor:pointer;
+        display:flex; flex-direction:row; align-items:center; gap:16px;
         transition:all 0.2s;
-        box-shadow:0 0 0 2px rgba(201,162,39,0.3),0 6px 20px rgba(0,0,0,0.5);">
-        <span style="font-size:28px;">⚔️</span>
-        <span style="font-family:'Cinzel',serif; font-size:22px; font-weight:700; color:#f0e4c0;">10</span>
-        <span style="font-family:'Cinzel',serif; font-size:9px; letter-spacing:2px; color:rgba(201,162,39,0.45); text-transform:uppercase;">pts</span>
-        <span style="font-family:'Cinzel',serif; font-size:11px; color:#c9a227; margin-top:2px; font-weight:700;">Warrior</span>
+        box-shadow:0 0 12px rgba(201,162,39,0.25), 0 4px 16px rgba(0,0,0,0.4);">
+        <span style="font-size:26px; flex-shrink:0;">⚔️</span>
+        <div style="flex:1; text-align:left;">
+          <div style="font-family:'Cinzel',serif; font-size:13px; font-weight:700; color:#c9a227; letter-spacing:1px;">WARRIOR</div>
+          <div style="font-family:'Crimson Text',serif; font-size:12px; color:rgba(240,228,192,0.55); font-style:italic;">Moderate · Popular verses</div>
+        </div>
+        <div style="text-align:right; flex-shrink:0;">
+          <span style="font-family:'Cinzel',serif; font-size:26px; font-weight:900; color:#f0e4c0;">10</span>
+          <span style="font-family:'Cinzel',serif; font-size:10px; color:rgba(201,162,39,0.55); display:block; margin-top:-4px; letter-spacing:2px;">PTS</span>
+        </div>
       </div>
 
+      <!-- Knight -->
       <div class="solo-lvl-card" id="slvl-15" onclick="soloPickLevel(15,'Knight','🛡️')" style="
-        background:rgba(201,162,39,0.07); border:1px solid rgba(201,162,39,0.2);
-        border-radius:14px; padding:20px 10px; text-align:center; cursor:pointer;
-        display:flex; flex-direction:column; align-items:center; gap:4px;
+        background:rgba(201,162,39,0.09); border:1px solid rgba(201,162,39,0.35);
+        border-radius:10px; padding:14px 20px; cursor:pointer;
+        display:flex; flex-direction:row; align-items:center; gap:16px;
         transition:all 0.2s;">
-        <span style="font-size:28px;">🛡️</span>
-        <span style="font-family:'Cinzel',serif; font-size:22px; font-weight:700; color:#c9a227;">15</span>
-        <span style="font-family:'Cinzel',serif; font-size:9px; letter-spacing:2px; color:rgba(201,162,39,0.45); text-transform:uppercase;">pts</span>
-        <span style="font-family:'Cinzel',serif; font-size:11px; color:rgba(201,162,39,0.7); margin-top:2px;">Knight</span>
+        <span style="font-size:26px; flex-shrink:0;">🛡️</span>
+        <div style="flex:1; text-align:left;">
+          <div style="font-family:'Cinzel',serif; font-size:13px; font-weight:700; color:rgba(201,162,39,0.85); letter-spacing:1px;">KNIGHT</div>
+          <div style="font-family:'Crimson Text',serif; font-size:12px; color:rgba(240,228,192,0.45); font-style:italic;">Hard · Deeper verses</div>
+        </div>
+        <div style="text-align:right; flex-shrink:0;">
+          <span style="font-family:'Cinzel',serif; font-size:26px; font-weight:900; color:#c9a227;">15</span>
+          <span style="font-family:'Cinzel',serif; font-size:10px; color:rgba(201,162,39,0.45); display:block; margin-top:-4px; letter-spacing:2px;">PTS</span>
+        </div>
       </div>
 
+      <!-- Champion — hardest -->
       <div class="solo-lvl-card" id="slvl-20" onclick="soloPickLevel(20,'Champion','👑')" style="
-        background:rgba(201,162,39,0.07); border:1px solid rgba(201,162,39,0.2);
-        border-radius:14px; padding:20px 10px; text-align:center; cursor:pointer;
-        display:flex; flex-direction:column; align-items:center; gap:4px;
+        background:rgba(201,162,39,0.05); border:1px solid rgba(201,162,39,0.2);
+        border-radius:10px; padding:14px 20px; cursor:pointer;
+        display:flex; flex-direction:row; align-items:center; gap:16px;
         transition:all 0.2s;">
-        <span style="font-size:28px;">👑</span>
-        <span style="font-family:'Cinzel',serif; font-size:22px; font-weight:700; color:#c9a227;">20</span>
-        <span style="font-family:'Cinzel',serif; font-size:9px; letter-spacing:2px; color:rgba(201,162,39,0.45); text-transform:uppercase;">pts</span>
-        <span style="font-family:'Cinzel',serif; font-size:11px; color:rgba(201,162,39,0.7); margin-top:2px;">Champion</span>
+        <span style="font-size:26px; flex-shrink:0;">👑</span>
+        <div style="flex:1; text-align:left;">
+          <div style="font-family:'Cinzel',serif; font-size:13px; font-weight:700; color:rgba(201,162,39,0.65); letter-spacing:1px;">CHAMPION</div>
+          <div style="font-family:'Crimson Text',serif; font-size:12px; color:rgba(240,228,192,0.35); font-style:italic;">Hardest · Rare verses</div>
+        </div>
+        <div style="text-align:right; flex-shrink:0;">
+          <span style="font-family:'Cinzel',serif; font-size:26px; font-weight:900; color:#c9a227;">20</span>
+          <span style="font-family:'Cinzel',serif; font-size:10px; color:rgba(201,162,39,0.45); display:block; margin-top:-4px; letter-spacing:2px;">PTS</span>
+        </div>
       </div>
 
     </div>
@@ -2043,7 +2147,7 @@
   <header class="game-hud">
     <button class="hud-back" onclick="confirmExit()">← Exit</button>
     <div class="hud-center">
-      <span class="hud-level" id="hud-level">⚔️ Warrior · 10pts</span>
+      <span class="hud-level" id="hud-level">· · ·</span>
     </div>
     <div class="hud-score-wrap">
       <span data-i18n="score-label">SCORE</span>
@@ -2703,13 +2807,37 @@ window.BV_CHAPTERS_SHARED = {'Genesis': 50, 'Exodus': 40, 'Leviticus': 27, 'Numb
       if (!entry) return '';
       return `<div class="cvp-list-item" onclick="cvpSelectSlot(${i})">
         <span class="cvp-list-num">${i+1}</span>
-        <div style="flex:1;overflow:hidden">
-          <div class="cvp-list-ref">${entry.ref}</div>
+        <div style="flex:1;overflow:hidden;min-width:0;">
+          <div class="cvp-list-ref">${entry.ref || (entry.book + ' ' + entry.chapter + ':' + entry.verse)}</div>
           <div class="cvp-list-text">${entry.text || '—'}</div>
         </div>
+        <button class="cvp-list-del" title="Delete slot ${i+1}"
+          onclick="event.stopPropagation(); cvpDeleteSlot(${i})">✕</button>
       </div>`;
     }).join('');
   }
+
+  window.cvpDeleteSlot = function(idx) {
+    const pack = loadPack();
+    pack[idx] = null;
+    savePack(pack);
+    // If we deleted the active slot, reset label
+    if (cvpSlot === idx) {
+      document.getElementById('cvp-slot-label').textContent = `Pack ${idx + 1} — empty`;
+      document.getElementById('cvp-preview').style.display = 'none';
+    }
+    // Update tab dot
+    const tab = document.querySelector(\`.cvp-tab[data-slot="\${idx}"]\`);
+    if (tab) tab.classList.remove('has-verse');
+    cvpRenderPackList();
+    whamPlaceholder(\`🗑 Pack ${idx + 1 } deleted\`);
+    // Sync cloud
+    if (window._fbUser) {
+      const { db, doc, setDoc, serverTimestamp } = window._fb || {};
+      if (db) setDoc(doc(db,'versePacks',window._fbUser.uid),
+        { uid: window._fbUser.uid, slots: pack, updatedAt: serverTimestamp() });
+    }
+  };
 
 })();
 
@@ -2872,7 +3000,7 @@ document.addEventListener('whamAuthChange', e => {
         </div>
         <div class="ps-display-name" id="ps-display-name">—</div>
         <div class="ps-email" id="ps-email-text">—</div>
-        <div class="ps-badge" id="ps-account-badge">⚔️ Warrior</div>
+        <div class="ps-badge" id="ps-account-badge">📜 Scribe</div>
       </div>
 
       <div class="ps-stats">
@@ -2957,10 +3085,10 @@ window.psOpen = async function() {
       // Badge based on score
       const badge = document.getElementById('ps-account-badge');
       const score = d.score || 0;
-      if      (score >= 500) badge.textContent = '👑 Champion';
-      else if (score >= 200) badge.textContent = '🛡️ Knight';
+      if      (score >= 700) badge.textContent = '👑 Champion';
+      else if (score >= 300) badge.textContent = '🛡️ Knight';
       else if (score >= 100) badge.textContent = '⚔️ Warrior';
-      else if (score >= 50)  badge.textContent = '🗡️ Squire';
+      else if (score >=   1) badge.textContent = '🗡️ Squire';
       else                   badge.textContent = '📜 Scribe';
       // Member since
       if (d.createdAt && d.createdAt.toDate) {
@@ -3042,6 +3170,8 @@ window.tutOverlayClick = function(e) {
 window.papaReact = function(state) {
   const wrap = document.getElementById('papa-wrap');
   if (!wrap) return;
+  // Ensure papa is visible whenever a reaction fires
+  wrap.classList.add('papa-visible');
   // Remove all state classes
   wrap.classList.remove('papa-correct','papa-wrong','papa-victory','papa-speaking');
   if (!state) return;
@@ -3054,6 +3184,100 @@ window.papaReact = function(state) {
     }, dur);
   }
 };
+
+// ── Papa: show / hide ──────────────────────────────────────
+window.papaMakeVisible = function() {
+  const wrap = document.getElementById('papa-wrap');
+  if (!wrap) return;
+  wrap.classList.remove('papa-hint', 'papa-hinting');
+  wrap.classList.add('papa-visible');
+};
+window.papaHide = function() {
+  const wrap = document.getElementById('papa-wrap');
+  if (!wrap) return;
+  wrap.classList.remove('papa-visible', 'papa-hint', 'papa-hinting');
+};
+
+// ── Papa Squire Hint Sequence ──────────────────────────────
+// Total visible runtime: 1.5 s
+// 0 ms   — papa slides right (papa-hint), buttons shrink
+// 200 ms — papa leans forward (papa-hinting)
+// 500 ms — bump 1: correct btn shakes + gold flash
+// 900 ms — bump 2: repeat
+// 1500ms — papa retreats, buttons restore
+window.triggerPapaHint = function(mode) {
+  // mode: 'mp' = multiplayer answer screen, else solo
+  const isMp = (mode === 'mp');
+
+  // Solo guard — don't fire if already answered
+  if (!isMp && window._gameState && window._gameState.answered) return;
+
+  // Correct book + grid differ by mode
+  const gridId      = isMp ? 'ans-choices-grid' : 'choices-grid';
+  const correctBook = isMp
+    ? window._mpCurrentVerse?.book
+    : window._gameState?.currentVerse?.book;
+
+  const wrap = document.getElementById('papa-wrap');
+  const grid = document.getElementById(gridId);
+  if (!wrap || !grid || !correctBook) return;
+
+  const buttons    = Array.from(grid.querySelectorAll('.choice-btn'));
+  const correctBtn = buttons.find(b =>
+    b.querySelector('.choice-book')?.textContent === correctBook
+  );
+  if (!correctBtn) return;
+
+  // 0 ms: papa bounces in, buttons shrink
+  wrap.classList.add('papa-hint');
+  grid.classList.add('papa-enter');
+
+  // 200 ms: papa leans toward buttons
+  setTimeout(() => {
+    wrap.classList.add('papa-hinting');
+  }, 200);
+
+  function doBump(delay) {
+    setTimeout(() => {
+      if (!isMp && window._gameState && window._gameState.answered) return;
+      correctBtn.classList.add('papa-bump', 'papa-shaking');
+      setTimeout(() => correctBtn.classList.remove('papa-shaking'), 240);
+      setTimeout(() => correctBtn.classList.remove('papa-bump'),    400);
+    }, delay);
+  }
+
+  doBump(500);  // bump 1
+  doBump(900);  // bump 2
+
+  // 1500 ms: papa retreats, all classes restore
+  setTimeout(() => {
+    wrap.classList.remove('papa-hint', 'papa-hinting');
+    wrap.classList.add('papa-visible');
+    grid.classList.remove('papa-enter');
+    buttons.forEach(b => b.classList.remove('papa-bump', 'papa-shaking'));
+  }, 1500);
+};
+
+// ── Hide Papa on phone landscape rotation ──────────────────
+(function() {
+  function handleOrientation() {
+    const isLandscapePhone = window.innerHeight < 500 && window.innerWidth > window.innerHeight;
+    const wrap = document.getElementById('papa-wrap');
+    if (!wrap) return;
+    if (isLandscapePhone) {
+      // Clear all active Papa states instantly so no ghost animations linger
+      wrap.className = '';   // strip all classes
+      wrap.style.left = '-200px';
+    }
+  }
+  window.addEventListener('resize', handleOrientation);
+  if (screen.orientation) {
+    screen.orientation.addEventListener('change', handleOrientation);
+  } else {
+    window.addEventListener('orientationchange', handleOrientation);
+  }
+  handleOrientation(); // run once on load
+})();
 
 // ── Papa hooks into game events ────────────────────────────
 (function() {
@@ -3213,11 +3437,11 @@ window.papaReact = function(state) {
           <strong>Climb the Ranks</strong>
           <p>Earn points across games to rise through the ranks:</p>
           <div>
-            <span class="tut-pill">📜 Scribe — 0+</span>
-            <span class="tut-pill">🗡️ Squire — 50+</span>
+            <span class="tut-pill">📜 Scribe — 0</span>
+            <span class="tut-pill">🗡️ Squire — 1+</span>
             <span class="tut-pill">⚔️ Warrior — 100+</span>
-            <span class="tut-pill">🛡️ Knight — 200+</span>
-            <span class="tut-pill" style="background:rgba(201,162,39,0.2);color:#c9a227;border-color:rgba(201,162,39,0.5);">👑 Champion — 500+</span>
+            <span class="tut-pill">🛡️ Knight — 300+</span>
+            <span class="tut-pill" style="background:rgba(201,162,39,0.2);color:#c9a227;border-color:rgba(201,162,39,0.5);">👑 Champion — 700+</span>
           </div>
         </div>
       </div>

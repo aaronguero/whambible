@@ -473,6 +473,130 @@
 .nc-title { font-family: 'Cinzel',serif; font-size: 20px; font-weight: 700; color: #c9a227; margin: 0 0 4px; }
 .nc-sub   { font-size: 13px; color: rgba(255,255,255,0.45); margin: 0 0 18px; }
 
+
+/* ══════════════════════════════════════════
+   PAPA AVATAR — multiplayer answer screen
+   ══════════════════════════════════════════ */
+#papa-wrap {
+  position: fixed;
+  bottom: 0;
+  left: -200px;
+  z-index: 50;
+  pointer-events: none;
+  width: 140px;
+  transform-origin: bottom left;
+  transition: left 0.38s cubic-bezier(0.34,1.56,0.64,1);
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  #papa-wrap { display: none !important; }
+}
+#papa-wrap.papa-visible { left: -10px; transform: scaleX(1); }
+#papa-wrap.papa-hint    { left: 20px;  transform: scaleX(-1); }
+#papa-img {
+  width: 140px;
+  display: block;
+  mix-blend-mode: multiply;
+  filter: drop-shadow(0 4px 18px rgba(0,0,0,0.6));
+  animation: papaIdle 3.2s ease-in-out infinite;
+  transform-origin: bottom center;
+  transition: filter 0.3s ease;
+}
+@keyframes papaIdle {
+  0%,100% { transform: translateY(0px) rotate(0deg); }
+  30%      { transform: translateY(-6px) rotate(0.4deg); }
+  60%      { transform: translateY(-3px) rotate(-0.3deg); }
+}
+#papa-wrap.papa-hinting #papa-img {
+  animation: papaHintLean 0.38s ease-out forwards;
+}
+@keyframes papaHintLean {
+  0%   { transform: translateY(0) rotate(0deg) scaleX(1); }
+  60%  { transform: translateY(-10px) rotate(-6deg) scaleX(1.05); }
+  100% { transform: translateY(-8px) rotate(-5deg) scaleX(1.04); }
+}
+.choices-grid.papa-enter .choice-btn {
+  transform: scale(0.93);
+  transition: transform 0.32s ease;
+}
+.choices-grid .choice-btn {
+  transition: transform 0.32s ease, background 0.2s, border-color 0.2s, box-shadow 0.2s;
+}
+.choice-btn.papa-bump {
+  border-color: rgba(201,162,39,0.9) !important;
+  background: linear-gradient(135deg, rgba(80,55,8,0.98) 0%, rgba(60,40,5,0.98) 100%) !important;
+  box-shadow: 0 0 18px rgba(201,162,39,0.5), 0 2px 10px rgba(0,0,0,0.3) !important;
+}
+@keyframes papaBumpShake {
+  0%,100% { transform: scale(0.93) translateX(0); }
+  20%     { transform: scale(0.93) translateX(-5px); }
+  40%     { transform: scale(0.93) translateX(4px); }
+  60%     { transform: scale(0.93) translateX(-3px); }
+  80%     { transform: scale(0.93) translateX(2px); }
+}
+.choice-btn.papa-shaking {
+  animation: papaBumpShake 0.22s ease-out forwards !important;
+}
+
+
+/* ── CVP multiplayer bubbles ── */
+.cvp-mp-bubble {
+  aspect-ratio: 1;
+  border-radius: 50%;
+  border: 1px solid rgba(201,162,39,0.22);
+  background: rgba(201,162,39,0.05);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  color: rgba(201,162,39,0.3);
+  cursor: pointer;
+  transition: all 0.18s;
+  min-height: 46px;
+  gap: 2px;
+}
+.cvp-mp-bubble.has-verse {
+  border-color: rgba(201,162,39,0.6);
+  background: rgba(201,162,39,0.12);
+  color: #c9a227;
+}
+.cvp-mp-bubble.selected-verse {
+  border: 2px solid #c9a227;
+  background: rgba(201,162,39,0.22);
+  box-shadow: 0 0 10px rgba(201,162,39,0.35);
+}
+.cvp-mp-bubble .bub-num {
+  font-size: 9px;
+  color: rgba(201,162,39,0.35);
+  font-weight: 700;
+}
+.cvp-mp-bubble.has-verse .bub-num { color: rgba(201,162,39,0.6); }
+.cvp-mp-bubble .bub-ref {
+  font-size: 7px;
+  color: rgba(201,162,39,0.55);
+  text-align: center;
+  line-height: 1.1;
+  padding: 0 2px;
+  word-break: break-all;
+}
+.cvp-mp-del-btn {
+  position: absolute;
+  top: -4px; right: -4px;
+  width: 16px; height: 16px;
+  border-radius: 50%;
+  border: 1px solid rgba(248,113,113,0.5);
+  background: rgba(15,23,42,0.9);
+  color: rgba(248,113,113,0.8);
+  font-size: 9px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.cvp-mp-bubble.has-verse:hover .cvp-mp-del-btn { opacity: 1; }
+.cvp-mp-bubble { position: relative; }
+
 </style>
 <style>
 /* == LANG WHEEL == */
@@ -984,6 +1108,193 @@
 }
 #bv-save-pack-btn:hover { background: rgba(201,162,39,0.22); }
 
+
+/* ══════════════════════════════════════════════
+   NEW CHALLENGE FLOW — Level / Verse / Challenger
+   ══════════════════════════════════════════════ */
+
+/* Verse stack card */
+.vs-card {
+  background: rgba(201,162,39,0.06);
+  border: 1px solid rgba(201,162,39,0.18);
+  border-radius: 12px;
+  padding: 12px 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  text-align: center;
+  transition: all 0.18s ease;
+  min-height: 80px;
+  position: relative;
+  overflow: hidden;
+}
+.vs-card:hover, .vs-card:active {
+  background: rgba(201,162,39,0.14);
+  border-color: #c9a227;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+}
+.vs-card.selected {
+  background: rgba(201,162,39,0.18);
+  border: 2px solid #c9a227;
+  box-shadow: 0 0 0 2px rgba(201,162,39,0.25), 0 8px 24px rgba(0,0,0,0.5);
+}
+.vs-card-ref {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  font-weight: 700;
+  color: #c9a227;
+  letter-spacing: 0.5px;
+  line-height: 1.2;
+}
+.vs-card-snippet {
+  font-family: 'Crimson Text', serif;
+  font-size: 10px;
+  font-style: italic;
+  color: rgba(240,228,192,0.45);
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Recent opponent row */
+.recent-opp-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(201,162,39,0.12);
+  border-radius: 12px;
+  padding: 12px 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.recent-opp-row:hover, .recent-opp-row:active {
+  background: rgba(201,162,39,0.08);
+  border-color: rgba(201,162,39,0.35);
+}
+.recent-opp-avatar {
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  background: rgba(201,162,39,0.15);
+  border: 1px solid rgba(201,162,39,0.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+.recent-opp-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+.recent-opp-info { flex: 1; min-width: 0; }
+.recent-opp-name {
+  font-family: 'Cinzel', serif;
+  font-size: 13px; font-weight: 700;
+  color: #e2e8f0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.recent-opp-meta {
+  font-size: 11px;
+  color: rgba(255,255,255,0.35);
+  margin-top: 2px;
+}
+.recent-opp-challenge-btn {
+  background: linear-gradient(135deg,#c9a227,#a07720);
+  border: none;
+  border-radius: 8px;
+  color: #0f172a;
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  font-weight: 800;
+  padding: 7px 12px;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: opacity 0.15s, transform 0.1s;
+}
+.recent-opp-challenge-btn:active { transform: scale(0.96); opacity: 0.85; }
+
+/* Search result row */
+.sc-result-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(201,162,39,0.15);
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.sc-result-row:hover { background: rgba(201,162,39,0.09); }
+.sc-result-row.selected {
+  border-color: #c9a227;
+  background: rgba(201,162,39,0.12);
+}
+.sc-result-name {
+  flex: 1;
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  color: #e2e8f0;
+  font-weight: 600;
+}
+.sc-result-email {
+  font-size: 11px;
+  color: rgba(255,255,255,0.3);
+}
+
+/* ── Level cards — stacked rectangles ── */
+.level-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+}
+.level-card {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 20px;
+  border-radius: 10px;
+  border: 1px solid rgba(201,162,39,0.25);
+  background: rgba(201,162,39,0.07);
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 100%;
+  box-sizing: border-box;
+}
+.level-card:active {
+  transform: scale(0.98);
+}
+.level-icon   { font-size: 26px; flex-shrink: 0; }
+.level-info   { flex: 1; text-align: left; }
+.level-title  { font-family:'Cinzel',serif; font-size:13px; font-weight:700; color:rgba(201,162,39,0.75); letter-spacing:1px; display:block; }
+.level-sub    { font-family:'Crimson Text',serif; font-size:12px; color:rgba(240,228,192,0.45); font-style:italic; display:block; }
+.level-pts-wrap { text-align: right; flex-shrink: 0; }
+.level-points { font-family:'Cinzel',serif; font-size:26px; font-weight:900; color:#c9a227; display:block; }
+.level-pt-label { font-family:'Cinzel',serif; font-size:10px; color:rgba(201,162,39,0.45); letter-spacing:2px; display:block; margin-top:-4px; }
+/* Warrior highlight (active/featured) */
+.level-card.warrior-featured {
+  border: 2px solid #c9a227;
+  background: rgba(201,162,39,0.13);
+  box-shadow: 0 0 14px rgba(201,162,39,0.25), 0 4px 16px rgba(0,0,0,0.4);
+}
+.level-card.warrior-featured .level-title { color: #c9a227; }
+.level-card.warrior-featured .level-sub   { color: rgba(240,228,192,0.6); }
+.level-card.warrior-featured .level-points { color: #f0e4c0; }
+/* rank-match highlight */
+.level-card.rank-match {
+  border: 2px solid #c9a227 !important;
+  background: rgba(201,162,39,0.14) !important;
+  box-shadow: 0 0 0 3px rgba(201,162,39,0.25), 0 8px 24px rgba(0,0,0,0.5) !important;
+}
 </style>
 </head>
 <body>
@@ -1964,7 +2275,7 @@
         </div>
 
         <!-- New Challenge button -->
-        <button class="btn-challenge-new" onclick="showNewChallenge()">
+        <button class="btn-challenge-new" onclick="startNewChallenge()">
           ⚔️ Issue New Challenge
         </button>
 
@@ -2005,6 +2316,138 @@
     </div>
   </div>
 
+
+  <!-- ══════════════════════════════════════════════════════
+       SCREEN: MP LEVEL SELECT
+       Player picks their challenge level — highlights their rank level
+       ══════════════════════════════════════════════════════ -->
+  <div id="screen-mp-level" class="screen">
+    <div class="screen-inner">
+
+      <div style="text-align:center;margin-bottom:24px;">
+        <div style="font-size:36px;margin-bottom:6px;">⚔️</div>
+        <h1 style="font-family:'Cinzel',serif;font-size:22px;font-weight:900;color:#c9a227;letter-spacing:2px;margin:0 0 4px;">
+          Choose Level
+        </h1>
+        <p style="font-family:'Crimson Text',serif;font-size:15px;font-style:italic;color:rgba(240,228,192,0.55);margin:0;">
+          Select your challenge difficulty
+        </p>
+      </div>
+
+      <div class="level-row" id="mp-level-row" style="margin-bottom:28px;">
+        <div class="level-card" id="mplvl-5" onclick="mpPickLevel(5,'Squire','🗡️')">
+          <span class="level-icon">🗡️</span>
+          <div class="level-info"><span class="level-title">SQUIRE</span><span class="level-sub">Easiest · Common verses</span></div>
+          <div class="level-pts-wrap"><span class="level-points">5</span><span class="level-pt-label">PTS</span></div>
+        </div>
+        <div class="level-card warrior-featured" id="mplvl-10" onclick="mpPickLevel(10,'Warrior','⚔️')">
+          <span class="level-icon">⚔️</span>
+          <div class="level-info"><span class="level-title">WARRIOR</span><span class="level-sub">Moderate · Popular verses</span></div>
+          <div class="level-pts-wrap"><span class="level-points">10</span><span class="level-pt-label">PTS</span></div>
+        </div>
+        <div class="level-card" id="mplvl-15" onclick="mpPickLevel(15,'Knight','🛡️')">
+          <span class="level-icon">🛡️</span>
+          <div class="level-info"><span class="level-title">KNIGHT</span><span class="level-sub">Hard · Deeper verses</span></div>
+          <div class="level-pts-wrap"><span class="level-points">15</span><span class="level-pt-label">PTS</span></div>
+        </div>
+        <div class="level-card" id="mplvl-20" onclick="mpPickLevel(20,'Champion','👑')">
+          <span class="level-icon">👑</span>
+          <div class="level-info"><span class="level-title">CHAMPION</span><span class="level-sub">Hardest · Rare verses</span></div>
+          <div class="level-pts-wrap"><span class="level-points">20</span><span class="level-pt-label">PTS</span></div>
+        </div>
+      </div>
+
+      <button class="btn-ghost" onclick="showScreen('lobby')">← Back</button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SCREEN: VERSE STACK
+       2 rows × 5 random verses — player picks one to challenge with
+       ══════════════════════════════════════════════════════ -->
+  <div id="screen-verse-stack" class="screen">
+    <div class="screen-inner">
+
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:3px;color:rgba(201,162,39,0.5);text-transform:uppercase;margin-bottom:6px;">
+          Choose Your Challenge
+        </div>
+        <h1 style="font-family:'Cinzel',serif;font-size:20px;font-weight:900;color:#c9a227;letter-spacing:1px;margin:0 0 4px;">
+          Pick a Verse
+        </h1>
+        <p style="font-family:'Crimson Text',serif;font-size:14px;font-style:italic;color:rgba(240,228,192,0.45);margin:0;">
+          Select the verse your opponent must identify
+        </p>
+      </div>
+
+      <!-- 2 rows × 5 verse cards -->
+      <div id="verse-stack-grid" style="
+        display:grid;
+        grid-template-columns:repeat(5,1fr);
+        grid-template-rows:1fr 1fr;
+        gap:10px;
+        margin-bottom:24px;
+      "></div>
+
+      <div style="text-align:center;">
+        <button class="btn-ghost" onclick="showScreen('mp-level')">← Back</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════
+       SCREEN: SELECT CHALLENGER
+       Last 5 recent opponents + search window
+       ══════════════════════════════════════════════════════ -->
+  <div id="screen-select-challenger" class="screen">
+    <div class="screen-inner">
+
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:30px;margin-bottom:6px;">🎯</div>
+        <h1 style="font-family:'Cinzel',serif;font-size:20px;font-weight:900;color:#c9a227;letter-spacing:1px;margin:0 0 4px;">
+          Select Opponent
+        </h1>
+        <p style="font-family:'Crimson Text',serif;font-size:14px;font-style:italic;color:rgba(240,228,192,0.45);margin:0;">
+          Challenge a recent opponent or search
+        </p>
+      </div>
+
+      <!-- Recent opponents -->
+      <div style="margin-bottom:20px;">
+        <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;color:rgba(201,162,39,0.45);text-transform:uppercase;margin-bottom:10px;">
+          Recent Opponents
+        </div>
+        <div id="recent-opponents-list" style="display:flex;flex-direction:column;gap:8px;">
+          <div style="color:rgba(255,255,255,0.25);font-size:13px;font-family:'Crimson Text',serif;font-style:italic;text-align:center;padding:12px;">
+            Loading recent opponents…
+          </div>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
+        <div style="flex:1;height:1px;background:rgba(201,162,39,0.15);"></div>
+        <span style="font-family:'Cinzel',serif;font-size:10px;color:rgba(201,162,39,0.35);letter-spacing:2px;">OR SEARCH</span>
+        <div style="flex:1;height:1px;background:rgba(201,162,39,0.15);"></div>
+      </div>
+
+      <!-- Search -->
+      <div style="margin-bottom:8px;">
+        <input type="text" id="sc-search-input" class="lm-input"
+          placeholder="Name or email…"
+          oninput="scSearchDebounce()"
+          style="margin-bottom:8px;" />
+        <div id="sc-search-results" style="display:none;flex-direction:column;gap:6px;margin-bottom:10px;"></div>
+        <div id="sc-search-status" style="font-size:12px;color:rgba(255,255,255,0.3);font-style:italic;min-height:16px;text-align:center;margin-bottom:8px;"></div>
+        <button class="btn-primary" style="width:100%" onclick="scIssueWithSearch()">
+          ⚔️ Challenge This Player
+        </button>
+      </div>
+
+      <button class="btn-ghost" style="margin-top:10px;width:100%" onclick="showScreen('verse-stack')">← Back</button>
+    </div>
+  </div>
+
   <!-- ── SCREEN: PICK LEVEL (active player picks challenge) ── -->
   <div id="screen-pick-level" class="screen">
     <div class="screen-inner">
@@ -2036,28 +2479,38 @@
       <div class="level-row" style="margin-bottom:20px">
         <div class="level-card" onclick="pickLevel(5,'Squire','🗡️')">
           <span class="level-icon">🗡️</span>
-          <span class="level-points">5</span>
-          <span class="level-pt-label">pts</span>
-          <span class="level-name">Squire</span>
+          <div class="level-info"><span class="level-title">SQUIRE</span><span class="level-sub">Easiest · Common verses</span></div>
+          <div class="level-pts-wrap"><span class="level-points">5</span><span class="level-pt-label">PTS</span></div>
         </div>
-        <div class="level-card" onclick="pickLevel(10,'Warrior','⚔️')">
+        <div class="level-card warrior-featured" onclick="pickLevel(10,'Warrior','⚔️')">
           <span class="level-icon">⚔️</span>
-          <span class="level-points">10</span>
-          <span class="level-pt-label">pts</span>
-          <span class="level-name">Warrior</span>
+          <div class="level-info"><span class="level-title">WARRIOR</span><span class="level-sub">Moderate · Popular verses</span></div>
+          <div class="level-pts-wrap"><span class="level-points">10</span><span class="level-pt-label">PTS</span></div>
         </div>
         <div class="level-card" onclick="pickLevel(15,'Knight','🛡️')">
           <span class="level-icon">🛡️</span>
-          <span class="level-points">15</span>
-          <span class="level-pt-label">pts</span>
-          <span class="level-name">Knight</span>
+          <div class="level-info"><span class="level-title">KNIGHT</span><span class="level-title"></span><span class="level-sub">Hard · Deeper verses</span></div>
+          <div class="level-pts-wrap"><span class="level-points">15</span><span class="level-pt-label">PTS</span></div>
         </div>
         <div class="level-card" onclick="pickLevel(20,'Champion','👑')">
           <span class="level-icon">👑</span>
-          <span class="level-points">20</span>
-          <span class="level-pt-label">pts</span>
-          <span class="level-name">Champion</span>
+          <div class="level-info"><span class="level-title">CHAMPION</span><span class="level-sub">Hardest · Rare verses</span></div>
+          <div class="level-pts-wrap"><span class="level-points">20</span><span class="level-pt-label">PTS</span></div>
         </div>
+        <!-- Custom Verse Pack -->
+        <button class="level-card" id="cvp-mp-btn" onclick="mpOpenCustomVersePack()" style="
+          border: 1px dashed rgba(201,162,39,0.4);
+          background: rgba(201,162,39,0.04);
+          margin-top: 4px;">
+          <span class="level-icon">📦</span>
+          <div class="level-info">
+            <span class="level-title" style="color:rgba(201,162,39,0.65);">CUSTOM VERSE PACK</span>
+            <span class="level-sub">Challenge with your saved verse</span>
+          </div>
+          <div class="level-pts-wrap">
+            <span style="font-size:18px;">▶</span>
+          </div>
+        </button>
       </div>
 
       <div class="round-label" id="round-label">Round 1</div>
@@ -2065,6 +2518,105 @@
   </div>
 
   <!-- ── SCREEN: ANSWER (opponent answers the challenge) ───── -->
+
+
+    <!-- ══════════════════════════════════════════════════════
+       SCREEN: ACCEPT CHALLENGE (Player 2 entry point)
+       Shows who challenged you, level, verse preview.
+       Accept button fires straight to answer screen.
+       ══════════════════════════════════════════════════════ -->
+  <div id="screen-accept-challenge" class="screen">
+    <div class="screen-inner" style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:80vh;text-align:center;padding:24px 20px 40px;">
+
+      <!-- Challenger avatar -->
+      <div id="ac-challenger-avatar" style="
+        width:72px;height:72px;border-radius:50%;
+        background:rgba(201,162,39,0.15);
+        border:2px solid rgba(201,162,39,0.4);
+        display:flex;align-items:center;justify-content:center;
+        font-size:34px;margin-bottom:14px;overflow:hidden;
+        box-shadow:0 0 28px rgba(201,162,39,0.25);
+      ">👤</div>
+
+      <!-- Challenger name -->
+      <div style="font-family:'Cinzel',serif;font-size:11px;letter-spacing:3px;color:rgba(201,162,39,0.5);text-transform:uppercase;margin-bottom:6px;">
+        Incoming Challenge
+      </div>
+      <h1 id="ac-challenger-name" style="font-family:'Cinzel',serif;font-size:22px;font-weight:900;color:#c9a227;letter-spacing:1px;margin:0 0 4px;">
+        Warrior
+      </h1>
+      <p style="font-family:'Crimson Text',serif;font-size:15px;font-style:italic;color:rgba(240,228,192,0.5);margin:0 0 24px;">
+        has challenged you!
+      </p>
+
+      <!-- Level badge -->
+      <div id="ac-level-badge" style="
+        display:inline-flex;align-items:center;gap:8px;
+        background:rgba(201,162,39,0.12);
+        border:1px solid rgba(201,162,39,0.35);
+        border-radius:50px;padding:8px 20px;
+        margin-bottom:24px;
+      ">
+        <span id="ac-level-icon" style="font-size:22px;">⚔️</span>
+        <span id="ac-level-name" style="font-family:'Cinzel',serif;font-size:14px;font-weight:800;color:#c9a227;letter-spacing:1px;">Warrior</span>
+        <span style="color:rgba(255,255,255,0.3);font-size:12px;">·</span>
+        <span id="ac-level-pts" style="font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:#e2e8f0;">10 pts</span>
+      </div>
+
+      <!-- Verse teaser card -->
+      <div id="ac-verse-card" style="
+        background:rgba(201,162,39,0.05);
+        border:1px solid rgba(201,162,39,0.15);
+        border-radius:14px;padding:16px 20px;
+        width:100%;max-width:340px;margin-bottom:32px;
+        box-shadow:inset 0 0 40px rgba(0,0,0,0.3);
+      ">
+        <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;color:rgba(201,162,39,0.45);text-transform:uppercase;margin-bottom:8px;">
+          Your Challenge Verse
+        </div>
+        <p id="ac-verse-text" style="
+          font-family:'Crimson Text',serif;font-size:16px;font-style:italic;
+          color:rgba(240,228,192,0.8);line-height:1.5;margin:0 0 10px;
+        ">"Loading verse…"</p>
+        <div id="ac-verse-ref" style="
+          font-family:'Cinzel',serif;font-size:11px;font-weight:700;
+          color:rgba(201,162,39,0.6);letter-spacing:0.5px;
+        ">— — —</div>
+        <div style="margin-top:10px;font-size:12px;color:rgba(255,255,255,0.3);font-style:italic;">
+          Where is this verse found?
+        </div>
+      </div>
+
+      <!-- 20-second timer hint -->
+      <div style="font-size:12px;color:rgba(255,255,255,0.28);font-style:italic;margin-bottom:24px;">
+        You'll have 20 seconds to answer
+      </div>
+
+      <!-- Accept button -->
+      <button id="ac-accept-btn" onclick="acceptChallenge()" style="
+        width:100%;max-width:320px;
+        background:linear-gradient(135deg,#c9a227,#a07720);
+        border:none;border-radius:14px;
+        font-family:'Cinzel',serif;font-size:16px;font-weight:900;
+        color:#0f172a;letter-spacing:1px;
+        padding:16px 24px;cursor:pointer;
+        box-shadow:0 8px 32px rgba(201,162,39,0.35);
+        transition:transform 0.1s,opacity 0.15s;
+        margin-bottom:12px;
+      " onmousedown="this.style.transform='scale(0.97)'" onmouseup="this.style.transform=''" ontouchstart="this.style.transform='scale(0.97)'" ontouchend="this.style.transform=''">
+        ⚔️ Accept Challenge
+      </button>
+
+      <button onclick="showScreen('lobby')" style="
+        background:none;border:none;
+        font-family:'Cinzel',serif;font-size:12px;
+        color:rgba(255,255,255,0.3);letter-spacing:1px;
+        cursor:pointer;padding:8px;
+      ">← Back to Battles</button>
+
+    </div>
+  </div>
+
   <div id="screen-answer" class="screen">
     <div class="screen-inner">
 
@@ -2847,39 +3399,6 @@ window.BV_CHAPTERS_SHARED = {'Genesis': 50, 'Exodus': 40, 'Leviticus': 27, 'Numb
 
 <script>
 // ── Auth helpers ────────────────────────────────────────────
-window.whamSignInGoogle = async function() {
-  const { auth, signInWithPopup, GoogleAuthProvider } = window._fb;
-  try {
-    await signInWithPopup(auth, new GoogleAuthProvider());
-  } catch(e) { whamPlaceholder('Sign-in cancelled'); }
-};
-
-window.whamSignInEmail = async function(email, password) {
-  const { auth, signInWithEmailAndPassword } = window._fb;
-  try {
-    await signInWithEmailAndPassword(auth, email, password);
-  } catch(e) { whamPlaceholder('⚠️ ' + e.message); }
-};
-
-window.whamSignUpEmail = async function(email, password) {
-  const { auth, createUserWithEmailAndPassword } = window._fb;
-  try {
-    await createUserWithEmailAndPassword(auth, email, password);
-  } catch(e) { whamPlaceholder('⚠️ ' + e.message); }
-};
-
-window.whamSignInGuest = async function() {
-  const { auth, signInAnonymously } = window._fb;
-  try { await signInAnonymously(auth); }
-  catch(e) { whamPlaceholder('⚠️ ' + e.message); }
-};
-
-window.whamSignOut = async function() {
-  const { auth, signOut } = window._fb;
-  await signOut(auth);
-  window._fbUser = null;
-  whamPlaceholder('👋 Signed out');
-};
 
 // ── Verse pack cloud sync ───────────────────────────────────
 window.whamSyncVersePack = async function(uid) {
@@ -2898,13 +3417,7 @@ window.whamSyncVersePack = async function(uid) {
   }
 };
 
-window.whamPushVersePack = async function() {
-  if (!window._fb || !window._fbUser) return;
-  const { db, doc, setDoc, serverTimestamp } = window._fb;
-  const local = JSON.parse(localStorage.getItem('whamVersePack') || '[]');
-  await setDoc(doc(db, 'versePacks', window._fbUser.uid),
-    { uid: window._fbUser.uid, slots: local, updatedAt: serverTimestamp() });
-};
+;
 
 // ── Auth change → update profile UI ────────────────────────
 document.addEventListener('whamAuthChange', e => {
@@ -2951,10 +3464,10 @@ document.addEventListener('whamAuthChange', async e => {
 
 // ── Rank badge helper (shared) ─────────────────────────────
 function rankBadge(score) {
-  if      (score >= 500) return { icon:'👑', label:'Champion', cls:'rank-champion' };
-  else if (score >= 200) return { icon:'🛡️', label:'Knight',   cls:'rank-knight'   };
+  if      (score >= 700) return { icon:'👑', label:'Champion', cls:'rank-champion' };
+  else if (score >= 300) return { icon:'🛡️', label:'Knight',   cls:'rank-knight'   };
   else if (score >= 100) return { icon:'⚔️', label:'Warrior',  cls:'rank-warrior'  };
-  else if (score >= 50)  return { icon:'🗡️', label:'Squire',   cls:'rank-squire'   };
+  else if (score >=   1) return { icon:'🗡️', label:'Squire',   cls:'rank-squire'   };
   else                   return { icon:'📜', label:'Scribe',   cls:'rank-scribe'   };
 }
 
@@ -3119,11 +3632,15 @@ async function renderActiveGames(games, myUid) {
 }
 
 // ── Open an existing game ──────────────────────────────────
+// FLOW: currentTurn tells us WHO acts.
+//   status='pick_level'        → currentTurn player is THIS ROUND's challenger → picks verse
+//   status='waiting_for_answer'→ currentTurn player is THIS ROUND's answerer   → answers
+// Roles ALTERNATE every round. currentTurn drives everything — no fixed P1/P2 roles.
 function openGame(gameId, game) {
   _currentGameId = gameId;
   _currentGame   = game;
-  const myUid   = window._fbUser?.uid;
-  const oppUid  = game.players?.find(p => p !== myUid);
+  const myUid    = window._fbUser?.uid;
+  const oppUid   = game.players?.find(p => p !== myUid);
   const isMyTurn = game.currentTurn === myUid;
 
   if (game.status === 'complete') {
@@ -3135,16 +3652,498 @@ function openGame(gameId, game) {
 
   if (isMyTurn) {
     if (game.status === 'waiting_for_answer') {
-      loadAnswerScreen(game);
+      // It's my turn AND there's a verse waiting — I'm the answerer this round
+      loadAcceptScreen(game);
     } else {
-      loadPickLevelScreen(game);
+      // It's my turn AND status is pick_level — I'm the challenger this round
+      startRoundChallenge(game);
     }
   } else {
-    showToast('⏳ Waiting for opponent’s move');
+    // Not my turn — waiting for opponent
+    const oppName = game.playerNames?.[oppUid] || 'Opponent';
+    showToast('\u23F3 Waiting for ' + oppName);
+    showScreen('lobby');
   }
 }
 
+// ── Load accept-challenge screen (Player 2 entry point) ────
+function loadAcceptScreen(game) {
+  const myUid      = window._fbUser?.uid;
+  const oppUid     = game.players?.find(p => p !== myUid);
+  const challName  = game.playerNames?.[oppUid]  || 'Warrior';
+  const challPhoto = game.playerPhotos?.[oppUid] || '';
+  const pts        = game.pendingLevel || 10;
+  const levelName  = game.pendingName  || 'Warrior';
+  const levelIcon  = game.pendingIcon  || '\u2694\uFE0F';
+  const verse      = game.pendingVerse || null;
+
+  // Avatar
+  const avatarEl = document.getElementById('ac-challenger-avatar');
+  if (avatarEl) {
+    avatarEl.innerHTML = challPhoto
+      ? '<img src="' + challPhoto + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;" onerror="this.parentElement.textContent='\uD83D\uDC64'" />'
+      : '\uD83D\uDC64';
+  }
+
+  const nameEl = document.getElementById('ac-challenger-name');
+  if (nameEl) nameEl.textContent = challName;
+
+  const iconEl = document.getElementById('ac-level-icon');
+  if (iconEl) iconEl.textContent = levelIcon;
+
+  const lvlNameEl = document.getElementById('ac-level-name');
+  if (lvlNameEl) lvlNameEl.textContent = levelName;
+
+  const ptsEl = document.getElementById('ac-level-pts');
+  if (ptsEl) ptsEl.textContent = pts + ' pts';
+
+  if (verse) {
+    const vtEl = document.getElementById('ac-verse-text');
+    const txt  = verse.text || '';
+    if (vtEl) vtEl.textContent = '"' + txt.slice(0, 120) + (txt.length > 120 ? '\u2026' : '') + '"';
+    const vrEl = document.getElementById('ac-verse-ref');
+    if (vrEl) vrEl.textContent = verse.book + ' ' + verse.chapter + ':' + verse.verse;
+  } else {
+    const vtEl = document.getElementById('ac-verse-text');
+    if (vtEl) vtEl.textContent = '"A verse is waiting for you\u2026"';
+    const vrEl = document.getElementById('ac-verse-ref');
+    if (vrEl) vrEl.textContent = '';
+  }
+
+  showScreen('accept-challenge');
+}
+
+// ── Player 2 taps Accept — straight to answer screen ───────
+window.acceptChallenge = function() {
+  const game = _currentGame;
+  if (!game) { showToast('Game not found'); return; }
+
+  const btn = document.getElementById('ac-accept-btn');
+  if (btn) { btn.textContent = '\u2694\uFE0F Loading\u2026'; btn.disabled = true; }
+
+  setTimeout(() => {
+    if (btn) { btn.textContent = '\u2694\uFE0F Accept Challenge'; btn.disabled = false; }
+    loadAnswerScreen(game);
+  }, 350);
+};
+
 // ── Show new challenge modal ───────────────────────────────
+
+// ══════════════════════════════════════════════════════════
+// NEW CHALLENGE FLOW: Level → Verse Stack → Select Challenger
+// ══════════════════════════════════════════════════════════
+
+// State for the new challenge flow
+let _ncLevel    = 10;
+let _ncLevelName= 'Warrior';
+let _ncLevelIcon= '⚔️';
+let _ncVerse    = null;
+let _ncOppDoc   = null;  // selected opponent Firestore doc
+let _scSearchTid = null;
+
+// ── Round challenge entry — current player picks level + verse, pushes opponent
+// Works for both P1 and P2 — whoever answered last becomes the next challenger.
+function startRoundChallenge(game) {
+  _currentGameId = game.id || _currentGameId;
+  _currentGame   = game;
+  _ncVerse  = null;   // force fresh verse pick every round
+
+  const myUid  = window._fbUser?.uid;
+  const oppUid = game.players?.find(p => p !== myUid);
+
+  // Pre-fill opponent (existing game) — skip select-challenger screen
+  _ncOppDoc = {
+    id:          oppUid,
+    displayName: game.playerNames?.[oppUid] || 'Opponent',
+    photoURL:    game.playerPhotos?.[oppUid] || '',
+    fcmToken:    null  // fetched fresh at issue time from Firestore
+  };
+
+  // VS strip — show current scores and round
+  const myName  = game.playerNames?.[myUid]  || 'You';
+  const oppName = game.playerNames?.[oppUid] || 'Opponent';
+  document.getElementById('vs-p1-name').textContent  = myName;
+  document.getElementById('vs-p2-name').textContent  = oppName;
+  document.getElementById('vs-p1-score').textContent = game.scores?.[myUid]  || 0;
+  document.getElementById('vs-p2-score').textContent = game.scores?.[oppUid] || 0;
+  document.getElementById('round-label').textContent = 'Round ' + (game.round || 1);
+  document.getElementById('pick-turn-name').textContent = myName;
+
+  // Suggest level matching player rank
+  const me = window._fbUser;
+  if (me && window._fb) {
+    const { db, doc, getDoc } = window._fb;
+    getDoc(doc(db, 'players', me.uid)).then(snap => {
+      const score = snap.exists() ? (snap.data().score || 0) : 0;
+      const suggested = score >= 700 ? 20 : score >= 300 ? 15 : score >= 100 ? 10 : score >= 1 ? 5 : 5;
+      if (typeof highlightMpLevel === 'function') highlightMpLevel(suggested);
+    }).catch(() => { if (typeof highlightMpLevel === 'function') highlightMpLevel(10); });
+  }
+
+  showScreen('mp-level');
+}
+
+// ── Entry point — replaces old showNewChallenge ────────────
+window.startNewChallenge = function() {
+  _ncLevel = 10; _ncLevelName = 'Warrior'; _ncLevelIcon = '⚔️';
+  _ncVerse = null; _ncOppDoc = null;
+
+  // Highlight the card that matches player's current rank
+  const me = window._fbUser;
+  if (me) {
+    const { db, doc, getDoc } = window._fb;
+    getDoc(doc(db,'players',me.uid)).then(snap => {
+      const score = snap.exists() ? (snap.data().score || 0) : 0;
+      const rankLevel = score >= 700 ? 20 : score >= 300 ? 15 : score >= 100 ? 10 : score >= 1 ? 5 : 5;
+      highlightMpLevel(rankLevel);
+    }).catch(() => highlightMpLevel(10));
+  } else {
+    highlightMpLevel(10);
+  }
+
+  showScreen('mp-level');
+};
+
+function highlightMpLevel(matchPts) {
+  [5,10,15,20].forEach(n => {
+    const el = document.getElementById('mplvl-' + n);
+    if (!el) return;
+    if (n === matchPts) {
+      el.classList.add('rank-match');
+    } else {
+      el.classList.remove('rank-match');
+    }
+  });
+}
+
+// ── Player picks level → go to verse stack ────────────────
+window.mpPickLevel = function(pts, name, icon) {
+  _ncLevel = pts; _ncLevelName = name; _ncLevelIcon = icon;
+
+  // Briefly highlight selected
+  [5,10,15,20].forEach(n => {
+    const el = document.getElementById('mplvl-' + n);
+    if (el) el.classList.toggle('rank-match', n === pts);
+  });
+
+  // Build verse stack then transition
+  setTimeout(() => {
+    buildVerseStack();
+    showScreen('verse-stack');
+  }, 180);
+};
+
+// ── Build verse stack — 10 fresh verses filtered by level class ──
+// Level 5  → most-searched top 25%  (well-known, easy)
+// Level 10 → mid pool 25–60%
+// Level 15 → deeper pool 60–85%
+// Level 20 → full pool (any verse, hardest)
+function buildVerseStack() {
+  const allVerses = window.WHAM_VERSES || [];
+  const total     = allVerses.length;
+
+  // Slice pool by level difficulty so each fresh round pulls appropriate verses
+  let pool;
+  if      (_ncLevel <= 5)  pool = allVerses.slice(0, Math.ceil(total * 0.25));
+  else if (_ncLevel <= 10) pool = allVerses.slice(Math.floor(total * 0.10), Math.ceil(total * 0.60));
+  else if (_ncLevel <= 15) pool = allVerses.slice(Math.floor(total * 0.35), Math.ceil(total * 0.85));
+  else                     pool = allVerses; // level 20 — full pool
+
+  // Always shuffle fresh so same level never shows same 10 cards twice in a row
+  const picks = [...pool].sort(() => Math.random() - 0.5).slice(0, 10);
+  const grid  = document.getElementById('verse-stack-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  picks.forEach((v, i) => {
+    const card = document.createElement('div');
+    card.className = 'vs-card';
+    card.id = 'vscard-' + i;
+    card.innerHTML = \`
+      <div class="vs-card-ref">\${v.book}<br>\${v.chapter}:\${v.verse}</div>
+      <div class="vs-card-snippet">"\${(v.text||'').slice(0,50)}…"</div>
+    \`;
+    card.onclick = () => {
+      // Highlight selection
+      grid.querySelectorAll('.vs-card').forEach(c => c.classList.remove('selected'));
+      card.classList.add('selected');
+      _ncVerse = v;
+      // Brief pulse then advance
+      setTimeout(() => {
+        if (_ncOppDoc && _ncOppDoc.id) {
+          // Existing game round — skip challenger select, issue directly
+          _createChallengeGame(_ncOppDoc);
+        } else {
+          loadRecentOpponents();
+          showScreen('select-challenger');
+        }
+      }, 220);
+    };
+    grid.appendChild(card);
+  });
+}
+
+// ── Load recent opponents (last 5 unique from games collection) ──
+async function loadRecentOpponents() {
+  const listEl = document.getElementById('recent-opponents-list');
+  if (!listEl) return;
+  listEl.innerHTML = '<div style="color:rgba(255,255,255,0.25);font-size:13px;font-family:Crimson Text,serif;font-style:italic;text-align:center;padding:12px;">Loading…</div>';
+
+  const me = window._fbUser;
+  if (!me) { listEl.innerHTML = '<div style="color:rgba(255,255,255,0.25);font-size:13px;text-align:center;padding:12px;">Sign in to see recent opponents</div>'; return; }
+
+  try {
+    const { db, collection, query, where, orderBy, limit, getDocs, doc, getDoc } = window._fb;
+
+    // Query games where I was a player, last 20
+    const q = query(
+      collection(db,'games'),
+      where('players','array-contains', me.uid),
+      orderBy('updatedAt','desc'),
+      limit(20)
+    );
+    const snap = await getDocs(q);
+
+    // Extract unique opponents
+    const seen = new Set();
+    const opps = [];
+    for (const d of snap.docs) {
+      const g = d.data();
+      const oppUid = (g.players || []).find(p => p !== me.uid);
+      if (!oppUid || seen.has(oppUid)) continue;
+      seen.add(oppUid);
+      opps.push({ uid: oppUid, name: g.playerNames?.[oppUid] || 'Warrior', photo: g.playerPhotos?.[oppUid] || '', gameId: d.id, updatedAt: g.updatedAt });
+      if (opps.length >= 5) break;
+    }
+
+    if (opps.length === 0) {
+      listEl.innerHTML = '<div style="color:rgba(255,255,255,0.25);font-size:13px;font-family:Crimson Text,serif;font-style:italic;text-align:center;padding:12px;">No recent opponents yet — search below</div>';
+      return;
+    }
+
+    listEl.innerHTML = '';
+    opps.forEach(opp => {
+      const row = document.createElement('div');
+      row.className = 'recent-opp-row';
+      const avatarHtml = opp.photo
+        ? \`<img src="\${opp.photo}" alt="" />\`
+        : '👤';
+      row.innerHTML = \`
+        <div class="recent-opp-avatar">\${avatarHtml}</div>
+        <div class="recent-opp-info">
+          <div class="recent-opp-name">\${opp.name}</div>
+          <div class="recent-opp-meta">Recent opponent</div>
+        </div>
+        <button class="recent-opp-challenge-btn" onclick="scIssueWithOpponent(\${JSON.stringify({uid:opp.uid,displayName:opp.name,photoURL:opp.photo}).replace(/"/g,'&quot;')})">
+          ⚔️ Challenge
+        </button>
+      \`;
+      listEl.appendChild(row);
+    });
+
+  } catch(e) {
+    console.warn('recent opponents:', e);
+    listEl.innerHTML = '<div style="color:rgba(255,255,255,0.25);font-size:13px;text-align:center;padding:12px;">Could not load recent opponents</div>';
+  }
+}
+
+// ── Search debounce ────────────────────────────────────────
+window.scSearchDebounce = function() {
+  clearTimeout(_scSearchTid);
+  _scSearchTid = setTimeout(scRunSearch, 380);
+};
+
+async function scRunSearch() {
+  const val    = (document.getElementById('sc-search-input')?.value || '').trim();
+  const resEl  = document.getElementById('sc-search-results');
+  const statEl = document.getElementById('sc-search-status');
+  if (!resEl || !statEl) return;
+
+  if (val.length < 2) {
+    resEl.style.display = 'none';
+    statEl.textContent  = '';
+    _ncOppDoc = null;
+    return;
+  }
+
+  statEl.textContent = 'Searching…';
+  resEl.style.display = 'none';
+  resEl.innerHTML = '';
+  _ncOppDoc = null;
+
+  const me = window._fbUser;
+  const { db, collection, query, where, getDocs } = window._fb;
+
+  let results = [];
+  try {
+    // Search by email
+    const q1 = query(collection(db,'players'), where('email','==',val));
+    const s1  = await getDocs(q1);
+    s1.forEach(d => { if (d.id !== me.uid) results.push({ id: d.id, ...d.data() }); });
+  } catch(e) {}
+  try {
+    // Search by displayName
+    const q2 = query(collection(db,'players'), where('displayName','==',val));
+    const s2  = await getDocs(q2);
+    s2.forEach(d => { if (d.id !== me.uid && !results.find(r => r.id === d.id)) results.push({ id: d.id, ...d.data() }); });
+  } catch(e) {}
+
+  if (results.length === 0) {
+    statEl.textContent = 'No players found — challenge by email anyway';
+    // Allow challenge by raw email
+    _ncOppDoc = { id: 'pending_' + Date.now(), displayName: val, email: val, photoURL: '' };
+    return;
+  }
+
+  statEl.textContent = '';
+  resEl.style.display = 'flex';
+  results.slice(0,5).forEach(r => {
+    const row = document.createElement('div');
+    row.className = 'sc-result-row';
+    row.innerHTML = \`
+      <div class="recent-opp-avatar" style="width:30px;height:30px;font-size:14px;">\${r.photoURL ? \`<img src="\${r.photoURL}" alt="" />\` : '👤'}</div>
+      <div class="sc-result-name">\${r.displayName || r.email || 'Player'}</div>
+      <div class="sc-result-email">\${r.email || ''}</div>
+    \`;
+    row.onclick = () => {
+      resEl.querySelectorAll('.sc-result-row').forEach(rw => rw.classList.remove('selected'));
+      row.classList.add('selected');
+      _ncOppDoc = r;
+      statEl.textContent = \`✅ \${r.displayName || r.email} selected\`;
+    };
+    resEl.appendChild(row);
+  });
+}
+
+// ── Issue challenge with search selection ──────────────────
+window.scIssueWithSearch = async function() {
+  if (!_ncOppDoc) { showToast('Select a player first'); return; }
+  await _createChallengeGame(_ncOppDoc);
+};
+
+// ── Issue challenge from recent opponent row ───────────────
+window.scIssueWithOpponent = async function(opp) {
+  await _createChallengeGame(opp);
+};
+
+// ── Create OR update game in Firestore ─────────────────────
+// New game: addDoc. Existing game (round 2+): updateDoc.
+async function _createChallengeGame(oppDoc) {
+  const me = window._fbUser;
+  if (!me || !_ncVerse) { showToast('Missing verse or auth'); return; }
+
+  const myName   = me.displayName || me.email || 'Warrior';
+  const myPhoto  = me.photoURL || '';
+  const oppUid   = oppDoc.id || ('pending_' + Date.now());
+  const oppName  = oppDoc.displayName || oppDoc.email || 'Opponent';
+  const oppPhoto = oppDoc.photoURL || '';
+
+  const isExistingGame = !!_currentGameId && !!_currentGame &&
+    (_currentGame.players || []).includes(me.uid) &&
+    (_currentGame.players || []).includes(oppUid);
+
+  const { db, collection, addDoc, doc, updateDoc, getDoc, serverTimestamp } = window._fb;
+
+  try {
+    showToast('\u2694\uFE0F Issuing challenge\u2026');
+    let gameId   = _currentGameId;
+    let gameData;
+
+    if (isExistingGame) {
+      // Round 2+ — update existing game doc
+      await updateDoc(doc(db, 'games', gameId), {
+        currentTurn:  oppUid,
+        status:       'waiting_for_answer',
+        pendingLevel: _ncLevel,
+        pendingName:  _ncLevelName,
+        pendingIcon:  _ncLevelIcon,
+        pendingVerse: _ncVerse,
+        updatedAt:    serverTimestamp()
+      });
+      gameData = Object.assign({}, _currentGame, {
+        currentTurn: oppUid, status: 'waiting_for_answer',
+        pendingLevel: _ncLevel, pendingName: _ncLevelName,
+        pendingIcon: _ncLevelIcon, pendingVerse: _ncVerse
+      });
+    } else {
+      // New game — addDoc
+      const gameRef = await addDoc(collection(db, 'games'), {
+        players:      [me.uid, oppUid],
+        playerNames:  { [me.uid]: myName, [oppUid]: oppName },
+        playerPhotos: { [me.uid]: myPhoto, [oppUid]: oppPhoto },
+        scores:       { [me.uid]: 0, [oppUid]: 0 },
+        currentTurn:  oppUid,
+        status:       'waiting_for_answer',
+        pendingLevel: _ncLevel,
+        pendingName:  _ncLevelName,
+        pendingIcon:  _ncLevelIcon,
+        pendingVerse: _ncVerse,
+        round:        1,
+        createdAt:    serverTimestamp(),
+        updatedAt:    serverTimestamp(),
+        createdBy:    me.uid
+      });
+      gameId   = gameRef.id;
+      gameData = {
+        id: gameId,
+        players:     [me.uid, oppUid],
+        playerNames: { [me.uid]: myName, [oppUid]: oppName },
+        playerPhotos:{ [me.uid]: myPhoto, [oppUid]: oppPhoto },
+        scores:      { [me.uid]: 0, [oppUid]: 0 },
+        currentTurn: oppUid, status: 'waiting_for_answer',
+        pendingLevel: _ncLevel, pendingVerse: _ncVerse,
+        pendingName: _ncLevelName, pendingIcon: _ncLevelIcon, round: 1
+      };
+    }
+
+    _currentGameId = gameId;
+    _currentGame   = gameData;
+
+    // Waiting / round-result screen
+    const myScore  = gameData.scores?.[me.uid]  || 0;
+    const oppScore = gameData.scores?.[oppUid] || 0;
+    document.getElementById('share-code').textContent   = gameId.slice(0, 8).toUpperCase();
+    document.getElementById('rr-p1-name').textContent   = myName;
+    document.getElementById('rr-p2-name').textContent   = oppName;
+    document.getElementById('rr-p1-total').textContent  = myScore + ' pts';
+    document.getElementById('rr-p2-total').textContent  = oppScore + ' pts';
+    document.getElementById('rr-p1-delta').textContent  = _ncLevelIcon + ' ' + _ncLevelName + ' challenge sent';
+    document.getElementById('rr-p1-delta').style.color  = '#c9a227';
+    document.getElementById('rr-p2-delta').textContent  = '\u23F3 Waiting to answer\u2026';
+    document.getElementById('rr-p2-delta').style.color  = 'rgba(255,255,255,0.35)';
+    document.getElementById('rr-icon').textContent      = _ncLevelIcon;
+    document.getElementById('rr-title').textContent     = _ncLevelName + ' Challenge Sent!';
+    document.getElementById('rr-verse-ref').textContent = _ncVerse.book + ' ' + _ncVerse.chapter + ':' + _ncVerse.verse;
+    document.getElementById('rr-verse-text').textContent = '"' + (_ncVerse.text || '') + '"';
+    const nextBtn = document.getElementById('rr-next-btn');
+    nextBtn.textContent = '\u2190 Back to Battles';
+    nextBtn.onclick = () => showScreen('lobby');
+    showScreen('round-result');
+
+    // Push opponent
+    let fcmToken = oppDoc.fcmToken || null;
+    if (!fcmToken) {
+      try {
+        const oppSnap = await getDoc(doc(db, 'players', oppUid));
+        if (oppSnap.exists()) fcmToken = oppSnap.data().fcmToken || null;
+      } catch(e) {}
+    }
+    if (fcmToken) {
+      sendPushToOpponent(fcmToken,
+        '\u2694\uFE0F WhamBible Challenge!',
+        myName + ' sent you a ' + _ncLevel + 'pt ' + _ncLevelName + ' challenge!',
+        gameId, myName);
+    }
+
+    showToast(_ncLevelIcon + ' Challenge sent to ' + oppName + '!');
+
+  } catch(e) {
+    showToast('Error: ' + e.message);
+    console.error('_createChallengeGame:', e);
+  }
+}
+
+
 window.showNewChallenge = function() {
   const modal = document.getElementById('new-challenge-modal');
   if (modal) { modal.style.display = 'flex'; }
@@ -3271,7 +4270,7 @@ function loadPickLevelScreen(game) {
 }
 
 // ── Pick level → update Firestore, send push, go to waiting ─
-window.pickLevel = async function(pts, name, icon) {
+window.pickLevel = async function(pts, name, icon, customVerse) {
   if (!_currentGameId || !window._fbUser) return;
   const me     = window._fbUser;
   const game   = _currentGame;
@@ -3279,14 +4278,24 @@ window.pickLevel = async function(pts, name, icon) {
 
   try {
     const { db, doc, updateDoc, serverTimestamp } = window._fb;
-    await updateDoc(doc(db,'games',_currentGameId), {
+    // Build update — include custom verse data if provided
+    const updatePayload = {
       currentTurn:   oppUid,
       status:        'waiting_for_answer',
       pendingLevel:  pts,
       pendingName:   name,
       pendingIcon:   icon,
       updatedAt:     serverTimestamp()
-    });
+    };
+    if (customVerse) {
+      updatePayload.pendingCustomVerse = {
+        book:    customVerse.book,
+        chapter: customVerse.chapter,
+        verse:   customVerse.verse,
+        text:    customVerse.text || ''
+      };
+    }
+    await updateDoc(doc(db,'games',_currentGameId), updatePayload);
 
     // Show share code / waiting
     document.getElementById('share-code').textContent = _currentGameId.slice(0,8).toUpperCase();
@@ -3328,6 +4337,18 @@ async function loadAnswerScreen(game) {
   document.getElementById('challenge-from-label').textContent = `${icon} ${oppName} challenged you!`;
   document.getElementById('challenge-pts-badge').textContent  = `${pts} pts`;
 
+  // ── Custom verse injection (set by challenger via CVP) ──
+  if (game.pendingCustomVerse && game.pendingCustomVerse.book) {
+    const cv = game.pendingCustomVerse;
+    window._mpCurrentVerse = {
+      id:      'custom',
+      book:    cv.book,
+      chapter: cv.chapter,
+      verse:   cv.verse,
+      text:    cv.text || ''
+    };
+  }
+
   // Load verse from game or pick random
   let verse = game.pendingVerse;
   if (!verse) {
@@ -3342,11 +4363,13 @@ async function loadAnswerScreen(game) {
   document.getElementById('ans-verse-body').textContent = `"${verse.text || ''}"`;
   renderAnswerChoices(verse, pts);
   showScreen('answer');
+  // Expose verse for Papa hint targeting
+  window._mpCurrentVerse = verse;
   window.startAnswerTimer(20, () => {
     // Timeout — auto-submit wrong
     window.stopAnswerTimer();
     submitAnswer({book:'',chapter:0,verse:0}, {book:'X',chapter:0,verse:0}, pts, verse);
-  });
+  }, pts);
 }
 
 // ── Pick random verse from verses.js pool ─────────────────
@@ -3383,79 +4406,131 @@ function renderAnswerChoices(verse, pts) {
   window.renderAnswerChoices(verse, pts);
 }
 
-// ── Submit answer ──────────────────────────────────────────
-async function submitAnswer(chosen, correct, pts, verse) {
-  const me      = window._fbUser;
-  if (!me || !_currentGameId) return;
-  const game    = _currentGame;
-  const oppUid  = game.players.find(p => p !== me.uid);
-  const isRight = chosen.book===correct.book && chosen.chapter===correct.chapter && chosen.verse===correct.verse;
 
-  clearInterval(_ansTimerInterval);
-  const earned    = isRight ? pts : 0;
-  await new Promise(r => setTimeout(r, 800));
+// ── Submit answer ──────────────────────────────────────────
+// Answerer submits. After each round, currentTurn flips to the
+// OTHER player — they become the next round's challenger.
+// This is the exact Whamgame alternating model.
+async function submitAnswer(chosen, correct, pts, verse) {
+  const me     = window._fbUser;
+  if (!me || !_currentGameId) return;
+  const game   = _currentGame;
+  const myUid  = me.uid;
+  const oppUid = game.players.find(p => p !== myUid);
+
+  const isRight = chosen.book === correct.book &&
+                  chosen.chapter === correct.chapter &&
+                  chosen.verse === correct.verse;
+
+  window.stopAnswerTimer();
+  const earned     = isRight ? pts : 0;
+  const newMyScore = (game.scores?.[myUid]  || 0) + earned;
+  const oppScore   = game.scores?.[oppUid]  || 0;
+  const newRound   = (game.round || 1) + 1;
+  const isComplete = newRound > 10;
+
+  if (isRight) {
+    if (typeof window.triggerWhamSlam === 'function') window.triggerWhamSlam(pts);
+    await new Promise(r => setTimeout(r, 1200));
+  } else {
+    await new Promise(r => setTimeout(r, 600));
+  }
 
   try {
-    const { db, doc, updateDoc, serverTimestamp } = window._fb;
-    const newMyScore = (game.scores?.[me.uid]  || 0) + earned;
-    const newOppScore = game.scores?.[oppUid]  || 0;
-    const newRound   = (game.round || 1) + 1;
-    const isComplete = newRound > 10;
+    const { db, doc, updateDoc, getDoc, serverTimestamp } = window._fb;
 
-    await updateDoc(doc(db,'games',_currentGameId), {
-      [`scores.${me.uid}`]: newMyScore,
-      currentTurn:  oppUid,
+    // Flip turn to opponent — they challenge next round
+    await updateDoc(doc(db, 'games', _currentGameId), {
+      ['scores.' + myUid]: newMyScore,
+      currentTurn:  oppUid,               // opponent picks next round
       status:       isComplete ? 'complete' : 'pick_level',
       pendingVerse: null,
       pendingLevel: null,
+      pendingName:  null,
+      pendingIcon:  null,
       round:        newRound,
-      lastAnswer:   { uid: me.uid, correct: isRight, earned, verse: `${correct.book} ${correct.chapter}:${correct.verse}` },
-      updatedAt:    serverTimestamp()
+      lastAnswer: {
+        uid: myUid, correct: isRight, earned,
+        verse: correct.book + ' ' + correct.chapter + ':' + correct.verse
+      },
+      updatedAt: serverTimestamp()
     });
 
-    // Update player stats in Firestore
-    await updatePlayerStats(me.uid, earned, isRight, isComplete, newMyScore, newOppScore);
+    _currentGame = Object.assign({}, game, {
+      scores:      Object.assign({}, game.scores, { [myUid]: newMyScore }),
+      currentTurn: oppUid,
+      status:      isComplete ? 'complete' : 'pick_level',
+      round:       newRound
+    });
+
+    await updatePlayerStats(myUid, earned, isRight, isComplete, newMyScore, oppScore);
 
     if (isComplete) {
-      // Show game complete screen
-      showGameComplete(game, me.uid, oppUid, newMyScore, newOppScore, newRound - 1);
+      showGameComplete(_currentGame, myUid, oppUid, newMyScore, oppScore, newRound - 1);
     } else {
-      // Show round result
-      document.getElementById('rr-icon').textContent   = isRight ? '✅' : '❌';
-      document.getElementById('rr-title').textContent  = isRight ? `+${pts} Points!` : 'Wrong Answer';
-      document.getElementById('rr-verse-ref').textContent = `${correct.book} ${correct.chapter}:${correct.verse}`;
-      document.getElementById('rr-verse-text').textContent = verse.text || '';
-      document.getElementById('rr-p1-name').textContent  = game.playerNames?.[me.uid] || 'You';
-      document.getElementById('rr-p2-name').textContent  = game.playerNames?.[oppUid] || 'Opponent';
-      document.getElementById('rr-p1-delta').textContent = isRight ? `+${pts}` : '+0';
-      document.getElementById('rr-p1-delta').style.color = isRight ? '#4ade80' : '#f87171';
-      document.getElementById('rr-p1-total').textContent = `${newMyScore} pts`;
-      document.getElementById('rr-p2-total').textContent = `${newOppScore} pts`;
-      document.getElementById('share-code').textContent  = _currentGameId.slice(0,8).toUpperCase();
-      document.getElementById('rr-next-btn').textContent = '← Back to Battles';
-      document.getElementById('rr-next-btn').onclick = () => showScreen('lobby');
-      showScreen('round-result');
+      showPostAnswerResult(isRight, pts, earned, correct, verse, newMyScore, oppScore, oppUid);
     }
 
-    // Push opponent
-    const { db: db2, doc: d2, getDoc } = window._fb;
-    const oppSnap = await getDoc(d2(db2,'players',oppUid));
-    if (oppSnap.exists() && oppSnap.data().fcmToken) {
-      const myName = game.playerNames?.[me.uid] || 'Opponent';
-      if (isComplete) {
-        sendPushToOpponent(oppSnap.data().fcmToken,
-          '🏁 Battle Over!',
-          `${myName} played their final turn — check the result!`,
-          _currentGameId);
-      } else {
-        sendPushToOpponent(oppSnap.data().fcmToken,
-          '⚔️ Your turn!',
-          `${myName} answered — now it's your turn to challenge!`,
-          _currentGameId);
+    // Push opponent — their turn to challenge
+    try {
+      const oppSnap = await getDoc(doc(db, 'players', oppUid));
+      if (oppSnap.exists() && oppSnap.data().fcmToken) {
+        const myName = game.playerNames?.[myUid] || 'Opponent';
+        if (isComplete) {
+          sendPushToOpponent(oppSnap.data().fcmToken,
+            '\uD83C\uDFC1 Battle Over!',
+            myName + ' played their last answer!',
+            _currentGameId, myName);
+        } else {
+          sendPushToOpponent(oppSnap.data().fcmToken,
+            '\u2694\uFE0F Your turn to challenge!',
+            myName + ' answered — now YOU pick the verse!',
+            _currentGameId, myName);
+        }
       }
-    }
-  } catch(e) { showToast('Error: ' + e.message); }
+    } catch(e) { console.warn('push opp:', e); }
+
+  } catch(e) {
+    showToast('Error: ' + e.message);
+    console.error('submitAnswer:', e);
+  }
 }
+
+
+// ── Post-answer result ─────────────────────────────────────
+// I just answered. Opponent gets push to challenge next round.
+// I go back to lobby and wait for their verse push.
+function showPostAnswerResult(isRight, pts, earned, correct, verse, myScore, oppScore, oppUid) {
+  const game    = _currentGame;
+  const myUid   = window._fbUser?.uid;
+  const myName  = game?.playerNames?.[myUid]  || 'You';
+  const oppName = game?.playerNames?.[oppUid] || 'Opponent';
+
+  document.getElementById('rr-icon').textContent  = isRight ? '\u2705' : '\u274C';
+  document.getElementById('rr-title').textContent = isRight ? '+' + pts + ' Points!' : 'Wrong Answer';
+
+  document.getElementById('rr-verse-ref').textContent  = correct.book + ' ' + correct.chapter + ':' + correct.verse;
+  document.getElementById('rr-verse-text').textContent = verse?.text || '';
+
+  document.getElementById('rr-p1-name').textContent  = myName;
+  document.getElementById('rr-p2-name').textContent  = oppName;
+  document.getElementById('rr-p1-delta').textContent = isRight ? '+' + pts : '+0';
+  document.getElementById('rr-p1-delta').style.color = isRight ? '#4ade80' : '#f87171';
+  document.getElementById('rr-p1-total').textContent = myScore + ' pts';
+  document.getElementById('rr-p2-total').textContent = oppScore + ' pts';
+  document.getElementById('rr-p2-delta').textContent = '\u23F3 ' + oppName + ' challenges next';
+  document.getElementById('rr-p2-delta').style.color = 'rgba(255,255,255,0.35)';
+
+  document.getElementById('share-code').textContent = _currentGameId.slice(0, 8).toUpperCase();
+
+  // Back to lobby — opponent will push when they pick a verse
+  const nextBtn = document.getElementById('rr-next-btn');
+  nextBtn.textContent = '\u2190 Back to Battles';
+  nextBtn.onclick = () => showScreen('lobby');
+
+  showScreen('round-result');
+}
+
 
 // ── Update player stats after each answer ──────────────────
 async function updatePlayerStats(uid, earned, isRight, isComplete, myScore, oppScore) {
@@ -3552,30 +4627,7 @@ async function showGameComplete(game, myUid, oppUid, myScore, oppScore, rounds) 
 
 // Timer delegated to challenge.js startAnswerTimer()
 
-// ── Resume game by code ────────────────────────────────────
-window.resumeGame = async function() {
-  const codeEl = document.getElementById('game-code');
-  const code   = codeEl?.value?.trim();
-  if (!code || code.length < 6) { showToast('Enter a valid game code'); return; }
-
-  // Game IDs stored in Firestore — search by prefix
-  const { db, collection, query, where, getDocs } = window._fb;
-  try {
-    // Try direct doc ID lookup (first 8 chars)
-    const { getDoc, doc } = window._fb;
-    // We store full IDs — search active games for matching prefix
-    const snap = await getDocs(collection(db,'games'));
-    const match = snap.docs.find(d => d.id.toUpperCase().startsWith(code.toUpperCase()));
-    if (match) {
-      const game = { id: match.id, ...match.data() };
-      _currentGameId = match.id;
-      _currentGame   = game;
-      openGame(match.id, game);
-    } else {
-      showToast('Game not found. Check the code.');
-    }
-  } catch(e) { showToast('Error: ' + e.message); }
-};
+;
 
 // ── Screen switcher ────────────────────────────────────────
 function showScreen(id) {
@@ -3672,7 +4724,7 @@ window.newGame  = function() {
         </div>
         <div class="ps-display-name" id="ps-display-name">—</div>
         <div class="ps-email" id="ps-email-text">—</div>
-        <div class="ps-badge" id="ps-account-badge">⚔️ Warrior</div>
+        <div class="ps-badge" id="ps-account-badge">📜 Scribe</div>
       </div>
 
       <div class="ps-stats">
@@ -3757,10 +4809,10 @@ window.psOpen = async function() {
       // Badge based on score
       const badge = document.getElementById('ps-account-badge');
       const score = d.score || 0;
-      if      (score >= 500) badge.textContent = '👑 Champion';
-      else if (score >= 200) badge.textContent = '🛡️ Knight';
+      if      (score >= 700) badge.textContent = '👑 Champion';
+      else if (score >= 300) badge.textContent = '🛡️ Knight';
       else if (score >= 100) badge.textContent = '⚔️ Warrior';
-      else if (score >= 50)  badge.textContent = '🗡️ Squire';
+      else if (score >=   1) badge.textContent = '🗡️ Squire';
       else                   badge.textContent = '📜 Scribe';
       // Member since
       if (d.createdAt && d.createdAt.toDate) {
@@ -3824,7 +4876,351 @@ function psToast(msg) {
   t.textContent = msg; t.style.opacity = '1';
   clearTimeout(t._t); t._t = setTimeout(()=>{ t.style.opacity='0'; }, 2200);
 }
+
+// ══ PAPA AVATAR — hint system ══════════════════════════════
+
+// ── triggerPapaHint for multiplayer answer screen ──
+window.triggerPapaHint = function() {
+  const wrap = document.getElementById('papa-wrap');
+  const grid = document.getElementById('ans-choices-grid');
+  if (!wrap || !grid) return;
+
+  const correctBook = window._mpCurrentVerse?.book;
+  if (!correctBook) return;
+
+  const buttons    = Array.from(grid.querySelectorAll('.choice-btn'));
+  const correctBtn = buttons.find(b =>
+    b.querySelector('.choice-book')?.textContent === correctBook
+  );
+  if (!correctBtn) return;
+
+  // 0ms: papa slides in, buttons shrink
+  wrap.classList.add('papa-hint');
+  grid.classList.add('papa-enter');
+
+  // 200ms: papa leans forward
+  setTimeout(() => wrap.classList.add('papa-hinting'), 200);
+
+  function doBump(delay) {
+    setTimeout(() => {
+      correctBtn.classList.add('papa-bump', 'papa-shaking');
+      setTimeout(() => correctBtn.classList.remove('papa-shaking'), 240);
+      setTimeout(() => correctBtn.classList.remove('papa-bump'),    400);
+    }, delay);
+  }
+  doBump(500);
+  doBump(900);
+
+  // 1500ms: papa retreats
+  setTimeout(() => {
+    wrap.classList.remove('papa-hint', 'papa-hinting');
+    wrap.classList.add('papa-visible');
+    grid.classList.remove('papa-enter');
+    buttons.forEach(b => b.classList.remove('papa-bump', 'papa-shaking'));
+  }, 1500);
+};
+
+// ── Hide Papa on phone landscape rotation ──
+(function() {
+  function handleOrientation() {
+    const isLandscapePhone = window.innerHeight < 500 && window.innerWidth > window.innerHeight;
+    const wrap = document.getElementById('papa-wrap');
+    if (!wrap) return;
+    if (isLandscapePhone) {
+      wrap.className = '';
+      wrap.style.left = '-200px';
+    }
+  }
+  window.addEventListener('resize', handleOrientation);
+  if (screen.orientation) {
+    screen.orientation.addEventListener('change', handleOrientation);
+  } else {
+    window.addEventListener('orientationchange', handleOrientation);
+  }
+  handleOrientation();
+})();
+
+
+// ══ Custom Verse Pack — multiplayer level screen ══════════
+
+window._cvpMpSlots    = [];
+window._cvpMpSelected = null;
+
+window.mpOpenCustomVersePack = function() {
+  // Load slots from localStorage
+  try {
+    window._cvpMpSlots = JSON.parse(localStorage.getItem('whamVersePack') || 'null') || Array(10).fill(null);
+  } catch(e) { window._cvpMpSlots = Array(10).fill(null); }
+
+  const grid1 = document.getElementById('cvp-mp-grid');
+  const grid2 = document.getElementById('cvp-mp-row2');
+  grid1.innerHTML = '';
+  grid2.innerHTML = '';
+
+  for (let i = 0; i < 10; i++) {
+    const slot   = window._cvpMpSlots[i];
+    const bubble = document.createElement('div');
+    bubble.className = 'cvp-mp-bubble' + (slot && slot.book ? ' has-verse' : '');
+    bubble.id = 'cvp-mp-bub-' + i;
+    bubble.onclick = () => cvpMpBubbleTap(i);
+    if (slot && slot.book) {
+      bubble.innerHTML = `<span class="bub-num">${i+1}</span><span class="bub-ref">${slot.book.slice(0,3)} ${slot.chapter}:${slot.verse}</span>`;
+      // Add a small ✕ delete badge
+      const delBtn = document.createElement('button');
+      delBtn.className = 'cvp-mp-del-btn';
+      delBtn.textContent = '✕';
+      delBtn.title = 'Delete slot ' + (i+1);
+      delBtn.onclick = (e) => { e.stopPropagation(); cvpMpDeleteSlot(i); };
+      bubble.appendChild(delBtn);
+    } else {
+      bubble.innerHTML = `<span class="bub-num">${i+1}</span><span class="bub-ref"></span>`;
+    }
+    (i < 5 ? grid1 : grid2).appendChild(bubble);
+  }
+
+  // reset state
+  window._cvpMpSelected = null;
+  document.getElementById('cvp-mp-play-btn').style.opacity = '0.4';
+  document.getElementById('cvp-mp-play-btn').style.pointerEvents = 'none';
+  document.getElementById('cvp-mp-preview').style.display = 'none';
+
+  showScreen('cvp-mp');
+};
+
+window.cvpMpBubbleTap = function(idx) {
+  const slot = window._cvpMpSlots[idx];
+  if (!slot || !slot.book) return;
+
+  // deselect all
+  for (let i = 0; i < 10; i++) {
+    const b = document.getElementById('cvp-mp-bub-' + i);
+    if (b) b.classList.remove('selected-verse');
+  }
+  document.getElementById('cvp-mp-bub-' + idx).classList.add('selected-verse');
+  window._cvpMpSelected = idx;
+
+  // show preview
+  const ref  = slot.book + ' ' + slot.chapter + ':' + slot.verse;
+  const prev = document.getElementById('cvp-mp-preview');
+  document.getElementById('cvp-mp-preview-ref').textContent  = ref;
+  document.getElementById('cvp-mp-preview-text').textContent = slot.text || '(No preview available)';
+  prev.style.display = 'block';
+
+  // enable play
+  const btn = document.getElementById('cvp-mp-play-btn');
+  btn.style.opacity       = '1';
+  btn.style.pointerEvents = 'all';
+};
+
+window.cvpMpDeleteSlot = function(idx) {
+  try {
+    const pack = JSON.parse(localStorage.getItem('whamVersePack') || 'null') || Array(10).fill(null);
+    pack[idx] = null;
+    localStorage.setItem('whamVersePack', JSON.stringify(pack));
+    window._cvpMpSlots = pack;
+    // If deleted slot was selected, reset
+    if (window._cvpMpSelected === idx) {
+      window._cvpMpSelected = null;
+      document.getElementById('cvp-mp-play-btn').style.opacity = '0.4';
+      document.getElementById('cvp-mp-play-btn').style.pointerEvents = 'none';
+      document.getElementById('cvp-mp-preview').style.display = 'none';
+    }
+    // Re-render grid
+    mpOpenCustomVersePack();
+  } catch(e) { console.warn('CVP delete error', e); }
+};
+
+window.mpPlayCustomVerse = function() {
+  if (window._cvpMpSelected === null) return;
+  const slot = window._cvpMpSlots[window._cvpMpSelected];
+  if (!slot || !slot.book) return;
+
+  // Build a synthetic verse object matching WHAM_VERSES format
+  const customVerse = {
+    id:      'custom_' + window._cvpMpSelected,
+    book:    slot.book,
+    chapter: parseInt(slot.chapter),
+    verse:   parseInt(slot.verse),
+    text:    slot.text || '',
+    pts:     20,     // custom verses play at champion difficulty for scoring
+    custom:  true
+  };
+
+  // Store as the selected verse — override the normal verse selection flow
+  window._mpCustomVerse = customVerse;
+
+  // Trigger pickLevel flow with pts=20 (Champion) using the custom verse
+  if (typeof pickLevel === 'function') {
+    pickLevel(20, 'Champion', '👑', customVerse);
+  }
+};
+
 </script>
+
+
+<!-- ══ HOW TO PLAY OVERLAY ══════════════════════════════════ -->
+<div id="htp-overlay" style="display:none;" onclick="htpOverlayClick(event)">
+  <div id="htp-modal">
+    <div id="htp-header">
+      <span style="font-size:22px;">📜</span>
+      <h2>How to Play</h2>
+      <button id="htp-close" onclick="htpClose()">✕</button>
+    </div>
+    <div id="htp-body">
+
+      <div class="htp-step">
+        <div class="htp-icon">⚔️</div>
+        <div>
+          <strong>Issue a Challenge</strong>
+          <p>Find an opponent and send them a challenge. You are the <em>Challenger</em> for the whole game.</p>
+        </div>
+      </div>
+
+      <div class="htp-step">
+        <div class="htp-icon">🎯</div>
+        <div>
+          <strong>Pick a Level</strong>
+          <p>Choose 5, 10, 15, or 20 points. Harder levels use rarer verses — and pay out more!</p>
+        </div>
+      </div>
+
+      <div class="htp-step">
+        <div class="htp-icon">📖</div>
+        <div>
+          <strong>Answer the Verse</strong>
+          <p>Your opponent sees the verse and picks the correct Book, Chapter, and Verse from 4 options.</p>
+        </div>
+      </div>
+
+      <div class="htp-step">
+        <div class="htp-icon">🌀</div>
+        <div>
+          <strong>Scroll Recovery</strong>
+          <p>Miss an answer? Spin the recovery scroll within 7 seconds to still earn 5 bonus points.</p>
+        </div>
+      </div>
+
+      <div class="htp-step">
+        <div class="htp-icon">🏆</div>
+        <div>
+          <strong>10 Rounds — Best Score Wins</strong>
+          <p>After 10 rounds the player with the most points claims victory!</p>
+        </div>
+      </div>
+
+      <div style="margin:16px 0 8px;">
+        <div class="htp-score-table">
+          <div class="htp-score-row htp-score-header"><span>Level</span><span>Points</span><span>Recovery</span></div>
+          <div class="htp-score-row"><span>🌱 Easy</span><span class="htp-pts-gold">5 pts</span><span class="htp-pts-gold">+5</span></div>
+          <div class="htp-score-row"><span>⚡ Medium</span><span class="htp-pts-gold">10 pts</span><span class="htp-pts-gold">+5</span></div>
+          <div class="htp-score-row"><span>🔥 Hard</span><span class="htp-pts-gold">15 pts</span><span class="htp-pts-gold">+5</span></div>
+          <div class="htp-score-row"><span>💀 Legend</span><span class="htp-pts-gold">20 pts</span><span class="htp-pts-gold">+5</span></div>
+          <div class="htp-score-row"><span>❌ Wrong (no recovery)</span><span class="htp-pts-zero">0 pts</span><span class="htp-pts-zero">—</span></div>
+        </div>
+      </div>
+
+      <div style="margin:16px 0 8px;">
+        <div class="htp-score-table">
+          <div class="htp-score-row htp-score-header"><span>Rank</span><span>Points Needed</span></div>
+          <div class="htp-score-row"><span>📜 Scribe</span><span>0 pts</span></div>
+          <div class="htp-score-row"><span>🗡️ Squire</span><span>1 – 99 pts</span></div>
+          <div class="htp-score-row"><span>⚔️ Warrior</span><span>100 – 299 pts</span></div>
+          <div class="htp-score-row"><span>🛡️ Knight</span><span>300 – 699 pts</span></div>
+          <div class="htp-score-row"><span>👑 Champion</span><span>700+ pts</span></div>
+        </div>
+      </div>
+
+      <button onclick="htpClose()" style="width:100%;margin-top:8px;padding:12px;background:linear-gradient(135deg,#c9a227,#a07818);border:none;border-radius:10px;color:#1a0f02;font-family:'Cinzel',serif;font-size:14px;font-weight:700;cursor:pointer;letter-spacing:1px;">Got It! ⚔️</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ INVITE OVERLAY ═══════════════════════════════════════ -->
+<div id="invite-overlay" style="display:none;" onclick="inviteOverlayClick(event)">
+  <div id="invite-modal">
+    <div id="invite-header">
+      <span style="font-size:22px;">📣</span>
+      <h2>Invite a Friend</h2>
+      <button id="invite-close" onclick="inviteClose()">✕</button>
+    </div>
+    <div id="invite-body">
+      <p class="invite-tagline">Challenge someone to a Bible verse battle!</p>
+
+      <div class="invite-link-wrap">
+        <input id="invite-link-input" class="invite-link-input" type="text" readonly value="https://whambible.org" />
+        <button class="invite-copy-btn" onclick="inviteCopy()">📋 Copy</button>
+      </div>
+
+      <div class="invite-share-row">
+        <button class="invite-share-btn" onclick="inviteShare('whatsapp')">💬 WhatsApp</button>
+        <button class="invite-share-btn" onclick="inviteShare('sms')">📱 SMS</button>
+        <button class="invite-share-btn" onclick="inviteShare('native')">↗️ Share</button>
+      </div>
+
+      <p class="invite-note">Your friend will need to create an account to accept the challenge.</p>
+
+      <button onclick="inviteClose()" style="width:100%;margin-top:4px;padding:12px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:10px;color:rgba(255,255,255,0.7);font-size:14px;cursor:pointer;">Close</button>
+    </div>
+  </div>
+</div>
+
+
+  <!-- ══ PAPA AVATAR ══════════════════════════════════════ -->
+  <div id="papa-wrap">
+    <img id="papa-img"
+      src="https://media.base44.com/images/public/69c5c3fce2ed0e50ba525a44/3f5d4294c_image.png"
+      alt="Papa" />
+  </div>
+
+
+  <!-- ══ SCREEN: CUSTOM VERSE PACK (multiplayer) ══════════════ -->
+  <div id="screen-cvp-mp" class="screen" style="display:none;">
+    <div class="screen-inner">
+      <div style="text-align:center;margin-bottom:20px;">
+        <div style="font-size:32px;margin-bottom:6px;">📦</div>
+        <h1 style="font-family:'Cinzel',serif;font-size:20px;font-weight:900;color:#c9a227;letter-spacing:2px;margin:0 0 4px;">
+          Custom Verse Pack
+        </h1>
+        <p style="font-family:'Crimson Text',serif;font-size:14px;font-style:italic;color:rgba(240,228,192,0.5);margin:0;">
+          Select a verse to challenge your opponent
+        </p>
+      </div>
+
+      <!-- 2 rows × 5 bubbles -->
+      <div id="cvp-mp-grid" style="
+        display:grid; grid-template-columns:repeat(5,1fr);
+        gap:8px; margin-bottom:8px; width:100%;">
+      </div>
+      <div id="cvp-mp-row2" style="
+        display:grid; grid-template-columns:repeat(5,1fr);
+        gap:8px; margin-bottom:16px; width:100%;">
+      </div>
+
+      <!-- Selected verse preview -->
+      <div id="cvp-mp-preview" style="
+        display:none; margin-bottom:16px; padding:14px;
+        background:rgba(201,162,39,0.07); border:1px solid rgba(201,162,39,0.25);
+        border-radius:12px;">
+        <div id="cvp-mp-preview-ref" style="
+          font-family:'Cinzel',serif; font-size:13px; color:#c9a227; margin-bottom:6px;"></div>
+        <div id="cvp-mp-preview-text" style="
+          font-size:13px; color:rgba(255,255,255,0.7); font-style:italic; line-height:1.5;"></div>
+      </div>
+
+      <!-- Actions -->
+      <button id="cvp-mp-play-btn" onclick="mpPlayCustomVerse()" style="
+        width:100%; padding:14px 0;
+        background:linear-gradient(135deg,#c9a227,#a07720);
+        border:none; border-radius:12px;
+        font-family:'Cinzel',serif; font-size:15px; font-weight:900;
+        color:#0f172a; cursor:pointer; margin-bottom:10px;
+        opacity:0.4; pointer-events:none;
+        transition:opacity 0.15s;">
+        ⚔️ Challenge With This Verse
+      </button>
+      <button class="btn-ghost" style="width:100%;" onclick="showScreen('pick-level')">← Back</button>
+    </div>
+  </div>
 
 </body>
 </html>

@@ -52,13 +52,35 @@ const VERSES_N = Array.from({length: 176}, (_, i) => i + 1);
 // ── Init ───────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
   const params    = new URLSearchParams(window.location.search);
-  const verseId   = parseInt(params.get('verse')) || 1;
+  const verseId   = params.get('verse');
   const pts       = parseInt(params.get('pts'))   || 10;
   const ret       = params.get('return')          || 'game.html';
 
   R.pts       = pts;
   R.returnUrl = ret;
-  R.verse     = VERSES.find(v => v.id === verseId) || VERSES[0];
+
+  // ── Custom verse injection ──────────────────────────────
+  if (verseId === 'custom') {
+    try {
+      const injected = JSON.parse(sessionStorage.getItem('wham_custom_verse_inject') || 'null');
+      if (injected && injected.book) {
+        // Build a synthetic verse object matching VERSES format
+        R.verse = {
+          id:      'custom',
+          book:    injected.book,
+          chapter: parseInt(injected.chapter),
+          verse:   parseInt(injected.verse),
+          text:    injected.text || '',
+          custom:  true
+        };
+        sessionStorage.removeItem('wham_custom_verse_inject'); // consume it
+      } else {
+        R.verse = VERSES[0]; // fallback
+      }
+    } catch(e) { R.verse = VERSES[0]; }
+  } else {
+    R.verse = VERSES.find(v => v.id === parseInt(verseId)) || VERSES[0];
+  }
 
   // Prewarm audio
   prewarmWhamAudio();

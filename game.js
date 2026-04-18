@@ -11,9 +11,9 @@ let _whamAudio = null;
 
 // ── State ────────────────────────────────────────────────
 let state = {
-  pointsPerVerse: 10,
-  levelName:      'Warrior',
-  levelIcon:      '⚔️',
+  pointsPerVerse: 5,          // overridden by getPlayerDefaultLevel() on init
+  levelName:      'Squire',   // overridden by getPlayerDefaultLevel() on init
+  levelIcon:      '🗡️',       // overridden by getPlayerDefaultLevel() on init
   queue:          [],
   currentIndex:   0,
   currentVerse:   null,
@@ -24,6 +24,42 @@ let state = {
   timerInterval:  null,
   timeLeft:       TIME_LIMIT,
 };
+// Expose to game.html inline scripts (papa hint, etc.)
+window._gameState = state;
+
+
+// ── Rank → Default Level Helper ──────────────────────────
+// Maps a player's lifetime score to their rank and the corresponding
+// suggested challenge level. Called at init to pre-select the right card.
+function rankFromScore(score) {
+  if (score >= 700) return { pts: 20, name: 'Champion', icon: '👑' };
+  if (score >= 300) return { pts: 15, name: 'Knight',   icon: '🛡️' };
+  if (score >= 100) return { pts: 10, name: 'Warrior',  icon: '⚔️' };
+  if (score >=   1) return { pts:  5, name: 'Squire',   icon: '🗡️' };
+  return                    { pts:  5, name: 'Squire',   icon: '🗡️' }; // Scribe → 5
+}
+
+// Returns a Promise that resolves to the player's rank-level object.
+// Reads Firestore if logged in, otherwise uses local solo high-score.
+async function getPlayerDefaultLevel() {
+  try {
+    const fb   = window._fb;
+    const auth = fb && fb.auth;
+    const user = auth && auth.currentUser;
+    if (user) {
+      const { db, doc, getDoc } = fb;
+      const snap = await getDoc(doc(db, 'players', user.uid));
+      if (snap.exists()) {
+        const s = snap.data().score || 0;
+        return rankFromScore(s);
+      }
+    }
+  } catch(e) { /* offline / not authed — fall through */ }
+
+  // Fallback: best solo score stored in localStorage
+  const localBest = parseInt(localStorage.getItem('wb_best_solo_score') || '0', 10);
+  return rankFromScore(localBest);
+}
 
 // ── Init ─────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', () => {
@@ -37,9 +73,15 @@ window.addEventListener('DOMContentLoaded', () => {
   // ── Returning from recovery screen — skip pick screen ────
   if (!isNaN(retIndex) && recovered !== null) {
     hideSoloPickScreen();
-    setLevel(isNaN(lvl) ? 10 : lvl);
+    // Use the level from URL param; if missing, resolve from rank
+    if (!isNaN(lvl) && lvl > 0) {
+      setLevel(lvl);
+    } else {
+      getPlayerDefaultLevel().then(rl => setLevel(rl.pts));
+    }
     buildQueue();
     renderProgressDots();
+    _queueBuilt = true; // mark queue as built so next answer doesn't rebuild
     state.currentIndex = retIndex;
     restoreScoreFromStorage();
     if (recovered === '1') {
@@ -52,7 +94,11 @@ window.addEventListener('DOMContentLoaded', () => {
       state.results[retIndex] = { correct: false };
     }
     state.currentIndex++;
-    loadVerse();
+    if (state.currentIndex >= state.queue.length) {
+      showGameOver();
+    } else {
+      showLevelSelectBetweenVerses();
+    }
     return;
   }
 
@@ -66,11 +112,16 @@ window.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  // Default: show pick screen with Warrior pre-highlighted
-  // (already styled in HTML)
+  // Fresh entry — pre-highlight the card matching the player's rank-level
+  getPlayerDefaultLevel().then(rankLevel => {
+    preHighlightLevelCard(rankLevel.pts);
+  });
 });
 
 // ── Solo Level Pick ───────────────────────────────────────
+// Whether the queue has been built yet this session
+let _queueBuilt = false;
+
 window.soloPickLevel = function(pts, name, icon) {
   // Highlight selected card
   [5,10,15,20].forEach(n => {
@@ -83,15 +134,78 @@ window.soloPickLevel = function(pts, name, icon) {
     el.style.transform    = isSelected ? 'translateY(-2px) scale(1.04)' : 'none';
   });
 
-  // Brief pause then animate out and start game
   setTimeout(() => {
     hideSoloPickScreen();
     setLevel(pts);
-    buildQueue();
-    renderProgressDots();
-    loadVerse();
+    if (!_queueBuilt) {
+      // First pick — build the full queue & dots
+      buildQueue();
+      renderProgressDots();
+      _queueBuilt = true;
+    }
+    if (window._pendingRecovery) {
+      window._pendingRecovery = false;
+      launchRecovery();
+    } else {
+      loadVerse();
+    }
   }, 220);
 };
+
+
+// Pre-highlight a level card (visual only — does NOT start the game)
+function preHighlightLevelCard(pts) {
+  [5,10,15,20].forEach(n => {
+    const el = document.getElementById('slvl-' + n);
+    if (!el) return;
+    const isSelected = n === pts;
+    el.style.background = isSelected ? 'rgba(201,162,39,0.15)' : 'rgba(201,162,39,0.07)';
+    el.style.border     = isSelected ? '2px solid #c9a227'     : '1px solid rgba(201,162,39,0.2)';
+    el.style.boxShadow  = isSelected ? '0 0 0 2px rgba(201,162,39,0.3),0 6px 20px rgba(0,0,0,0.5)' : 'none';
+    el.style.transform  = isSelected ? 'translateY(-2px) scale(1.04)' : 'none';
+  });
+  // Also update the HUD label to match (will be overwritten when player confirms)
+  const levels = {5:{name:'Squire',icon:'🗡️'},10:{name:'Warrior',icon:'⚔️'},15:{name:'Knight',icon:'🛡️'},20:{name:'Champion',icon:'👑'}};
+  const l = levels[pts] || levels[5];
+  const el = document.getElementById('hud-level');
+  if (el) el.textContent = `${l.icon} ${l.name} · ${pts}pts`;
+}
+
+// Show pick screen between verses (does NOT rebuild queue)
+function showLevelSelectBetweenVerses() {
+  const screen = document.getElementById('solo-pick-screen');
+  if (!screen) { loadVerse(); return; }
+
+  // Update header text for between-verse context
+  const heading = screen.querySelector('h1');
+  if (heading) heading.textContent = 'Next Level';
+  const sub = screen.querySelector('p');
+  if (sub && sub.style.fontStyle === 'italic') {
+    const remaining = state.queue.length - state.currentIndex;
+    sub.textContent = remaining > 0
+      ? `${remaining} verse${remaining !== 1 ? 's' : ''} remaining — choose your points`
+      : 'Choose your level';
+  }
+
+  // Reset card styles to default
+  [5,10,15,20].forEach(n => {
+    const el = document.getElementById('slvl-' + n);
+    if (!el) return;
+    el.style.background = 'rgba(201,162,39,0.07)';
+    el.style.border     = '1px solid rgba(201,162,39,0.2)';
+    el.style.boxShadow  = 'none';
+    el.style.transform  = 'none';
+  });
+
+  screen.style.display   = 'flex';
+  screen.style.opacity   = '0';
+  screen.style.transform = 'scale(1.03)';
+  screen.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+  setTimeout(() => {
+    screen.style.opacity   = '1';
+    screen.style.transform = 'scale(1)';
+  }, 20);
+}
 
 function hideSoloPickScreen() {
   const screen = document.getElementById('solo-pick-screen');
@@ -185,6 +299,8 @@ function loadVerse() {
   fb.textContent = '';
   fb.className   = 'feedback-bar';
 
+  _hintFired = false;      // fresh verse — allow hint once
+  if (typeof window.papaMakeVisible === 'function') window.papaMakeVisible();
   buildChoices(v);
   startTimer();
 }
@@ -239,7 +355,9 @@ function handleAnswer(choiceIndex, isCorrect) {
     updateDot(state.currentIndex, 'correct');
     // WHAM SLAM fires on correct — exact Whamgame spec
     setTimeout(() => fireWhamSlam(`${state.currentVerse.book} ${state.currentVerse.chapter}:${state.currentVerse.verse}`, 'Correct!', () => {
-      showResult(true);
+      state.currentIndex++;
+      if (state.currentIndex >= state.queue.length) { showGameOver(); return; }
+      showLevelSelectBetweenVerses();
     }), 200);
   } else {
     buttons.forEach(btn => {
@@ -249,7 +367,7 @@ function handleAnswer(choiceIndex, isCorrect) {
     showFeedback(false);
     state.results.push({ correct: false });
     updateDot(state.currentIndex, 'wrong');
-    // No slam on wrong — go straight to recovery
+    // Wrong — go straight to recovery, no level select
     setTimeout(() => launchRecovery(), 800);
   }
 }
@@ -384,6 +502,18 @@ function startTimer() {
     const pct = (state.timeLeft / TIME_LIMIT) * 100;
     bar.style.width = pct + '%';
     if (pct < 30) bar.className = 'timer-bar danger';
+    // ── Papa hint thresholds by level ──
+    // Timer runs 20→0. "Xs have passed" = timeLeft <= (20 - X)
+    // Squire(5pt)=10s passed → timeLeft<=10
+    // Warrior(10pt)=13s passed → timeLeft<=7
+    // Knight(15pt)=15s passed → timeLeft<=5
+    // Champion(20pt)=17s passed → timeLeft<=3
+    const _hintAt = { 5: 10, 10: 7, 15: 5, 20: 3 };
+    const _ht = _hintAt[state.pointsPerVerse];
+    if (!_hintFired && _ht && state.timeLeft <= _ht && state.timeLeft > (_ht - 0.2)) {
+      _hintFired = true;
+      if (typeof window.triggerPapaHint === 'function') window.triggerPapaHint();
+    }
     if (state.timeLeft <= 0) { clearTimer(); timeUp(); }
   }, 100);
 }
@@ -433,16 +563,33 @@ function showGameOver() {
       msRecordSolo(state.score, levelLabel.replace(/[^0-9a-zA-Z ·]/g,'').trim());
     }
   } catch(e) {}
+
+  // Persist best solo score locally (used as rank fallback when not logged in)
+  try {
+    const prev = parseInt(localStorage.getItem('wb_best_solo_score') || '0', 10);
+    if (state.score > prev) localStorage.setItem('wb_best_solo_score', String(state.score));
+  } catch(e) {}
 }
 
 window.restartGame = function () {
   state.score = 0; state.streak = 0; state.currentIndex = 0; state.results = [];
+  _queueBuilt = false;
+  window._pendingRecovery = false;
   sessionStorage.removeItem('wb_solo_score');
   document.getElementById('gameover-overlay').style.display = 'none';
   updateScoreDisplay();
-  buildQueue();
-  renderProgressDots();
-  loadVerse();
+  // Show level select — pre-highlight rank-appropriate level again
+  getPlayerDefaultLevel().then(rl => preHighlightLevelCard(rl.pts));
+  const screen = document.getElementById('solo-pick-screen');
+  if (screen) {
+    const heading = screen.querySelector('h1');
+    if (heading) heading.textContent = 'Solo Battle';
+    const sub = screen.querySelector('p');
+    if (sub && sub.style.fontStyle === 'italic') sub.textContent = 'Choose your difficulty to begin';
+    screen.style.display   = 'flex';
+    screen.style.opacity   = '1';
+    screen.style.transform = 'scale(1)';
+  }
 };
 
 window.confirmExit = function () {
