@@ -3517,8 +3517,8 @@ function openGame(gameId, game) {
       // Player 2 — show accept screen first
       loadAcceptScreen(game);
     } else {
-      // Player 1 — pick level for next round
-      loadPickLevelScreen(game);
+      // Player 1 — new round: go through level → verse stack → challenger flow
+      startRoundChallenge(game);
     }
   } else {
     const oppName = game.playerNames?.[oppUid] || 'Opponent';
@@ -3601,6 +3601,46 @@ let _ncVerse    = null;
 let _ncOppDoc   = null;  // selected opponent Firestore doc
 let _scSearchTid = null;
 
+// ── Round N challenge entry — P1 picks level for existing game
+function startRoundChallenge(game) {
+  _currentGameId = game.id || _currentGameId;
+  _currentGame   = game;
+  _ncVerse = null; _ncOppDoc = null;
+
+  const myUid = window._fbUser?.uid;
+  const oppUid = game.players?.find(p => p !== myUid);
+
+  // Pre-fill opponent so verse stack goes straight to answer (no challenger select)
+  _ncOppDoc = {
+    id:          oppUid,
+    displayName: game.playerNames?.[oppUid] || 'Opponent',
+    photoURL:    game.playerPhotos?.[oppUid] || '',
+    fcmToken:    null  // will be fetched at issue time
+  };
+
+  // Highlight rank-match level
+  const me = window._fbUser;
+  if (me) {
+    const { db, doc, getDoc } = window._fb;
+    getDoc(doc(db, 'players', me.uid)).then(snap => {
+      const score = snap.exists() ? (snap.data().score || 0) : 0;
+      const rankLevel = score >= 500 ? 20 : score >= 200 ? 15 : score >= 100 ? 10 : score >= 50 ? 5 : 10;
+      highlightMpLevel(rankLevel);
+    }).catch(() => highlightMpLevel(10));
+  } else {
+    highlightMpLevel(10);
+  }
+
+  // Show VS strip with live scores
+  document.getElementById('vs-p1-name').textContent  = game.playerNames?.[myUid]  || 'You';
+  document.getElementById('vs-p2-name').textContent  = game.playerNames?.[oppUid] || 'Opponent';
+  document.getElementById('vs-p1-score').textContent = game.scores?.[myUid]  || 0;
+  document.getElementById('vs-p2-score').textContent = game.scores?.[oppUid] || 0;
+  document.getElementById('round-label').textContent = 'Round ' + (game.round || 1);
+
+  showScreen('mp-level');
+}
+
 // ── Entry point — replaces old showNewChallenge ────────────
 window.startNewChallenge = function() {
   _ncLevel = 10; _ncLevelName = 'Warrior'; _ncLevelIcon = '⚔️';
@@ -3674,8 +3714,13 @@ function buildVerseStack() {
       _ncVerse = v;
       // Brief pulse then advance
       setTimeout(() => {
-        loadRecentOpponents();
-        showScreen('select-challenger');
+        if (_ncOppDoc && _ncOppDoc.id) {
+          // Existing game round — skip challenger select, issue directly
+          _createChallengeGame(_ncOppDoc);
+        } else {
+          loadRecentOpponents();
+          showScreen('select-challenger');
+        }
       }, 220);
     };
     grid.appendChild(card);
@@ -3825,79 +3870,123 @@ window.scIssueWithOpponent = async function(opp) {
   await _createChallengeGame(opp);
 };
 
-// ── Create the game in Firestore ───────────────────────────
+// ── Create OR update game in Firestore ─────────────────────
+// New game: addDoc. Existing game (round 2+): updateDoc.
 async function _createChallengeGame(oppDoc) {
   const me = window._fbUser;
   if (!me || !_ncVerse) { showToast('Missing verse or auth'); return; }
 
-  const { db, collection, addDoc, serverTimestamp } = window._fb;
   const myName   = me.displayName || me.email || 'Warrior';
   const myPhoto  = me.photoURL || '';
   const oppUid   = oppDoc.id || ('pending_' + Date.now());
   const oppName  = oppDoc.displayName || oppDoc.email || 'Opponent';
   const oppPhoto = oppDoc.photoURL || '';
 
+  const isExistingGame = !!_currentGameId && !!_currentGame &&
+    (_currentGame.players || []).includes(me.uid) &&
+    (_currentGame.players || []).includes(oppUid);
+
+  const { db, collection, addDoc, doc, updateDoc, getDoc, serverTimestamp } = window._fb;
+
   try {
-    showToast('⚔️ Issuing challenge…');
-    const gameRef = await addDoc(collection(db,'games'), {
-      players:      [me.uid, oppUid],
-      playerNames:  { [me.uid]: myName, [oppUid]: oppName },
-      playerPhotos: { [me.uid]: myPhoto, [oppUid]: oppPhoto },
-      scores:       { [me.uid]: 0, [oppUid]: 0 },
-      currentTurn:  oppUid,              // opponent answers first
-      status:       'waiting_for_answer',
-      pendingLevel: _ncLevel,
-      pendingName:  _ncLevelName,
-      pendingIcon:  _ncLevelIcon,
-      pendingVerse: _ncVerse,
-      round:        1,
-      createdAt:    serverTimestamp(),
-      updatedAt:    serverTimestamp(),
-      createdBy:    me.uid
-    });
+    showToast('\u2694\uFE0F Issuing challenge\u2026');
+    let gameId   = _currentGameId;
+    let gameData;
 
-    _currentGameId = gameRef.id;
-    _currentGame   = {
-      id: gameRef.id,
-      players: [me.uid, oppUid],
-      playerNames: { [me.uid]: myName, [oppUid]: oppName },
-      playerPhotos: { [me.uid]: myPhoto, [oppUid]: oppPhoto },
-      scores: { [me.uid]: 0, [oppUid]: 0 },
-      currentTurn: oppUid, status: 'waiting_for_answer',
-      pendingLevel: _ncLevel, pendingVerse: _ncVerse,
-      pendingName: _ncLevelName, pendingIcon: _ncLevelIcon, round: 1
-    };
+    if (isExistingGame) {
+      // Round 2+ — update existing game doc
+      await updateDoc(doc(db, 'games', gameId), {
+        currentTurn:  oppUid,
+        status:       'waiting_for_answer',
+        pendingLevel: _ncLevel,
+        pendingName:  _ncLevelName,
+        pendingIcon:  _ncLevelIcon,
+        pendingVerse: _ncVerse,
+        updatedAt:    serverTimestamp()
+      });
+      gameData = Object.assign({}, _currentGame, {
+        currentTurn: oppUid, status: 'waiting_for_answer',
+        pendingLevel: _ncLevel, pendingName: _ncLevelName,
+        pendingIcon: _ncLevelIcon, pendingVerse: _ncVerse
+      });
+    } else {
+      // New game — addDoc
+      const gameRef = await addDoc(collection(db, 'games'), {
+        players:      [me.uid, oppUid],
+        playerNames:  { [me.uid]: myName, [oppUid]: oppName },
+        playerPhotos: { [me.uid]: myPhoto, [oppUid]: oppPhoto },
+        scores:       { [me.uid]: 0, [oppUid]: 0 },
+        currentTurn:  oppUid,
+        status:       'waiting_for_answer',
+        pendingLevel: _ncLevel,
+        pendingName:  _ncLevelName,
+        pendingIcon:  _ncLevelIcon,
+        pendingVerse: _ncVerse,
+        round:        1,
+        createdAt:    serverTimestamp(),
+        updatedAt:    serverTimestamp(),
+        createdBy:    me.uid
+      });
+      gameId   = gameRef.id;
+      gameData = {
+        id: gameId,
+        players:     [me.uid, oppUid],
+        playerNames: { [me.uid]: myName, [oppUid]: oppName },
+        playerPhotos:{ [me.uid]: myPhoto, [oppUid]: oppPhoto },
+        scores:      { [me.uid]: 0, [oppUid]: 0 },
+        currentTurn: oppUid, status: 'waiting_for_answer',
+        pendingLevel: _ncLevel, pendingVerse: _ncVerse,
+        pendingName: _ncLevelName, pendingIcon: _ncLevelIcon, round: 1
+      };
+    }
 
-    // Show waiting screen (round-result repurposed)
-    document.getElementById('share-code').textContent  = gameRef.id.slice(0,8).toUpperCase();
-    document.getElementById('rr-p1-name').textContent  = myName;
-    document.getElementById('rr-p2-name').textContent  = oppName;
-    document.getElementById('rr-p1-total').textContent = '0 pts';
-    document.getElementById('rr-p2-total').textContent = '0 pts';
-    document.getElementById('rr-p1-delta').textContent = \`\${_ncLevelIcon} \${_ncLevelName} challenge sent\`;
-    document.getElementById('rr-p2-delta').textContent = '⏳ Waiting to answer…';
-    document.getElementById('rr-icon').textContent     = _ncLevelIcon;
-    document.getElementById('rr-title').textContent    = \`\${_ncLevelName} Challenge Sent!\`;
-    document.getElementById('rr-next-btn').textContent = '← Back to Battles';
-    document.getElementById('rr-next-btn').onclick     = () => showScreen('lobby');
-    document.getElementById('rr-verse-ref').textContent = \`\${_ncVerse.book} \${_ncVerse.chapter}:\${_ncVerse.verse}\`;
-    document.getElementById('rr-verse-text').textContent = \`"\${_ncVerse.text || ''}"\`;
+    _currentGameId = gameId;
+    _currentGame   = gameData;
+
+    // Waiting / round-result screen
+    const myScore  = gameData.scores?.[me.uid]  || 0;
+    const oppScore = gameData.scores?.[oppUid] || 0;
+    document.getElementById('share-code').textContent   = gameId.slice(0, 8).toUpperCase();
+    document.getElementById('rr-p1-name').textContent   = myName;
+    document.getElementById('rr-p2-name').textContent   = oppName;
+    document.getElementById('rr-p1-total').textContent  = myScore + ' pts';
+    document.getElementById('rr-p2-total').textContent  = oppScore + ' pts';
+    document.getElementById('rr-p1-delta').textContent  = _ncLevelIcon + ' ' + _ncLevelName + ' challenge sent';
+    document.getElementById('rr-p1-delta').style.color  = '#c9a227';
+    document.getElementById('rr-p2-delta').textContent  = '\u23F3 Waiting to answer\u2026';
+    document.getElementById('rr-p2-delta').style.color  = 'rgba(255,255,255,0.35)';
+    document.getElementById('rr-icon').textContent      = _ncLevelIcon;
+    document.getElementById('rr-title').textContent     = _ncLevelName + ' Challenge Sent!';
+    document.getElementById('rr-verse-ref').textContent = _ncVerse.book + ' ' + _ncVerse.chapter + ':' + _ncVerse.verse;
+    document.getElementById('rr-verse-text').textContent = '"' + (_ncVerse.text || '') + '"';
+    const nextBtn = document.getElementById('rr-next-btn');
+    nextBtn.textContent = '\u2190 Back to Battles';
+    nextBtn.onclick = () => showScreen('lobby');
     showScreen('round-result');
 
-    // Push notification to opponent
-    if (oppDoc.fcmToken) {
-      sendPushToOpponent(oppDoc.fcmToken,
-        '⚔️ WhamBible Challenge!',
-        \`\${myName} sent you a \${_ncLevel}pt \${_ncLevelName} challenge!\`,
-        gameRef.id, myName);
+    // Push opponent
+    let fcmToken = oppDoc.fcmToken || null;
+    if (!fcmToken) {
+      try {
+        const oppSnap = await getDoc(doc(db, 'players', oppUid));
+        if (oppSnap.exists()) fcmToken = oppSnap.data().fcmToken || null;
+      } catch(e) {}
     }
-    showToast(\`\${_ncLevelIcon} Challenge issued to \${oppName}!\`);
+    if (fcmToken) {
+      sendPushToOpponent(fcmToken,
+        '\u2694\uFE0F WhamBible Challenge!',
+        myName + ' sent you a ' + _ncLevel + 'pt ' + _ncLevelName + ' challenge!',
+        gameId, myName);
+    }
+
+    showToast(_ncLevelIcon + ' Challenge sent to ' + oppName + '!');
 
   } catch(e) {
     showToast('Error: ' + e.message);
-    console.error('createChallengeGame:', e);
+    console.error('_createChallengeGame:', e);
   }
 }
+
 
 window.showNewChallenge = function() {
   const modal = document.getElementById('new-challenge-modal');
@@ -4143,72 +4232,137 @@ async function submitAnswer(chosen, correct, pts, verse) {
   if (!me || !_currentGameId) return;
   const game    = _currentGame;
   const oppUid  = game.players.find(p => p !== me.uid);
-  const isRight = chosen.book===correct.book && chosen.chapter===correct.chapter && chosen.verse===correct.verse;
+  const isRight = chosen.book === correct.book &&
+                  chosen.chapter === correct.chapter &&
+                  chosen.verse === correct.verse;
 
-  clearInterval(_ansTimerInterval);
-  const earned    = isRight ? pts : 0;
-  await new Promise(r => setTimeout(r, 800));
+  window.stopAnswerTimer();
+  const earned     = isRight ? pts : 0;
+  const newMyScore = (game.scores?.[me.uid]  || 0) + earned;
+  const newOppScore = game.scores?.[oppUid] || 0;
+  const newRound   = (game.round || 1) + 1;
+  const isComplete = newRound > 10;
 
+  // ── 1. WHAM SLAM animation on correct ─────────────────────
+  if (isRight) {
+    if (typeof window.triggerWhamSlam === 'function') {
+      window.triggerWhamSlam(pts);
+    }
+    await new Promise(r => setTimeout(r, 1200));
+  } else {
+    await new Promise(r => setTimeout(r, 600));
+  }
+
+  // ── 2. Write result to Firestore ───────────────────────────
   try {
     const { db, doc, updateDoc, serverTimestamp } = window._fb;
-    const newMyScore = (game.scores?.[me.uid]  || 0) + earned;
-    const newOppScore = game.scores?.[oppUid]  || 0;
-    const newRound   = (game.round || 1) + 1;
-    const isComplete = newRound > 10;
-
-    await updateDoc(doc(db,'games',_currentGameId), {
-      [`scores.${me.uid}`]: newMyScore,
+    await updateDoc(doc(db, 'games', _currentGameId), {
+      ['scores.' + me.uid]: newMyScore,
       currentTurn:  oppUid,
       status:       isComplete ? 'complete' : 'pick_level',
       pendingVerse: null,
       pendingLevel: null,
+      pendingName:  null,
+      pendingIcon:  null,
       round:        newRound,
-      lastAnswer:   { uid: me.uid, correct: isRight, earned, verse: `${correct.book} ${correct.chapter}:${correct.verse}` },
-      updatedAt:    serverTimestamp()
+      lastAnswer: {
+        uid:     me.uid,
+        correct: isRight,
+        earned,
+        verse:   correct.book + ' ' + correct.chapter + ':' + correct.verse
+      },
+      updatedAt: serverTimestamp()
     });
 
-    // Update player stats in Firestore
-    await updatePlayerStats(me.uid, earned, isRight, isComplete, newMyScore, newOppScore);
+    // Update local game state so round-result renders correctly
+    _currentGame = Object.assign({}, game, {
+      scores:      Object.assign({}, game.scores, { [me.uid]: newMyScore }),
+      currentTurn: oppUid,
+      status:      isComplete ? 'complete' : 'pick_level',
+      round:       newRound
+    });
 
-    if (isComplete) {
-      // Show game complete screen
-      showGameComplete(game, me.uid, oppUid, newMyScore, newOppScore, newRound - 1);
-    } else {
-      // Show round result
-      document.getElementById('rr-icon').textContent   = isRight ? '✅' : '❌';
-      document.getElementById('rr-title').textContent  = isRight ? `+${pts} Points!` : 'Wrong Answer';
-      document.getElementById('rr-verse-ref').textContent = `${correct.book} ${correct.chapter}:${correct.verse}`;
-      document.getElementById('rr-verse-text').textContent = verse.text || '';
-      document.getElementById('rr-p1-name').textContent  = game.playerNames?.[me.uid] || 'You';
-      document.getElementById('rr-p2-name').textContent  = game.playerNames?.[oppUid] || 'Opponent';
-      document.getElementById('rr-p1-delta').textContent = isRight ? `+${pts}` : '+0';
-      document.getElementById('rr-p1-delta').style.color = isRight ? '#4ade80' : '#f87171';
-      document.getElementById('rr-p1-total').textContent = `${newMyScore} pts`;
-      document.getElementById('rr-p2-total').textContent = `${newOppScore} pts`;
-      document.getElementById('share-code').textContent  = _currentGameId.slice(0,8).toUpperCase();
-      document.getElementById('rr-next-btn').textContent = '← Back to Battles';
-      document.getElementById('rr-next-btn').onclick = () => showScreen('lobby');
-      showScreen('round-result');
-    }
+  } catch(e) {
+    showToast('Save error: ' + e.message);
+    console.error('submitAnswer save:', e);
+    return;
+  }
 
-    // Push opponent
+  // ── 3. Update player stats ─────────────────────────────────
+  await updatePlayerStats(me.uid, earned, isRight, isComplete, newMyScore, newOppScore);
+
+  // ── 4. Show result then route ──────────────────────────────
+  if (isComplete) {
+    showGameComplete(_currentGame, me.uid, oppUid, newMyScore, newOppScore, newRound - 1);
+  } else {
+    showPostAnswerResult(isRight, pts, earned, correct, verse, newMyScore, newOppScore, oppUid);
+  }
+
+  // ── 5. Push P1 — their turn to pick level ─────────────────
+  try {
     const { db: db2, doc: d2, getDoc } = window._fb;
-    const oppSnap = await getDoc(d2(db2,'players',oppUid));
+    const oppSnap = await getDoc(d2(db2, 'players', oppUid));
     if (oppSnap.exists() && oppSnap.data().fcmToken) {
       const myName = game.playerNames?.[me.uid] || 'Opponent';
       if (isComplete) {
-        sendPushToOpponent(oppSnap.data().fcmToken,
-          '🏁 Battle Over!',
-          `${myName} played their final turn — check the result!`,
-          _currentGameId);
+        sendPushToOpponent(
+          oppSnap.data().fcmToken,
+          '\uD83C\uDFC1 Battle Over!',
+          myName + ' played their final turn — check the result!',
+          _currentGameId, myName
+        );
       } else {
-        sendPushToOpponent(oppSnap.data().fcmToken,
-          '⚔️ Your turn!',
-          `${myName} answered — now it's your turn to challenge!`,
-          _currentGameId);
+        sendPushToOpponent(
+          oppSnap.data().fcmToken,
+          '\u2694\uFE0F Your turn to challenge!',
+          myName + ' answered — pick your next verse!',
+          _currentGameId, myName
+        );
       }
     }
-  } catch(e) { showToast('Error: ' + e.message); }
+  } catch(e) { console.warn('push error:', e); }
+}
+
+// ── Post-answer result card ─────────────────────────────────
+// Shows: correct/wrong, score delta, verse reveal, then routes
+// Correct  → lobby (P1 gets push, picks level next round)
+// Wrong    → already went through recovery before submitAnswer
+function showPostAnswerResult(isRight, pts, earned, correct, verse, myScore, oppScore, oppUid) {
+  const game    = _currentGame;
+  const myUid   = window._fbUser?.uid;
+  const myName  = game.playerNames?.[myUid]  || 'You';
+  const oppName = game.playerNames?.[oppUid] || 'Opponent';
+
+  // Result icon + title
+  document.getElementById('rr-icon').textContent  = isRight ? '\u2705' : '\u274C';
+  document.getElementById('rr-title').textContent = isRight
+    ? '+' + pts + ' Points!'
+    : 'Wrong Answer';
+
+  // Verse reveal
+  document.getElementById('rr-verse-ref').textContent  =
+    correct.book + ' ' + correct.chapter + ':' + correct.verse;
+  document.getElementById('rr-verse-text').textContent = verse.text || '';
+
+  // Score strip
+  document.getElementById('rr-p1-name').textContent  = myName;
+  document.getElementById('rr-p2-name').textContent  = oppName;
+  document.getElementById('rr-p1-delta').textContent = isRight ? '+' + pts : '+0';
+  document.getElementById('rr-p1-delta').style.color = isRight ? '#4ade80' : '#f87171';
+  document.getElementById('rr-p1-total').textContent = myScore + ' pts';
+  document.getElementById('rr-p2-total').textContent = oppScore + ' pts';
+  document.getElementById('rr-p2-delta').textContent = '\u23F3 Their turn to challenge';
+  document.getElementById('rr-p2-delta').style.color = 'rgba(255,255,255,0.35)';
+
+  // Game code
+  document.getElementById('share-code').textContent = _currentGameId.slice(0, 8).toUpperCase();
+
+  // Next button → lobby (P1 picks verse next)
+  const nextBtn = document.getElementById('rr-next-btn');
+  nextBtn.textContent = '\u2190 Back to Battles';
+  nextBtn.onclick = () => showScreen('lobby');
+
+  showScreen('round-result');
 }
 
 // ── Update player stats after each answer ──────────────────
