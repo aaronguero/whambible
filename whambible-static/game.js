@@ -303,11 +303,8 @@ function handleAnswer(choiceIndex, isCorrect) {
     showFeedback(false);
     state.results.push({ correct: false });
     updateDot(state.currentIndex, 'wrong');
-    // Wrong — show level select so player picks level, then recovery launches
-    setTimeout(() => {
-      window._pendingRecovery = true;
-      showLevelSelectBetweenVerses();
-    }, 800);
+    // Wrong — go straight to recovery, no level select
+    setTimeout(() => launchRecovery(), 800);
   }
 }
 
@@ -460,10 +457,7 @@ function timeUp() {
   const fb = document.getElementById('feedback-bar');
   fb.textContent = '⏱️ Time\'s up — Scroll Recovery incoming!';
   fb.className   = 'feedback-bar wrong';
-  setTimeout(() => {
-    window._pendingRecovery = true;
-    showLevelSelectBetweenVerses();
-  }, 800);
+  setTimeout(() => launchRecovery(), 800);
 }
 
 // ── Game Over ─────────────────────────────────────────────
