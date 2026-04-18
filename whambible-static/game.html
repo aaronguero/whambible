@@ -2872,7 +2872,7 @@ document.addEventListener('whamAuthChange', e => {
         </div>
         <div class="ps-display-name" id="ps-display-name">—</div>
         <div class="ps-email" id="ps-email-text">—</div>
-        <div class="ps-badge" id="ps-account-badge">⚔️ Warrior</div>
+        <div class="ps-badge" id="ps-account-badge">📜 Scribe</div>
       </div>
 
       <div class="ps-stats">
@@ -2957,10 +2957,10 @@ window.psOpen = async function() {
       // Badge based on score
       const badge = document.getElementById('ps-account-badge');
       const score = d.score || 0;
-      if      (score >= 500) badge.textContent = '👑 Champion';
-      else if (score >= 200) badge.textContent = '🛡️ Knight';
+      if      (score >= 700) badge.textContent = '👑 Champion';
+      else if (score >= 300) badge.textContent = '🛡️ Knight';
       else if (score >= 100) badge.textContent = '⚔️ Warrior';
-      else if (score >= 50)  badge.textContent = '🗡️ Squire';
+      else if (score >=   1) badge.textContent = '🗡️ Squire';
       else                   badge.textContent = '📜 Scribe';
       // Member since
       if (d.createdAt && d.createdAt.toDate) {
@@ -3213,11 +3213,11 @@ window.papaReact = function(state) {
           <strong>Climb the Ranks</strong>
           <p>Earn points across games to rise through the ranks:</p>
           <div>
-            <span class="tut-pill">📜 Scribe — 0+</span>
-            <span class="tut-pill">🗡️ Squire — 50+</span>
+            <span class="tut-pill">📜 Scribe — 0</span>
+            <span class="tut-pill">🗡️ Squire — 1+</span>
             <span class="tut-pill">⚔️ Warrior — 100+</span>
-            <span class="tut-pill">🛡️ Knight — 200+</span>
-            <span class="tut-pill" style="background:rgba(201,162,39,0.2);color:#c9a227;border-color:rgba(201,162,39,0.5);">👑 Champion — 500+</span>
+            <span class="tut-pill">🛡️ Knight — 300+</span>
+            <span class="tut-pill" style="background:rgba(201,162,39,0.2);color:#c9a227;border-color:rgba(201,162,39,0.5);">👑 Champion — 700+</span>
           </div>
         </div>
       </div>

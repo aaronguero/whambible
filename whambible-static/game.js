@@ -30,10 +30,10 @@ let state = {
 // Maps a player's lifetime score to their rank and the corresponding
 // suggested challenge level. Called at init to pre-select the right card.
 function rankFromScore(score) {
-  if (score >= 500) return { pts: 20, name: 'Champion', icon: '👑' };
-  if (score >= 200) return { pts: 15, name: 'Knight',   icon: '🛡️' };
+  if (score >= 700) return { pts: 20, name: 'Champion', icon: '👑' };
+  if (score >= 300) return { pts: 15, name: 'Knight',   icon: '🛡️' };
   if (score >= 100) return { pts: 10, name: 'Warrior',  icon: '⚔️' };
-  if (score >= 50)  return { pts:  5, name: 'Squire',   icon: '🗡️' };
+  if (score >=   1) return { pts:  5, name: 'Squire',   icon: '🗡️' };
   return                    { pts:  5, name: 'Squire',   icon: '🗡️' }; // Scribe → 5
 }
 

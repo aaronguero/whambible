@@ -3292,10 +3292,10 @@ document.addEventListener('whamAuthChange', async e => {
 
 // ── Rank badge helper (shared) ─────────────────────────────
 function rankBadge(score) {
-  if      (score >= 500) return { icon:'👑', label:'Champion', cls:'rank-champion' };
-  else if (score >= 200) return { icon:'🛡️', label:'Knight',   cls:'rank-knight'   };
+  if      (score >= 700) return { icon:'👑', label:'Champion', cls:'rank-champion' };
+  else if (score >= 300) return { icon:'🛡️', label:'Knight',   cls:'rank-knight'   };
   else if (score >= 100) return { icon:'⚔️', label:'Warrior',  cls:'rank-warrior'  };
-  else if (score >= 50)  return { icon:'🗡️', label:'Squire',   cls:'rank-squire'   };
+  else if (score >=   1) return { icon:'🗡️', label:'Squire',   cls:'rank-squire'   };
   else                   return { icon:'📜', label:'Scribe',   cls:'rank-scribe'   };
 }
 
@@ -3603,7 +3603,7 @@ function startRoundChallenge(game) {
     const { db, doc, getDoc } = window._fb;
     getDoc(doc(db, 'players', me.uid)).then(snap => {
       const score = snap.exists() ? (snap.data().score || 0) : 0;
-      const suggested = score >= 500 ? 20 : score >= 200 ? 15 : score >= 100 ? 10 : score >= 50 ? 5 : 10;
+      const suggested = score >= 700 ? 20 : score >= 300 ? 15 : score >= 100 ? 10 : score >= 1 ? 5 : 5;
       if (typeof highlightMpLevel === 'function') highlightMpLevel(suggested);
     }).catch(() => { if (typeof highlightMpLevel === 'function') highlightMpLevel(10); });
   }
@@ -3622,7 +3622,7 @@ window.startNewChallenge = function() {
     const { db, doc, getDoc } = window._fb;
     getDoc(doc(db,'players',me.uid)).then(snap => {
       const score = snap.exists() ? (snap.data().score || 0) : 0;
-      const rankLevel = score >= 500 ? 20 : score >= 200 ? 15 : score >= 100 ? 10 : score >= 50 ? 5 : 10;
+      const rankLevel = score >= 700 ? 20 : score >= 300 ? 15 : score >= 100 ? 10 : score >= 1 ? 5 : 5;
       highlightMpLevel(rankLevel);
     }).catch(() => highlightMpLevel(10));
   } else {
@@ -4528,7 +4528,7 @@ window.newGame  = function() {
         </div>
         <div class="ps-display-name" id="ps-display-name">—</div>
         <div class="ps-email" id="ps-email-text">—</div>
-        <div class="ps-badge" id="ps-account-badge">⚔️ Warrior</div>
+        <div class="ps-badge" id="ps-account-badge">📜 Scribe</div>
       </div>
 
       <div class="ps-stats">
@@ -4613,10 +4613,10 @@ window.psOpen = async function() {
       // Badge based on score
       const badge = document.getElementById('ps-account-badge');
       const score = d.score || 0;
-      if      (score >= 500) badge.textContent = '👑 Champion';
-      else if (score >= 200) badge.textContent = '🛡️ Knight';
+      if      (score >= 700) badge.textContent = '👑 Champion';
+      else if (score >= 300) badge.textContent = '🛡️ Knight';
       else if (score >= 100) badge.textContent = '⚔️ Warrior';
-      else if (score >= 50)  badge.textContent = '🗡️ Squire';
+      else if (score >=   1) badge.textContent = '🗡️ Squire';
       else                   badge.textContent = '📜 Scribe';
       // Member since
       if (d.createdAt && d.createdAt.toDate) {
@@ -4748,10 +4748,10 @@ function psToast(msg) {
         <div class="htp-score-table">
           <div class="htp-score-row htp-score-header"><span>Rank</span><span>Points Needed</span></div>
           <div class="htp-score-row"><span>📜 Scribe</span><span>0 pts</span></div>
-          <div class="htp-score-row"><span>🛡 Squire</span><span>50 pts</span></div>
-          <div class="htp-score-row"><span>⚔️ Warrior</span><span>100 pts</span></div>
-          <div class="htp-score-row"><span>🏇 Knight</span><span>200 pts</span></div>
-          <div class="htp-score-row"><span>🏆 Champion</span><span>500 pts</span></div>
+          <div class="htp-score-row"><span>🗡️ Squire</span><span>1 – 99 pts</span></div>
+          <div class="htp-score-row"><span>⚔️ Warrior</span><span>100 – 299 pts</span></div>
+          <div class="htp-score-row"><span>🛡️ Knight</span><span>300 – 699 pts</span></div>
+          <div class="htp-score-row"><span>👑 Champion</span><span>700+ pts</span></div>
         </div>
       </div>
 
