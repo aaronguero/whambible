@@ -40,6 +40,7 @@ window.addEventListener('DOMContentLoaded', () => {
     setLevel(isNaN(lvl) ? 10 : lvl);
     buildQueue();
     renderProgressDots();
+    _queueBuilt = true; // mark queue as built so next answer doesn't rebuild
     state.currentIndex = retIndex;
     restoreScoreFromStorage();
     if (recovered === '1') {
@@ -52,7 +53,11 @@ window.addEventListener('DOMContentLoaded', () => {
       state.results[retIndex] = { correct: false };
     }
     state.currentIndex++;
-    loadVerse();
+    if (state.currentIndex >= state.queue.length) {
+      showGameOver();
+    } else {
+      showLevelSelectBetweenVerses();
+    }
     return;
   }
 
@@ -71,6 +76,9 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 // ── Solo Level Pick ───────────────────────────────────────
+// Whether the queue has been built yet this session
+let _queueBuilt = false;
+
 window.soloPickLevel = function(pts, name, icon) {
   // Highlight selected card
   [5,10,15,20].forEach(n => {
@@ -83,15 +91,59 @@ window.soloPickLevel = function(pts, name, icon) {
     el.style.transform    = isSelected ? 'translateY(-2px) scale(1.04)' : 'none';
   });
 
-  // Brief pause then animate out and start game
   setTimeout(() => {
     hideSoloPickScreen();
     setLevel(pts);
-    buildQueue();
-    renderProgressDots();
-    loadVerse();
+    if (!_queueBuilt) {
+      // First pick — build the full queue & dots
+      buildQueue();
+      renderProgressDots();
+      _queueBuilt = true;
+    }
+    if (window._pendingRecovery) {
+      window._pendingRecovery = false;
+      launchRecovery();
+    } else {
+      loadVerse();
+    }
   }, 220);
 };
+
+// Show pick screen between verses (does NOT rebuild queue)
+function showLevelSelectBetweenVerses() {
+  const screen = document.getElementById('solo-pick-screen');
+  if (!screen) { loadVerse(); return; }
+
+  // Update header text for between-verse context
+  const heading = screen.querySelector('h1');
+  if (heading) heading.textContent = 'Next Level';
+  const sub = screen.querySelector('p');
+  if (sub && sub.style.fontStyle === 'italic') {
+    const remaining = state.queue.length - state.currentIndex;
+    sub.textContent = remaining > 0
+      ? `${remaining} verse${remaining !== 1 ? 's' : ''} remaining — choose your points`
+      : 'Choose your level';
+  }
+
+  // Reset card styles to default
+  [5,10,15,20].forEach(n => {
+    const el = document.getElementById('slvl-' + n);
+    if (!el) return;
+    el.style.background = 'rgba(201,162,39,0.07)';
+    el.style.border     = '1px solid rgba(201,162,39,0.2)';
+    el.style.boxShadow  = 'none';
+    el.style.transform  = 'none';
+  });
+
+  screen.style.display   = 'flex';
+  screen.style.opacity   = '0';
+  screen.style.transform = 'scale(1.03)';
+  screen.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+  setTimeout(() => {
+    screen.style.opacity   = '1';
+    screen.style.transform = 'scale(1)';
+  }, 20);
+}
 
 function hideSoloPickScreen() {
   const screen = document.getElementById('solo-pick-screen');
@@ -239,7 +291,9 @@ function handleAnswer(choiceIndex, isCorrect) {
     updateDot(state.currentIndex, 'correct');
     // WHAM SLAM fires on correct — exact Whamgame spec
     setTimeout(() => fireWhamSlam(`${state.currentVerse.book} ${state.currentVerse.chapter}:${state.currentVerse.verse}`, 'Correct!', () => {
-      showResult(true);
+      state.currentIndex++;
+      if (state.currentIndex >= state.queue.length) { showGameOver(); return; }
+      showLevelSelectBetweenVerses();
     }), 200);
   } else {
     buttons.forEach(btn => {
@@ -249,8 +303,11 @@ function handleAnswer(choiceIndex, isCorrect) {
     showFeedback(false);
     state.results.push({ correct: false });
     updateDot(state.currentIndex, 'wrong');
-    // No slam on wrong — go straight to recovery
-    setTimeout(() => launchRecovery(), 800);
+    // Wrong — show level select so player picks level, then recovery launches
+    setTimeout(() => {
+      window._pendingRecovery = true;
+      showLevelSelectBetweenVerses();
+    }, 800);
   }
 }
 
@@ -403,7 +460,10 @@ function timeUp() {
   const fb = document.getElementById('feedback-bar');
   fb.textContent = '⏱️ Time\'s up — Scroll Recovery incoming!';
   fb.className   = 'feedback-bar wrong';
-  setTimeout(() => launchRecovery(), 800);
+  setTimeout(() => {
+    window._pendingRecovery = true;
+    showLevelSelectBetweenVerses();
+  }, 800);
 }
 
 // ── Game Over ─────────────────────────────────────────────
@@ -437,12 +497,22 @@ function showGameOver() {
 
 window.restartGame = function () {
   state.score = 0; state.streak = 0; state.currentIndex = 0; state.results = [];
+  _queueBuilt = false;
+  window._pendingRecovery = false;
   sessionStorage.removeItem('wb_solo_score');
   document.getElementById('gameover-overlay').style.display = 'none';
   updateScoreDisplay();
-  buildQueue();
-  renderProgressDots();
-  loadVerse();
+  // Show level select to start fresh
+  const screen = document.getElementById('solo-pick-screen');
+  if (screen) {
+    const heading = screen.querySelector('h1');
+    if (heading) heading.textContent = 'Solo Battle';
+    const sub = screen.querySelector('p');
+    if (sub && sub.style.fontStyle === 'italic') sub.textContent = 'Choose your difficulty to begin';
+    screen.style.display   = 'flex';
+    screen.style.opacity   = '1';
+    screen.style.transform = 'scale(1)';
+  }
 };
 
 window.confirmExit = function () {
