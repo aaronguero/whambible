@@ -4169,14 +4169,11 @@ async function loadAnswerScreen(game) {
   document.getElementById('ans-verse-body').textContent = `"${verse.text || ''}"`;
   renderAnswerChoices(verse, pts);
   showScreen('answer');
-  // Expose current verse + level for Papa hint in challenge.js
-  window._mpCurrentVerse = verse;
-  window._mpCurrentPts   = pts;
   window.startAnswerTimer(20, () => {
     // Timeout — auto-submit wrong
     window.stopAnswerTimer();
     submitAnswer({book:'',chapter:0,verse:0}, {book:'X',chapter:0,verse:0}, pts, verse);
-  }, pts);
+  });
 }
 
 // ── Pick random verse from verses.js pool ─────────────────

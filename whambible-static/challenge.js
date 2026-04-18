@@ -79,33 +79,21 @@ let ansTimer    = null;
 let ansTimeLeft = TIME_LIMIT;
 let ansAnswered = false;
 
-let _mpHintFired = false;   // reset per answer round
-
-window.startAnswerTimer = function(seconds, onTimeout, levelPts) {
+window.startAnswerTimer = function(seconds, onTimeout) {
   ansTimeLeft  = seconds || TIME_LIMIT;
   ansAnswered  = false;
-  _mpHintFired = false;
   const totalSecs = seconds || TIME_LIMIT;
   const bar = document.getElementById('ans-timer-bar');
   if (bar) { bar.style.width = '100%'; bar.className = 'timer-bar'; }
   clearInterval(ansTimer);
   ansTimer = setInterval(() => {
     ansTimeLeft -= 0.1;
-    const elapsed = totalSecs - ansTimeLeft;
     const pct = (ansTimeLeft / totalSecs) * 100;
     if (bar) {
       bar.style.width = pct + '%';
       bar.className = 'timer-bar' + (pct < 30 ? ' danger' : '');
     }
-    // ── Multiplayer Papa hint thresholds (elapsed time) ──
-    // Squire(5pt)=7s  Warrior(10pt)=5s  Knight(15pt)=3s  Champion(20pt)=no hint
-    // timeLeft equivalents: Squire<=13  Warrior<=15  Knight<=17
-    const _mpHintAt = { 5: 13, 10: 15, 15: 17 }; // Champion(20) omitted = no hint
-    const _mht = _mpHintAt[levelPts];
-    if (!_mpHintFired && _mht && ansTimeLeft <= _mht && ansTimeLeft > (_mht - 0.2)) {
-      _mpHintFired = true;
-      if (typeof window.triggerPapaHint === 'function') window.triggerPapaHint('mp');
-    }
+    // Papa hint intentionally disabled in multiplayer (papa-wrap lives in game.html only)
     if (ansTimeLeft <= 0) {
       clearInterval(ansTimer);
       if (onTimeout) onTimeout();
