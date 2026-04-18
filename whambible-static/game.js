@@ -503,8 +503,12 @@ function startTimer() {
     bar.style.width = pct + '%';
     if (pct < 30) bar.className = 'timer-bar danger';
     // ── Papa hint thresholds by level ──
-    // Squire(5pt)=10s  Warrior(10pt)=13s  Knight(15pt)=15s  Champion(20pt)=17s
-    const _hintAt = { 5: 10, 10: 13, 15: 15, 20: 17 };
+    // Timer runs 20→0. "Xs have passed" = timeLeft <= (20 - X)
+    // Squire(5pt)=10s passed → timeLeft<=10
+    // Warrior(10pt)=13s passed → timeLeft<=7
+    // Knight(15pt)=15s passed → timeLeft<=5
+    // Champion(20pt)=17s passed → timeLeft<=3
+    const _hintAt = { 5: 10, 10: 7, 15: 5, 20: 3 };
     const _ht = _hintAt[state.pointsPerVerse];
     if (!_hintFired && _ht && state.timeLeft <= _ht && state.timeLeft > (_ht - 0.2)) {
       _hintFired = true;
