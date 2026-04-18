@@ -8,7 +8,7 @@
   --amber: #e07b20;
   --bg-dark: #2d1205;
   --bg-mid: #3a1a06;
-  --bg-card: rgba(18,35,55,0.97);
+  --bg-card: rgba(255,245,210,0.97);
   --text-warm: #fff8e7;
   --red-donate: rgba(180,50,20,0.85);
 }
@@ -16,7 +16,7 @@
 html, body {
   min-height: 100vh;
   background: linear-gradient(180deg, #2d1205 0%, #3a1a06 30%, #4a2208 60%, #3a1a06 100%);
-  color: var(--text-warm);
+  color: #2a1205;
   font-family: 'Crimson Text', Georgia, serif;
   overflow-x: hidden;
 }
@@ -118,7 +118,7 @@ html, body {
 /* ===== Verse Card ===== */
 .verse-card {
   width: 100%;
-  background: linear-gradient(135deg, rgba(18,35,55,0.97) 0%, rgba(10,25,45,0.97) 100%);
+  background: linear-gradient(135deg, rgba(255,245,210,0.97) 0%, rgba(245,230,185,0.97) 100%);
   border: 1px solid rgba(245,216,122,0.7);
   border-radius: 12px;
   padding: 20px 24px;
@@ -136,7 +136,7 @@ html, body {
 }
 
 .verse-text {
-  color: var(--text-warm);
+  color: #2a1205;
   font-size: 16px;
   line-height: 1.75;
   font-style: italic;
@@ -205,7 +205,7 @@ html, body {
 .level-card.selected .level-points { color: #f0e4c0; text-shadow: 0 0 10px rgba(245,216,122,0.95); }
 
 .level-icon { font-size: 18px; }
-.level-points { color: var(--gold); font-size: 20px; font-weight: bold; font-family: 'Cinzel', serif; }
+.level-points { color: #3a1a06; font-size: 20px; font-weight: bold; font-family: 'Cinzel', serif; }
 .level-pt-label { color: rgba(245,216,122,0.85); font-size: 9px; letter-spacing: 1px; text-transform: uppercase; }
 .level-name { color: rgba(245,216,122,0.95); font-size: 9px; margin-top: 2px; font-family: 'Cinzel', serif; }
 
@@ -248,7 +248,7 @@ html, body {
   background: transparent;
   border: 2px solid rgba(245,216,122,0.95);
   border-radius: 8px;
-  color: var(--gold);
+  color: #3a1a06;
   font-size: 14px;
   font-weight: 700;
   font-family: 'Cinzel', serif;
