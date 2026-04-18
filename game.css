@@ -9,15 +9,15 @@
   align-items: center;
   justify-content: space-between;
   padding: 10px 16px;
-  background: rgba(28,15,4,0.95);
-  border-bottom: 1px solid rgba(212,146,26,0.25);
+  background: rgba(10,11,15,0.95);
+  border-bottom: 1px solid rgba(201,169,110,0.25);
   backdrop-filter: blur(8px);
 }
 
 .hud-back {
   background: none;
-  border: 1px solid rgba(212,146,26,0.3);
-  color: rgba(212,146,26,0.7);
+  border: 1px solid rgba(201,169,110,0.3);
+  color: rgba(201,169,110,0.7);
   font-family: 'Cinzel', serif;
   font-size: 11px;
   padding: 6px 10px;
@@ -32,7 +32,7 @@
 .hud-level {
   font-family: 'Cinzel', serif;
   font-size: 12px;
-  color: rgba(212,146,26,0.8);
+  color: rgba(201,169,110,0.8);
   letter-spacing: 1px;
 }
 
@@ -45,7 +45,7 @@
   font-family: 'Cinzel', serif;
   font-size: 8px;
   letter-spacing: 2px;
-  color: rgba(212,146,26,0.5);
+  color: rgba(201,169,110,0.5);
 }
 .hud-score {
   font-family: 'Cinzel', serif;
@@ -64,12 +64,12 @@
 .timer-bar-wrap {
   width: 100%;
   height: 4px;
-  background: rgba(212,146,26,0.1);
+  background: rgba(201,169,110,0.1);
 }
 .timer-bar {
   height: 100%;
   width: 100%;
-  background: linear-gradient(90deg, #D4921A, #C05A2A);
+  background: linear-gradient(90deg, #c9a96e, #C05A2A);
   transition: width 0.1s linear;
   transform-origin: left;
 }
@@ -85,7 +85,7 @@
 .progress-text {
   font-family: 'Cinzel', serif;
   font-size: 10px;
-  color: rgba(212,146,26,0.5);
+  color: rgba(201,169,110,0.5);
   letter-spacing: 1px;
 }
 .progress-dots {
@@ -96,17 +96,17 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: rgba(212,146,26,0.2);
-  border: 1px solid rgba(212,146,26,0.3);
+  background: rgba(201,169,110,0.2);
+  border: 1px solid rgba(201,169,110,0.3);
   transition: all 0.3s;
 }
 .progress-dot.done { background: var(--gold); border-color: var(--gold); }
 .progress-dot.correct { background: #3AA86A; border-color: #3AA86A; }
 .progress-dot.wrong { background: #9B1C1C; border-color: #9B1C1C; }
 .progress-dot.current {
-  background: rgba(212,146,26,0.5);
+  background: rgba(201,169,110,0.5);
   border-color: var(--gold);
-  box-shadow: 0 0 6px rgba(212,146,26,0.6);
+  box-shadow: 0 0 6px rgba(201,169,110,0.6);
 }
 
 /* Game Content */
@@ -124,13 +124,13 @@
 /* Verse Display Card */
 .verse-display-card {
   background: linear-gradient(160deg, rgba(45,28,6,0.98) 0%, rgba(20,12,2,0.98) 100%);
-  border: 1px solid rgba(212,146,26,0.45);
+  border: 1px solid rgba(201,169,110,0.45);
   border-radius: 14px;
   padding: 24px 20px 18px;
   box-shadow:
     0 6px 30px rgba(0,0,0,0.6),
-    inset 0 1px 0 rgba(212,146,26,0.2),
-    inset 0 -1px 0 rgba(212,146,26,0.1);
+    inset 0 1px 0 rgba(201,169,110,0.2),
+    inset 0 -1px 0 rgba(201,169,110,0.1);
   text-align: center;
   position: relative;
   overflow: hidden;
@@ -152,7 +152,7 @@
 }
 
 .verse-ornament {
-  color: rgba(212,146,26,0.3);
+  color: rgba(201,169,110,0.3);
   font-size: 10px;
   letter-spacing: 6px;
   margin: 4px 0;
@@ -173,7 +173,7 @@
   font-family: 'Cinzel', serif;
   font-size: 10px;
   letter-spacing: 2px;
-  color: rgba(212,146,26,0.6);
+  color: rgba(201,169,110,0.6);
   text-transform: uppercase;
   margin-top: 10px;
 }
@@ -185,7 +185,7 @@
   font-family: 'Cinzel', serif;
   font-size: 9px;
   letter-spacing: 2px;
-  color: rgba(212,146,26,0.4);
+  color: rgba(201,169,110,0.4);
   text-transform: uppercase;
   text-align: center;
 }
@@ -201,7 +201,7 @@
   min-height: 76px;
   padding: 12px 14px;
   background: linear-gradient(135deg, rgba(35,22,4,0.95) 0%, rgba(25,15,3,0.95) 100%);
-  border: 1px solid rgba(212,146,26,0.3);
+  border: 1px solid rgba(201,169,110,0.3);
   border-radius: 10px;
   cursor: pointer;
   display: flex;
@@ -250,7 +250,7 @@
 
 .choice-btn:hover:not(:disabled) {
   background: linear-gradient(135deg, rgba(55,35,8,0.98) 0%, rgba(40,25,5,0.98) 100%);
-  border-color: rgba(212,146,26,0.65);
+  border-color: rgba(201,169,110,0.65);
   transform: translateX(4px);
   box-shadow: 0 4px 16px rgba(0,0,0,0.4);
 }
@@ -262,8 +262,8 @@
   height: 26px;
   flex-shrink: 0;
   border-radius: 50%;
-  background: rgba(212,146,26,0.12);
-  border: 1px solid rgba(212,146,26,0.35);
+  background: rgba(201,169,110,0.12);
+  border: 1px solid rgba(201,169,110,0.35);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -295,7 +295,7 @@
 .choice-ref {
   font-family: 'Crimson Text', serif;
   font-size: 14px;
-  color: rgba(212,146,26,0.7);
+  color: rgba(201,169,110,0.7);
   display: block;
   margin-top: 1px;
   white-space: nowrap;
@@ -326,14 +326,14 @@
 
 /* Reveal = correct button shown after wrong answer or time-up — subtle, not green */
 .choice-btn.reveal {
-  border-color: rgba(212,146,26,0.6) !important;
+  border-color: rgba(201,169,110,0.6) !important;
   background: linear-gradient(135deg, rgba(40,28,6,0.98) 0%, rgba(30,20,4,0.98) 100%) !important;
   opacity: 0.75;
 }
 .choice-btn.reveal .choice-letter {
-  background: rgba(212,146,26,0.25);
-  border-color: rgba(212,146,26,0.6);
-  color: #D4921A;
+  background: rgba(201,169,110,0.25);
+  border-color: rgba(201,169,110,0.6);
+  color: #c9a96e;
 }
 
 /* Feedback bar */
@@ -365,13 +365,13 @@
 
 .result-card {
   background: linear-gradient(160deg, rgba(40,25,5,0.99) 0%, rgba(20,12,2,0.99) 100%);
-  border: 1px solid rgba(212,146,26,0.5);
+  border: 1px solid rgba(201,169,110,0.5);
   border-radius: 16px;
   padding: 32px 24px;
   max-width: 360px;
   width: 100%;
   text-align: center;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(212,146,26,0.15);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(201,169,110,0.15);
   animation: cardPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 @keyframes cardPop {
@@ -391,7 +391,7 @@
 .result-verse {
   font-family: 'Cinzel', serif;
   font-size: 13px;
-  color: rgba(212,146,26,0.8);
+  color: rgba(201,169,110,0.8);
   margin-bottom: 12px;
   letter-spacing: 1px;
 }
@@ -424,7 +424,7 @@
   font-family: 'Cinzel', serif;
   font-size: 9px;
   letter-spacing: 2px;
-  color: rgba(212,146,26,0.5);
+  color: rgba(201,169,110,0.5);
   text-transform: uppercase;
 }
 
@@ -451,12 +451,12 @@
 }
 .wham-slam-overlay.phase-0 { background: #ffffff; }
 .wham-slam-overlay.phase-1,
-.wham-slam-overlay.phase-2 { background: #1C0F04; }
+.wham-slam-overlay.phase-2 { background: #0a0b0f; }
 
 .wham-slam-word {
   font-weight: 900;
   letter-spacing: 6px;
-  background: linear-gradient(135deg, #E05A2A, #D4921A, #F5C842);
+  background: linear-gradient(135deg, #E05A2A, #c9a96e, #f5d87a);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
