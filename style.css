@@ -9,6 +9,10 @@
   --gold-deep:     #8B6914;   /* deep amber */
   --terra:         #C05A2A;   /* terracotta */
   --sky:           #4A9CC8;
+  --jade:          #1EA064;   /* mural tropical green */
+  --scarlet:       #D23228;   /* mural macaw red */
+  --violet:        #8C3CC8;   /* mural moon purple */
+  --sunburst:      #F5C83C;   /* mural noon yellow */
   --sky-light:     #7BBFDF;
   --crimson:       #9B1C1C;
   --parchment:     #F0E6D3;
@@ -27,35 +31,62 @@ html, body {
   overflow-x: hidden;
 }
 
-/* Radial light burst from top — like a divine spotlight */
+/* ── MURAL UNDERLAY — fixed behind everything ── */
+.bg-mural {
+  position: fixed;
+  inset: 0;
+  background-image: url('https://media.base44.com/images/public/69df9a909b33058a5ce47831/cd2376900_generated_image.png');
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  opacity: 0.55;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ── COLOR OVERLAY — mural palette radials over the image ── */
 .bg-overlay {
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(ellipse 80% 50% at 50% -10%,  rgba(201,169,110,0.28) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 40% at 50% 100%,  rgba(139,58,26,0.20)  0%, transparent 60%),
-    radial-gradient(ellipse 40% 30% at 10% 50%,   rgba(74,156,200,0.06) 0%, transparent 50%),
-    radial-gradient(ellipse 40% 30% at 90% 50%,   rgba(74,156,200,0.06) 0%, transparent 50%);
+    /* deep ink vignette — keeps edges dark and readable */
+    radial-gradient(ellipse 100% 100% at 50% 50%, transparent 30%, rgba(10,11,15,0.75) 100%),
+    /* jade green — top left, like tropical leaves catching light */
+    radial-gradient(ellipse 55% 40% at 15% 20%,  rgba(30,160,100,0.18) 0%, transparent 70%),
+    /* cobalt blue — top right */
+    radial-gradient(ellipse 50% 35% at 82% 18%,  rgba(40,100,220,0.16) 0%, transparent 70%),
+    /* scarlet — mid left, the macaw's wing */
+    radial-gradient(ellipse 40% 30% at 8%  55%,  rgba(210,50,40,0.14)  0%, transparent 70%),
+    /* sunburst gold — center top, the crown light */
+    radial-gradient(ellipse 60% 35% at 50% 5%,   rgba(245,200,60,0.20) 0%, transparent 65%),
+    /* purple — upper center, the moon */
+    radial-gradient(ellipse 30% 25% at 65% 25%,  rgba(140,60,200,0.14) 0%, transparent 65%),
+    /* burnt orange — bottom right */
+    radial-gradient(ellipse 45% 35% at 88% 75%,  rgba(210,110,30,0.14) 0%, transparent 65%),
+    /* sky blue — mid right */
+    radial-gradient(ellipse 40% 30% at 90% 45%,  rgba(74,156,200,0.15) 0%, transparent 65%);
   pointer-events: none;
-  z-index: 0;
+  z-index: 1;
 }
 
-/* Subtle animated particle shimmer */
+/* Animated shimmer — gold particles drifting */
 .bg-overlay::after {
   content: '';
   position: absolute;
   inset: 0;
   background-image:
-    radial-gradient(1px 1px at 20% 30%, rgba(201,169,110,0.4) 0%, transparent 100%),
-    radial-gradient(1px 1px at 80% 20%, rgba(201,169,110,0.3) 0%, transparent 100%),
-    radial-gradient(1px 1px at 60% 70%, rgba(201,169,110,0.25) 0%, transparent 100%),
-    radial-gradient(1px 1px at 35% 80%, rgba(201,169,110,0.2) 0%, transparent 100%);
-  animation: shimmer 8s ease-in-out infinite alternate;
+    radial-gradient(1.5px 1.5px at 22% 28%, rgba(245,200,60,0.55) 0%, transparent 100%),
+    radial-gradient(1px   1px   at 78% 18%, rgba(74,156,200,0.45)  0%, transparent 100%),
+    radial-gradient(1.5px 1.5px at 58% 72%, rgba(30,160,100,0.40)  0%, transparent 100%),
+    radial-gradient(1px   1px   at 38% 82%, rgba(210,50,40,0.35)   0%, transparent 100%),
+    radial-gradient(1px   1px   at 65% 42%, rgba(140,60,200,0.35)  0%, transparent 100%);
+  animation: shimmer 7s ease-in-out infinite alternate;
   pointer-events: none;
+  z-index: 2;
 }
 
 @keyframes shimmer {
-  0%   { opacity: 0.4; }
+  0%   { opacity: 0.3; }
   100% { opacity: 1; }
 }
 
