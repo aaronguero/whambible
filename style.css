@@ -39,7 +39,7 @@ html, body {
   background-size: cover;
   background-position: center top;
   background-repeat: no-repeat;
-  opacity: 0.55;
+  opacity: 0.42;
   z-index: 0;
   pointer-events: none;
 }
@@ -50,7 +50,7 @@ html, body {
   inset: 0;
   background:
     /* deep ink vignette — keeps edges dark and readable */
-    radial-gradient(ellipse 100% 100% at 50% 50%, transparent 30%, rgba(10,11,15,0.75) 100%),
+    radial-gradient(ellipse 100% 100% at 50% 50%, transparent 20%, rgba(10,11,15,0.85) 100%),
     /* jade green — top left, like tropical leaves catching light */
     radial-gradient(ellipse 55% 40% at 15% 20%,  rgba(30,160,100,0.18) 0%, transparent 70%),
     /* cobalt blue — top right */
@@ -207,9 +207,11 @@ html, body {
 .verse-card {
   width: 100%;
   background: linear-gradient(160deg,
-    rgba(20,21,32,0.98) 0%,
-    rgba(28,20,8,0.97)  50%,
-    rgba(20,21,32,0.98) 100%);
+    rgba(8,8,14,0.97)  0%,
+    rgba(18,12,4,0.97) 50%,
+    rgba(8,8,14,0.97)  100%);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(201,169,110,0.40);
   border-radius: 16px;
   padding: 22px 26px 18px;
