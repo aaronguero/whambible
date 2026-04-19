@@ -44,6 +44,22 @@ html, body {
   pointer-events: none;
 }
 
+/* ── LOGO UNDERLAY — new mural-palette logo as full-screen art ── */
+.bg-logo {
+  position: fixed;
+  inset: 0;
+  background-image: url('https://media.base44.com/images/public/69df9a909b33058a5ce47831/a29432898_generated_image.png');
+  background-size: cover;
+  background-position: center top;
+  background-repeat: no-repeat;
+  opacity: 0.30;
+  /* Fade to black at the bottom so UI cards are readable */
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 55%, rgba(0,0,0,0) 100%);
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 55%, rgba(0,0,0,0) 100%);
+  z-index: 0;
+  pointer-events: none;
+}
+
 /* ── COLOR OVERLAY — mural palette radials over the image ── */
 .bg-overlay {
   position: fixed;
@@ -131,6 +147,7 @@ html, body {
 }
 
 /* ===== Logo Section ===== */
+/* .logo-section — ARCHIVED (replaced by bg-logo underlay)
 .logo-section {
   display: flex;
   flex-direction: column;
@@ -139,6 +156,7 @@ html, body {
   margin-bottom: 4px;
   position: relative;
 }
+*/
 
 /* Epic glow halo behind the logo */
 .logo-section::before {
