@@ -171,6 +171,27 @@ export default function Home() {
           text-shadow: 0 1px 4px rgba(255,255,255,0.6);
         }
 
+        /* ─────────────── MISSION LINE ─────────────── */
+        .wb-mission {
+          font-family: 'Cinzel', serif;
+          font-size: 0.72rem; letter-spacing: 0.22em;
+          text-transform: uppercase; text-align: center;
+          margin: -10px 0 18px;
+          opacity: 0.9;
+        }
+        .wb-mission-prefix {
+          color: ${C.cobalt};
+          text-shadow: 0 1px 4px rgba(255,255,255,0.6);
+        }
+        .wb-mission-wham {
+          background: linear-gradient(135deg, ${C.gold} 0%, ${C.tealLight} 50%, ${C.gold} 100%);
+          -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+          background-clip: text;
+          font-size: 1.05rem; font-weight: 800; letter-spacing: 0.28em;
+          text-shadow: none;
+          filter: drop-shadow(0 1px 6px rgba(58,189,212,0.45));
+        }
+
         /* ─────────────── VERSE CARD ─────────────── */
         .wb-verse-card {
           width: 100%;
@@ -318,6 +339,10 @@ export default function Home() {
           <div className="wb-scroll-curl" />
 
           <p className="wb-tagline">⚔️ Know the Word · Win the Battle ⚔️</p>
+          <p className="wb-mission">
+            <span className="wb-mission-prefix">We Have A Mission · </span>
+            <span className="wb-mission-wham">WHAM</span>
+          </p>
 
           {/* Verse Card */}
           <div className="wb-verse-card">
