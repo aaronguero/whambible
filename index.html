@@ -65,12 +65,13 @@
   position: absolute;
   top: 52px;
   right: 0;
-  background: #0f172a;
-  border: 1px solid #1e293b;
+  background: rgba(13,31,53,0.95);
+  border: 1px solid rgba(58,189,212,0.25);
   border-radius: 16px;
   overflow: hidden;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.7);
+  box-shadow: 0 8px 40px rgba(13,31,53,0.6);
   min-width: 220px;
+  backdrop-filter: blur(12px);
   animation: menuFade 0.15s ease;
 }
 
@@ -180,7 +181,7 @@
   animation: menuFade 0.18s ease;
 }
 #bv-modal {
-  background: #0f172a;
+  background: rgba(13,31,53,0.97);
   border: 1px solid #D4921A;
   border-radius: 20px;
   width: min(92vw, 480px);
@@ -603,7 +604,7 @@
 }
 #tut-overlay.open { display: flex; }
 #tut-modal {
-  background: linear-gradient(160deg, #0f172a 0%, #0a0f1e 100%);
+  background: linear-gradient(160deg, #0D1F35 0%, #0a0f1e 100%);
   border: 1px solid rgba(212,146,26,0.45);
   border-radius: 20px;
   width: min(96vw, 480px);
@@ -618,7 +619,7 @@
   padding: 18px 20px 14px;
   border-bottom: 1px solid rgba(212,146,26,0.2);
   position: sticky; top: 0;
-  background: linear-gradient(160deg, #0f172a 0%, #0a0f1e 100%);
+  background: linear-gradient(160deg, #0D1F35 0%, #0a0f1e 100%);
   z-index: 2;
 }
 #tut-header h2 {
