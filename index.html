@@ -16,8 +16,7 @@
 /* ============================================================
    DROPDOWN MENU — exact Whamgame structure
    ============================================================ */
-@keyframes menuFade {
-  from { opacity: 0; transform: translateY(-8px) scale(0.97); }
+
   to   { opacity: 1; transform: translateY(0)   scale(1);     }
 }
 
@@ -72,7 +71,17 @@
   box-shadow: 0 8px 40px rgba(13,31,53,0.6);
   min-width: 220px;
   backdrop-filter: blur(12px);
-  animation: menuFade 0.15s ease;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px) scale(0.97);
+  transition: opacity 0.15s ease, visibility 0.15s ease, transform 0.15s ease;
+  pointer-events: none;
+}
+.wham-menu-panel.open {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
 }
 
 /* Each menu row */
@@ -1951,7 +1960,7 @@
     <button class="wham-menu-btn" id="menuToggleBtn" onclick="whamMenuToggle()" aria-label="Menu">
       <div class="bar"></div><div class="bar"></div><div class="bar"></div>
     </button>
-    <div class="wham-menu-panel" id="menuPanel" style="display:none;">
+    <div class="wham-menu-panel" id="menuPanel">
 
       <button class="wham-menu-item" onclick="whamMenuGo('leaderboard')">
         <span class="m-icon">🏆</span><span class="m-label">Leaderboard</span>
@@ -2139,7 +2148,7 @@
     const btn   = document.getElementById('menuToggleBtn');
     const panel = document.getElementById('menuPanel');
     if (btn)   btn.classList.toggle('open', menuOpen);
-    if (panel) panel.style.display = menuOpen ? 'block' : 'none';
+    if (panel) panel.classList.toggle('open', menuOpen);
   };
 
   window.whamMenuGo = function(screen) {
@@ -2147,7 +2156,7 @@
     const btn   = document.getElementById('menuToggleBtn');
     const panel = document.getElementById('menuPanel');
     if (btn)   btn.classList.remove('open');
-    if (panel) panel.style.display = 'none';
+    if (panel) panel.classList.remove('open');
     switch(screen) {
       case 'bibleVerses': bvOpen(); break;
       case 'leaderboard':  lbOpen(); break;
