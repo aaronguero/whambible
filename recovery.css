@@ -1,5 +1,5 @@
 /* Recovery screen inherits global warm dark theme */
-html { background: linear-gradient(180deg, transparent 0%, #0D1F35 40%, #1a1408 70%, transparent 100%); }
+html { background: transparent; }
 
 /* ===================================================
    WhamBible — Recovery Screen Styles
