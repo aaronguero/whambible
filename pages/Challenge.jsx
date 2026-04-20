@@ -16,7 +16,7 @@ const FB_CONFIG = {
   appId:             "1:207184555743:web:0bd4b8350701d02f79836a",
 };
 const VAPID_KEY = "BKfAsLFqwK3E_eUGVRqbk27nO-PA5jONM6ekOop3Vp2U3vXH384dtK5WZnlWVtThnkdn37rvQQuxiHjTnYwEPDI";
-const PUSH_URL  = "/.netlify/functions/send-push";
+// Push handled via Base44 backend function — works in preview AND on Netlify
 
 // ── Assets ──
 const LANDSCAPE_BG = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/33b065c94_generated_image.png";
@@ -142,13 +142,24 @@ async function getFirebase() {
   return _fb;
 }
 
-// ── FCM push helper ──
+// ── FCM push helper — via Base44 backend function (same pattern as whamgame) ──
 async function sendPush(token, title, body, gameId, fromName) {
+  if (!token) return;
   try {
-    await fetch(PUSH_URL, {
+    // Dynamically import Base44 SDK client
+    const { createClient } = await import("@/api/client").catch(() => ({ createClient: null }));
+    if (createClient) {
+      const client = createClient();
+      await client.functions.invoke("sendPushNotification", {
+        token, title, body, gameId: gameId||"", fromName: fromName||"", type:"game_update"
+      });
+      return;
+    }
+    // Fallback: direct call to deployed function URL
+    await fetch("https://designer-5ce47831.base44.app/functions/sendPushNotification", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, title, body, gameId, fromName: fromName||"", type:"game_update" }),
+      body: JSON.stringify({ token, title, body, gameId: gameId||"", fromName: fromName||"", type:"game_update" }),
     });
   } catch(e) { console.warn("push:", e); }
 }
