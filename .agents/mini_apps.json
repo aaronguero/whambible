@@ -2,6 +2,9 @@
   "app_id": "69dfc58914309a4bd10f7a71",
   "slug": "wham-bible",
   "pages": {
+    "SoloGame": {
+      "title": "SoloGame"
+    },
     "Home": {
       "title": "Home"
     }

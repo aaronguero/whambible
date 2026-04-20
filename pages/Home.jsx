@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { createPageUrl } from "@/utils";
 
 // ── Asset URLs ──
 const LANDSCAPE_BG  = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/33b065c94_generated_image.png";
@@ -355,8 +356,8 @@ export default function Home() {
 
           {/* Main CTA Buttons */}
           <div className="wb-btn-row">
-            <button className="wb-btn-primary">⚔️ Play Solo</button>
-            <button className="wb-btn-secondary">👥 Challenge a Friend</button>
+            <button className="wb-btn-primary" onClick={() => window.location.href = createPageUrl("SoloGame")}>⚔️ Play Solo</button>
+            <button className="wb-btn-secondary" onClick={() => window.location.href = createPageUrl("Challenge")}>👥 Challenge a Friend</button>
             <button className="wb-btn-ghost">📋 World Leaderboard</button>
           </div>
 
