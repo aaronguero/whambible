@@ -2029,53 +2029,45 @@
   <div id="solo-pick-screen" style="
     position:fixed; inset:0; z-index:500;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
-    background: transparent;
-    padding: 24px 20px;
-    overflow-y: auto;
-  ">
-    <!-- Cinematic bg layers inside pick screen -->
+    background:transparent;
+    padding:24px 20px; overflow-y:auto;">
+
+    <!-- Cinematic bg layers -->
     <div class="wb-bg-land" style="z-index:0;"></div>
     <div class="wb-bg-char" style="z-index:1; background-image:url('https://media.base44.com/images/public/69df9a909b33058a5ce47831/a21cde22c_generated_image.png');"></div>
     <div class="wb-bg-tone" style="z-index:2;"></div>
     <div class="wb-bg-rim" style="z-index:3;"></div>
 
-    <!-- Back to home -->
+    <!-- Back -->
     <button onclick="window.location.href='index.html'" style="
       position:absolute; top:18px; left:16px; z-index:10;
-      background:rgba(255,252,245,0.7); border:1px solid rgba(26,58,92,0.3);
+      background:rgba(255,252,245,0.75); border:1px solid rgba(26,58,92,0.25);
       color:rgba(26,58,92,0.8); font-family:'Cinzel',serif;
       font-size:11px; padding:6px 10px; border-radius:6px;
       cursor:pointer; backdrop-filter:blur(4px);">← Home</button>
 
-    <!-- Logo mark -->
-    <div style="font-size:38px; margin-bottom:6px; position:relative; z-index:10;">⚔️</div>
-    <h1 style="
-      position:relative; z-index:10;
-      font-family:'Cinzel',serif; font-size:22px; font-weight:900;
-      color:#1A3A5C; letter-spacing:2px; margin:0 0 4px;
-      text-shadow:0 1px 4px rgba(255,255,255,0.7);">
-      Solo Battle
-    </h1>
-    <p style="
-      position:relative; z-index:10;
-      font-family:'Crimson Text',serif; font-size:15px; font-style:italic;
-      color:rgba(26,58,92,0.65); margin:0 0 28px; text-align:center;">
-      Choose your difficulty to begin
-    </p>
+    <!-- Header -->
+    <div style="position:relative; z-index:10; text-align:center; margin-bottom:24px;">
+      <div style="font-size:36px; margin-bottom:8px;">⚔️</div>
+      <h1 style="font-family:'Cinzel',serif; font-size:22px; font-weight:900;
+        color:#1A3A5C; letter-spacing:2px; margin:0 0 4px;
+        text-shadow:0 1px 4px rgba(255,255,255,0.8);">Solo Battle</h1>
+      <p style="font-family:'Crimson Text',serif; font-size:15px; font-style:italic;
+        color:rgba(26,58,92,0.6); margin:0;">Choose your difficulty to begin</p>
+    </div>
 
-    <!-- Level Cards — stacked rectangles, easiest top → hardest bottom -->
-    <div style="
-      position:relative; z-index:10;
+    <!-- Level Cards -->
+    <div style="position:relative; z-index:10;
       display:flex; flex-direction:column;
-      gap:10px; width:100%; max-width:360px; margin-bottom:28px;">
+      gap:10px; width:100%; max-width:360px; margin-bottom:24px;">
 
-      <!-- Squire — easiest -->
+      <!-- Squire -->
       <div class="solo-lvl-card" id="slvl-5" onclick="soloPickLevel(5,'Squire','🗡️')" style="
-        background:rgba(255,252,245,0.82); border:1.5px solid rgba(30,122,140,0.35);
-        border-radius:10px; padding:14px 20px; cursor:pointer;
+        background:rgba(255,252,245,0.88); border:1.5px solid rgba(30,122,140,0.30);
+        border-radius:10px; padding:16px 20px; cursor:pointer;
         display:flex; flex-direction:row; align-items:center; gap:16px;
-        backdrop-filter:blur(8px);
-        transition:all 0.2s; box-shadow:0 3px 14px rgba(26,58,92,0.12);">
+        backdrop-filter:blur(10px); transition:all 0.2s;
+        box-shadow:0 3px 16px rgba(26,58,92,0.12);">
         <span style="font-size:26px; flex-shrink:0;">🗡️</span>
         <div style="flex:1; text-align:left;">
           <div style="font-family:'Cinzel',serif; font-size:13px; font-weight:700; color:#1A3A5C; letter-spacing:1px;">SQUIRE</div>
@@ -2089,31 +2081,32 @@
 
       <!-- Warrior -->
       <div class="solo-lvl-card" id="slvl-10" onclick="soloPickLevel(10,'Warrior','⚔️')" style="
-        background:rgba(255,252,245,0.82); border:1.5px solid rgba(30,122,140,0.35);
-        border-radius:10px; padding:14px 20px; cursor:pointer;
+        background:rgba(255,252,245,0.88); border:1.5px solid rgba(30,122,140,0.30);
+        border-radius:10px; padding:16px 20px; cursor:pointer;
         display:flex; flex-direction:row; align-items:center; gap:16px;
-        backdrop-filter:blur(8px);
-        transition:all 0.2s; box-shadow:0 3px 14px rgba(26,58,92,0.12);">
+        backdrop-filter:blur(10px); transition:all 0.2s;
+        box-shadow:0 3px 16px rgba(26,58,92,0.12);">
         <span style="font-size:26px; flex-shrink:0;">⚔️</span>
         <div style="flex:1; text-align:left;">
-          <div style="font-family:'Cinzel',serif; font-size:13px; font-weight:700; color:#D4921A; letter-spacing:1px;">WARRIOR</div>
-          <div style="font-family:'Crimson Text',serif; font-size:12px; color:rgba(26,58,92,0.6); font-style:italic;">Moderate · Popular verses</div>
+          <div style="font-family:'Cinzel',serif; font-size:13px; font-weight:700; color:#1A3A5C; letter-spacing:1px;">WARRIOR</div>
+          <div style="font-family:'Crimson Text',serif; font-size:12px; color:rgba(26,58,92,0.55); font-style:italic;">Moderate · Popular verses</div>
         </div>
         <div style="text-align:right; flex-shrink:0;">
-          <span style="font-family:'Cinzel',serif; font-size:26px; font-weight:900; color:#f0e4c0;">10</span>
-          <span style="font-family:'Cinzel',serif; font-size:10px; color:rgba(212,146,26,0.55); display:block; margin-top:-4px; letter-spacing:2px;">PTS</span>
+          <span style="font-family:'Cinzel',serif; font-size:26px; font-weight:900; color:#D4921A;">10</span>
+          <span style="font-family:'Cinzel',serif; font-size:10px; color:rgba(212,146,26,0.6); display:block; margin-top:-4px; letter-spacing:2px;">PTS</span>
         </div>
       </div>
 
       <!-- Knight -->
       <div class="solo-lvl-card" id="slvl-15" onclick="soloPickLevel(15,'Knight','🛡️')" style="
-        background:rgba(212,146,26,0.09); border:1px solid rgba(212,146,26,0.35);
-        border-radius:10px; padding:14px 20px; cursor:pointer;
+        background:rgba(255,252,245,0.88); border:1.5px solid rgba(30,122,140,0.30);
+        border-radius:10px; padding:16px 20px; cursor:pointer;
         display:flex; flex-direction:row; align-items:center; gap:16px;
-        transition:all 0.2s;">
+        backdrop-filter:blur(10px); transition:all 0.2s;
+        box-shadow:0 3px 16px rgba(26,58,92,0.12);">
         <span style="font-size:26px; flex-shrink:0;">🛡️</span>
         <div style="flex:1; text-align:left;">
-          <div style="font-family:'Cinzel',serif; font-size:13px; font-weight:700; color:rgba(212,146,26,0.85); letter-spacing:1px;">KNIGHT</div>
+          <div style="font-family:'Cinzel',serif; font-size:13px; font-weight:700; color:#1A3A5C; letter-spacing:1px;">KNIGHT</div>
           <div style="font-family:'Crimson Text',serif; font-size:12px; color:rgba(26,58,92,0.55); font-style:italic;">Hard · Deeper verses</div>
         </div>
         <div style="text-align:right; flex-shrink:0;">
@@ -2122,30 +2115,30 @@
         </div>
       </div>
 
-      <!-- Champion — hardest -->
+      <!-- Champion -->
       <div class="solo-lvl-card" id="slvl-20" onclick="soloPickLevel(20,'Champion','👑')" style="
-        background:rgba(212,146,26,0.05); border:1px solid rgba(212,146,26,0.2);
-        border-radius:10px; padding:14px 20px; cursor:pointer;
+        background:rgba(255,252,245,0.88); border:1.5px solid rgba(212,146,26,0.45);
+        border-radius:10px; padding:16px 20px; cursor:pointer;
         display:flex; flex-direction:row; align-items:center; gap:16px;
-        transition:all 0.2s;">
+        backdrop-filter:blur(10px); transition:all 0.2s;
+        box-shadow:0 4px 20px rgba(212,146,26,0.20);">
         <span style="font-size:26px; flex-shrink:0;">👑</span>
         <div style="flex:1; text-align:left;">
-          <div style="font-family:'Cinzel',serif; font-size:13px; font-weight:700; color:rgba(212,146,26,0.65); letter-spacing:1px;">CHAMPION</div>
-          <div style="font-family:'Crimson Text',serif; font-size:12px; color:rgba(240,228,192,0.35); font-style:italic;">Hardest · Rare verses</div>
+          <div style="font-family:'Cinzel',serif; font-size:13px; font-weight:700; color:#1A3A5C; letter-spacing:1px;">CHAMPION</div>
+          <div style="font-family:'Crimson Text',serif; font-size:12px; color:rgba(26,58,92,0.55); font-style:italic;">Hardest · Rare verses</div>
         </div>
         <div style="text-align:right; flex-shrink:0;">
           <span style="font-family:'Cinzel',serif; font-size:26px; font-weight:900; color:#D4921A;">20</span>
           <span style="font-family:'Cinzel',serif; font-size:10px; color:rgba(212,146,26,0.6); display:block; margin-top:-4px; letter-spacing:2px;">PTS</span>
         </div>
       </div>
-
     </div>
 
-    <!-- Verse count label -->
-    <p style="
-      font-family:'Cinzel',serif; font-size:10px; letter-spacing:2px;
-      color:rgba(212,146,26,0.3); text-transform:uppercase; margin:0;">
-      5 Verses · Solo Mode
+    <!-- Footer note -->
+    <p style="position:relative; z-index:10;
+      color:rgba(26,58,92,0.4); font-family:'Cinzel',serif;
+      font-size:10px; letter-spacing:2px; text-transform:uppercase;">
+      5 VERSES · SOLO MODE
     </p>
 
   </div><!-- /solo-pick-screen -->
