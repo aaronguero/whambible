@@ -7,6 +7,9 @@
     },
     "Home": {
       "title": "Home"
+    },
+    "Recovery": {
+      "title": "Recovery"
     }
   }
 }
