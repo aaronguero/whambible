@@ -93,12 +93,9 @@ window.addEventListener('DOMContentLoaded', () => {
       updateDot(retIndex, 'wrong');
       state.results[retIndex] = { correct: false };
     }
-    state.currentIndex++;
-    if (state.currentIndex >= state.queue.length) {
-      showGameOver();
-    } else {
-      showLevelSelectBetweenVerses();
-    }
+    // Show answer reveal for the recovered verse before advancing
+    loadVerse();
+    showResult(recovered === '1');
     return;
   }
 
@@ -355,9 +352,7 @@ function handleAnswer(choiceIndex, isCorrect) {
     updateDot(state.currentIndex, 'correct');
     // WHAM SLAM fires on correct — exact Whamgame spec
     setTimeout(() => fireWhamSlam(`${state.currentVerse.book} ${state.currentVerse.chapter}:${state.currentVerse.verse}`, 'Correct!', () => {
-      state.currentIndex++;
-      if (state.currentIndex >= state.queue.length) { showGameOver(); return; }
-      showLevelSelectBetweenVerses();
+      showResult(true);
     }), 200);
   } else {
     buttons.forEach(btn => {
@@ -481,12 +476,15 @@ function showResult(isCorrect) {
   document.getElementById('result-title').style.color      = isCorrect ? '#4caf7d' : '#c93030';
   document.getElementById('result-verse-ref').textContent  = `${v.book} ${v.chapter}:${v.verse}`;
   document.getElementById('result-body').textContent       = `"${v.text}"`;
+  const _nBtn = document.getElementById('result-next-btn');
+  if (_nBtn) _nBtn.textContent = isCorrect ? 'Next Verse ⚔️' : 'Continue 📖';
   document.getElementById('result-overlay').style.display  = 'flex';
 }
 
 window.nextVerse = function () {
   document.getElementById('result-overlay').style.display = 'none';
   state.currentIndex++;
+  if (state.currentIndex >= state.queue.length) { showGameOver(); return; }
   loadVerse();
 };
 
