@@ -2029,62 +2029,71 @@
   <div id="solo-pick-screen" style="
     position:fixed; inset:0; z-index:500;
     display:flex; flex-direction:column; align-items:center; justify-content:center;
-    background: linear-gradient(180deg,#0d0800 0%,#1a0f02 60%,#0d0800 100%);
+    background: transparent;
     padding: 24px 20px;
     overflow-y: auto;
   ">
+    <!-- Cinematic bg layers inside pick screen -->
+    <div class="wb-bg-land" style="z-index:0;"></div>
+    <div class="wb-bg-char" style="z-index:1; background-image:url('https://media.base44.com/images/public/69df9a909b33058a5ce47831/a21cde22c_generated_image.png');"></div>
+    <div class="wb-bg-tone" style="z-index:2;"></div>
+    <div class="wb-bg-rim" style="z-index:3;"></div>
 
     <!-- Back to home -->
     <button onclick="window.location.href='index.html'" style="
-      position:absolute; top:18px; left:16px;
-      background:none; border:1px solid rgba(201,162,39,0.3);
-      color:rgba(201,162,39,0.7); font-family:'Cinzel',serif;
+      position:absolute; top:18px; left:16px; z-index:10;
+      background:rgba(255,252,245,0.7); border:1px solid rgba(26,58,92,0.3);
+      color:rgba(26,58,92,0.8); font-family:'Cinzel',serif;
       font-size:11px; padding:6px 10px; border-radius:6px;
-      cursor:pointer;">← Home</button>
+      cursor:pointer; backdrop-filter:blur(4px);">← Home</button>
 
     <!-- Logo mark -->
-    <div style="font-size:38px; margin-bottom:6px;">⚔️</div>
+    <div style="font-size:38px; margin-bottom:6px; position:relative; z-index:10;">⚔️</div>
     <h1 style="
+      position:relative; z-index:10;
       font-family:'Cinzel',serif; font-size:22px; font-weight:900;
-      color:#c9a227; letter-spacing:2px; margin:0 0 4px;
-      text-shadow:0 2px 12px rgba(201,162,39,0.4);">
+      color:#1A3A5C; letter-spacing:2px; margin:0 0 4px;
+      text-shadow:0 1px 4px rgba(255,255,255,0.7);">
       Solo Battle
     </h1>
     <p style="
+      position:relative; z-index:10;
       font-family:'Crimson Text',serif; font-size:15px; font-style:italic;
-      color:rgba(240,228,192,0.55); margin:0 0 28px; text-align:center;">
+      color:rgba(26,58,92,0.65); margin:0 0 28px; text-align:center;">
       Choose your difficulty to begin
     </p>
 
     <!-- Level Cards — stacked rectangles, easiest top → hardest bottom -->
     <div style="
+      position:relative; z-index:10;
       display:flex; flex-direction:column;
       gap:10px; width:100%; max-width:360px; margin-bottom:28px;">
 
       <!-- Squire — easiest -->
       <div class="solo-lvl-card" id="slvl-5" onclick="soloPickLevel(5,'Squire','🗡️')" style="
-        background:rgba(201,162,39,0.07); border:1px solid rgba(201,162,39,0.25);
+        background:rgba(255,252,245,0.82); border:1.5px solid rgba(30,122,140,0.35);
         border-radius:10px; padding:14px 20px; cursor:pointer;
         display:flex; flex-direction:row; align-items:center; gap:16px;
-        transition:all 0.2s;">
+        backdrop-filter:blur(8px);
+        transition:all 0.2s; box-shadow:0 3px 14px rgba(26,58,92,0.12);">
         <span style="font-size:26px; flex-shrink:0;">🗡️</span>
         <div style="flex:1; text-align:left;">
-          <div style="font-family:'Cinzel',serif; font-size:13px; font-weight:700; color:rgba(201,162,39,0.75); letter-spacing:1px;">SQUIRE</div>
-          <div style="font-family:'Crimson Text',serif; font-size:12px; color:rgba(240,228,192,0.45); font-style:italic;">Easiest · Common verses</div>
+          <div style="font-family:'Cinzel',serif; font-size:13px; font-weight:700; color:#1A3A5C; letter-spacing:1px;">SQUIRE</div>
+          <div style="font-family:'Crimson Text',serif; font-size:12px; color:rgba(26,58,92,0.55); font-style:italic;">Easiest · Common verses</div>
         </div>
         <div style="text-align:right; flex-shrink:0;">
-          <span style="font-family:'Cinzel',serif; font-size:26px; font-weight:900; color:#c9a227;">5</span>
-          <span style="font-family:'Cinzel',serif; font-size:10px; color:rgba(201,162,39,0.45); display:block; margin-top:-4px; letter-spacing:2px;">PTS</span>
+          <span style="font-family:'Cinzel',serif; font-size:26px; font-weight:900; color:#D4921A;">5</span>
+          <span style="font-family:'Cinzel',serif; font-size:10px; color:rgba(212,146,26,0.6); display:block; margin-top:-4px; letter-spacing:2px;">PTS</span>
         </div>
       </div>
 
       <!-- Warrior -->
       <div class="solo-lvl-card" id="slvl-10" onclick="soloPickLevel(10,'Warrior','⚔️')" style="
-        background:rgba(201,162,39,0.12); border:2px solid #c9a227;
+        background:rgba(255,252,245,0.82); border:1.5px solid rgba(30,122,140,0.35);
         border-radius:10px; padding:14px 20px; cursor:pointer;
         display:flex; flex-direction:row; align-items:center; gap:16px;
-        transition:all 0.2s;
-        box-shadow:0 0 12px rgba(201,162,39,0.25), 0 4px 16px rgba(0,0,0,0.4);">
+        backdrop-filter:blur(8px);
+        transition:all 0.2s; box-shadow:0 3px 14px rgba(26,58,92,0.12);">
         <span style="font-size:26px; flex-shrink:0;">⚔️</span>
         <div style="flex:1; text-align:left;">
           <div style="font-family:'Cinzel',serif; font-size:13px; font-weight:700; color:#c9a227; letter-spacing:1px;">WARRIOR</div>
@@ -2105,11 +2114,11 @@
         <span style="font-size:26px; flex-shrink:0;">🛡️</span>
         <div style="flex:1; text-align:left;">
           <div style="font-family:'Cinzel',serif; font-size:13px; font-weight:700; color:rgba(201,162,39,0.85); letter-spacing:1px;">KNIGHT</div>
-          <div style="font-family:'Crimson Text',serif; font-size:12px; color:rgba(240,228,192,0.45); font-style:italic;">Hard · Deeper verses</div>
+          <div style="font-family:'Crimson Text',serif; font-size:12px; color:rgba(26,58,92,0.55); font-style:italic;">Hard · Deeper verses</div>
         </div>
         <div style="text-align:right; flex-shrink:0;">
-          <span style="font-family:'Cinzel',serif; font-size:26px; font-weight:900; color:#c9a227;">15</span>
-          <span style="font-family:'Cinzel',serif; font-size:10px; color:rgba(201,162,39,0.45); display:block; margin-top:-4px; letter-spacing:2px;">PTS</span>
+          <span style="font-family:'Cinzel',serif; font-size:26px; font-weight:900; color:#D4921A;">15</span>
+          <span style="font-family:'Cinzel',serif; font-size:10px; color:rgba(212,146,26,0.6); display:block; margin-top:-4px; letter-spacing:2px;">PTS</span>
         </div>
       </div>
 
@@ -2125,8 +2134,8 @@
           <div style="font-family:'Crimson Text',serif; font-size:12px; color:rgba(240,228,192,0.35); font-style:italic;">Hardest · Rare verses</div>
         </div>
         <div style="text-align:right; flex-shrink:0;">
-          <span style="font-family:'Cinzel',serif; font-size:26px; font-weight:900; color:#c9a227;">20</span>
-          <span style="font-family:'Cinzel',serif; font-size:10px; color:rgba(201,162,39,0.45); display:block; margin-top:-4px; letter-spacing:2px;">PTS</span>
+          <span style="font-family:'Cinzel',serif; font-size:26px; font-weight:900; color:#D4921A;">20</span>
+          <span style="font-family:'Cinzel',serif; font-size:10px; color:rgba(212,146,26,0.6); display:block; margin-top:-4px; letter-spacing:2px;">PTS</span>
         </div>
       </div>
 
