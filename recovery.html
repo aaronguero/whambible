@@ -66,8 +66,8 @@
   position: absolute;
   top: 52px;
   right: 0;
-  background: #1C0F04;
-  border: 1px solid #2C1A08;
+  background: #0D1F35;
+  border: 1px solid rgba(26,58,92,0.2);
   border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 8px 40px rgba(0,0,0,0.7);
@@ -84,7 +84,7 @@
   padding: 13px 18px;
   background: transparent;
   border: none;
-  border-bottom: 1px solid #2C1A08;
+  border-bottom: 1px solid rgba(26,58,92,0.2);
   color: #e2e8f0;
   font-size: 14px;
   font-weight: 600;
@@ -121,7 +121,7 @@
 /* Theme submenu rows */
 .wham-submenu {
   background: rgba(28, 15, 4, 0.95);
-  border-top: 1px solid #2C1A08;
+  border-top: 1px solid rgba(26,58,92,0.2);
   display: none;
 }
 .wham-submenu.open { display: block; }
@@ -164,7 +164,7 @@
 /* Divider inside menu */
 .wham-menu-divider {
   height: 1px;
-  background: #2C1A08;
+  background: rgba(26,58,92,0.2);
   margin: 0;
 }
 
@@ -181,7 +181,7 @@
   animation: menuFade 0.18s ease;
 }
 #bv-modal {
-  background: #1C0F04;
+  background: #0D1F35;
   border: 1px solid #D4921A;
   border-radius: 20px;
   width: min(92vw, 480px);
@@ -192,7 +192,7 @@
 }
 #bv-header {
   padding: 18px 20px 14px;
-  border-bottom: 1px solid #2C1A08;
+  border-bottom: 1px solid rgba(26,58,92,0.2);
   display: flex; align-items: center; gap: 10px;
 }
 #bv-header h2 {
@@ -227,7 +227,7 @@
   border: 1px solid #334155;
   border-radius: 12px;
   overflow: hidden;
-  background: #1C0F04;
+  background: #0D1F35;
   cursor: grab;
   user-select: none;
   touch-action: none;
@@ -261,8 +261,8 @@
   content: ''; position: absolute; left: 0; right: 0; z-index: 2; pointer-events: none;
   height: 52px;
 }
-.bv-wheel-outer::before { top: 0;    background: linear-gradient(to bottom, #1C0F04 0%, transparent 100%); }
-.bv-wheel-outer::after  { bottom: 0; background: linear-gradient(to top,    #1C0F04 0%, transparent 100%); }
+.bv-wheel-outer::before { top: 0;    background: linear-gradient(to bottom, #0D1F35 0%, transparent 100%); }
+.bv-wheel-outer::after  { bottom: 0; background: linear-gradient(to top,    #0D1F35 0%, transparent 100%); }
 /* Selector band */
 .bv-selector-band {
   position: absolute; left: 6px; right: 6px;
@@ -280,7 +280,7 @@
   padding: 13px;
   background: linear-gradient(135deg, #D4921A, #a07720);
   border: none; border-radius: 12px;
-  color: #1C0F04; font-size: 15px; font-weight: 800;
+  color: #0D1F35; font-size: 15px; font-weight: 800;
   font-family: 'Cinzel', serif; letter-spacing: 0.5px;
   cursor: pointer; transition: opacity 0.15s, transform 0.1s;
   width: calc(100% - 40px);
@@ -431,7 +431,7 @@
   background: linear-gradient(135deg, #D4921A, #a07720);
   border: none;
   border-radius: 10px;
-  color: #1C0F04;
+  color: #0D1F35;
   font-family: 'Cinzel', serif;
   font-size: 12px;
   font-weight: 800;
@@ -621,7 +621,7 @@
   <!-- ── WHAM SLAM OVERLAY ─────────────────────────────────────
        Exact Whamgame.base44.app spec:
        Phase 0 (0ms):    bg=#fff, WHAM! 60px, audio fires
-       Phase 1 (300ms):  bg=#1C0F04, WHAM! 96px, ref appears green
+       Phase 1 (300ms):  bg=#0D1F35, WHAM! 96px, ref appears green
        Phase 2 (1120ms): everything fades
        Done   (1620ms):  onDone fires
        Only fires on CORRECT / RECOVERY SUCCESS
@@ -828,7 +828,7 @@
     if (!toast) {
       toast = document.createElement('div');
       toast.id = 'menu-toast';
-      toast.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:#2C1A08;color:#D4921A;border:1px solid #D4921A;padding:10px 22px;border-radius:30px;font-size:14px;font-weight:600;z-index:9999;pointer-events:none;opacity:0;transition:opacity 0.2s;';
+      toast.style.cssText = 'position:fixed;bottom:32px;left:50%;transform:translateX(-50%);background:rgba(26,58,92,0.2);color:#D4921A;border:1px solid #D4921A;padding:10px 22px;border-radius:30px;font-size:14px;font-weight:600;z-index:9999;pointer-events:none;opacity:0;transition:opacity 0.2s;';
       document.body.appendChild(toast);
     }
     toast.textContent = msg;
