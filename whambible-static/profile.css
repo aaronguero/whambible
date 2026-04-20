@@ -1,0 +1,516 @@
+/* ===== WhamBible — Profile Page Styles ===== */
+
+/* ── Back nav ─────────────────────────────────────────── */
+.prof-back {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 16px 0 8px;
+}
+
+.back-btn {
+  background: transparent;
+  border: 1px solid rgba(201,162,39,0.3);
+  border-radius: 8px;
+  color: rgba(201,162,39,0.7);
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 7px 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+  width: 60px;
+}
+.back-btn:hover {
+  background: rgba(201,162,39,0.1);
+  color: #c9a227;
+}
+
+.prof-page-title {
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: rgba(201,162,39,0.7);
+}
+
+/* ── Base Card ────────────────────────────────────────── */
+.prof-card {
+  width: 100%;
+  background: linear-gradient(135deg, rgba(40,25,5,0.97) 0%, rgba(25,15,3,0.97) 100%);
+  border: 1px solid rgba(201,162,39,0.25);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 4px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(201,162,39,0.1);
+  margin-bottom: 14px;
+}
+
+.card-section-label {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  color: rgba(201,162,39,0.5);
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+/* ── Identity Card ────────────────────────────────────── */
+.identity-top {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-bottom: 20px;
+}
+
+.avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.avatar-circle {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid rgba(201,162,39,0.5);
+  box-shadow: 0 0 0 3px rgba(201,162,39,0.15), 0 0 20px rgba(201,162,39,0.2);
+}
+
+#avatar-initials {
+  font-family: 'Cinzel', serif;
+  font-size: 26px;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+
+.rank-badge {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 26px;
+  height: 26px;
+  background: #0d0800;
+  border: 2px solid rgba(201,162,39,0.5);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+.identity-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.prof-username {
+  font-family: 'Cinzel', serif;
+  font-size: 20px;
+  font-weight: 700;
+  color: #f0e4c0;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.prof-rank-label {
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #c9a227;
+  margin: 4px 0 2px;
+  letter-spacing: 0.5px;
+}
+
+.prof-member-since {
+  font-size: 11px;
+  color: rgba(201,162,39,0.4);
+  font-family: 'Crimson Text', serif;
+}
+
+.prof-total-score-wrap {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(201,162,39,0.07);
+  border: 1px solid rgba(201,162,39,0.2);
+  border-radius: 12px;
+  padding: 14px 20px;
+}
+
+.prof-total-score-label {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: rgba(201,162,39,0.5);
+}
+
+.prof-total-score {
+  font-family: 'Cinzel', serif;
+  font-size: 42px;
+  font-weight: 900;
+  color: #c9a227;
+  text-shadow: 0 0 20px rgba(201,162,39,0.5);
+  line-height: 1;
+}
+
+.prof-total-score-pts {
+  font-family: 'Cinzel', serif;
+  font-size: 14px;
+  color: rgba(201,162,39,0.5);
+  letter-spacing: 1px;
+}
+
+/* ── Stats Grid ───────────────────────────────────────── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.stat-cell {
+  background: rgba(201,162,39,0.05);
+  border: 1px solid rgba(201,162,39,0.15);
+  border-radius: 10px;
+  padding: 12px 8px;
+  text-align: center;
+}
+
+.stat-val {
+  font-family: 'Cinzel', serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #c9a227;
+  line-height: 1.1;
+  margin-bottom: 4px;
+}
+
+.stat-key {
+  font-size: 9px;
+  font-family: 'Cinzel', serif;
+  letter-spacing: 0.5px;
+  color: rgba(201,162,39,0.45);
+  text-transform: uppercase;
+  line-height: 1.3;
+}
+
+/* ── Rank Progress Bar ────────────────────────────────── */
+.rank-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.rank-current-icon,
+.rank-next-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.rank-bar-wrap {
+  flex: 1;
+}
+
+.rank-bar-bg {
+  height: 10px;
+  background: rgba(201,162,39,0.1);
+  border: 1px solid rgba(201,162,39,0.2);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+
+.rank-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #a07818, #c9a227, #f5d87a);
+  border-radius: 999px;
+  transition: width 0.9s cubic-bezier(.22,.68,0,1.2);
+  box-shadow: 0 0 8px rgba(201,162,39,0.5);
+}
+
+.rank-bar-labels {
+  display: flex;
+  justify-content: space-between;
+  font-family: 'Cinzel', serif;
+  font-size: 9px;
+  letter-spacing: 0.5px;
+  color: rgba(201,162,39,0.4);
+}
+
+.rank-progress-msg {
+  font-size: 13px;
+  font-family: 'Crimson Text', serif;
+  font-style: italic;
+  color: rgba(240,228,192,0.65);
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* ── Recent Games ─────────────────────────────────────── */
+.no-games-msg {
+  font-size: 14px;
+  font-family: 'Crimson Text', serif;
+  font-style: italic;
+  color: rgba(201,162,39,0.4);
+  text-align: center;
+  padding: 12px 0;
+}
+
+.recent-game-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(201,162,39,0.1);
+  cursor: pointer;
+  transition: background 0.15s;
+  border-radius: 8px;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+.recent-game-row:last-child { border-bottom: none; }
+.recent-game-row:hover { background: rgba(201,162,39,0.05); }
+
+.rg-left {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+.rg-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+
+.result-win {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #4ade80;
+  letter-spacing: 1px;
+}
+.result-loss {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #f87171;
+  letter-spacing: 1px;
+}
+.result-prog {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: #c9a227;
+  letter-spacing: 1px;
+}
+
+.rg-opponent {
+  font-size: 14px;
+  font-family: 'Crimson Text', serif;
+  color: #f0e4c0;
+}
+
+.rg-score {
+  font-family: 'Cinzel', serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #c9a227;
+}
+
+.rg-date {
+  font-size: 11px;
+  color: rgba(201,162,39,0.4);
+  font-family: 'Crimson Text', serif;
+}
+
+.rg-arrow {
+  color: rgba(201,162,39,0.3);
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+/* ── Notification Toggles ─────────────────────────────── */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.toggle-info {
+  flex: 1;
+}
+
+.toggle-title {
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #f0e4c0;
+  margin-bottom: 3px;
+}
+
+.toggle-sub {
+  font-size: 12px;
+  font-family: 'Crimson Text', serif;
+  color: rgba(201,162,39,0.45);
+  line-height: 1.4;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 44px;
+  height: 26px;
+  flex-shrink: 0;
+}
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: rgba(201,162,39,0.15);
+  border: 1px solid rgba(201,162,39,0.3);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all 0.25s;
+}
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  left: 3px;
+  top: 3px;
+  background: rgba(201,162,39,0.5);
+  border-radius: 50%;
+  transition: all 0.25s;
+}
+.toggle-switch input:checked + .toggle-slider {
+  background: rgba(201,162,39,0.25);
+  border-color: #c9a227;
+}
+.toggle-switch input:checked + .toggle-slider::before {
+  transform: translateX(18px);
+  background: #c9a227;
+  box-shadow: 0 0 8px rgba(201,162,39,0.6);
+}
+
+/* ── Account / Edit Name ──────────────────────────────── */
+.edit-name-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.edit-label {
+  font-family: 'Cinzel', serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: rgba(201,162,39,0.5);
+  text-transform: uppercase;
+}
+
+.edit-row {
+  display: flex;
+  gap: 10px;
+}
+
+.edit-input {
+  flex: 1;
+  background: rgba(201,162,39,0.07);
+  border: 1px solid rgba(201,162,39,0.25);
+  border-radius: 10px;
+  padding: 11px 14px;
+  color: #f0e4c0;
+  font-family: 'Crimson Text', serif;
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.edit-input:focus {
+  border-color: rgba(201,162,39,0.6);
+  background: rgba(201,162,39,0.1);
+}
+.edit-input::placeholder { color: rgba(201,162,39,0.3); }
+
+.edit-save-btn {
+  padding: 11px 18px;
+  background: linear-gradient(135deg, #c9a227, #a07818);
+  border: none;
+  border-radius: 10px;
+  color: #1a0f02;
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.1s;
+  white-space: nowrap;
+}
+.edit-save-btn:hover  { opacity: 0.9; }
+.edit-save-btn:active { transform: scale(0.97); }
+
+/* Language chips */
+.lang-select-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.lang-chip {
+  background: rgba(201,162,39,0.07);
+  border: 1px solid rgba(201,162,39,0.2);
+  border-radius: 20px;
+  padding: 6px 14px;
+  color: rgba(201,162,39,0.55);
+  font-size: 12px;
+  font-family: 'Cinzel', serif;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.lang-chip.active,
+.lang-chip:hover {
+  background: rgba(201,162,39,0.2);
+  border-color: #c9a227;
+  color: #c9a227;
+}
+
+/* Sign out button */
+.btn-signout {
+  width: 100%;
+  padding: 14px;
+  background: transparent;
+  border: 1px solid rgba(248,113,113,0.35);
+  border-radius: 10px;
+  color: #f87171;
+  font-family: 'Cinzel', serif;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-signout:hover {
+  background: rgba(248,113,113,0.08);
+  border-color: #f87171;
+}
+
+/* ── Responsive ───────────────────────────────────────── */
+@media (max-width: 360px) {
+  .prof-total-score { font-size: 34px; }
+  .stat-val         { font-size: 18px; }
+  .avatar-circle    { width: 60px; height: 60px; }
+  #avatar-initials  { font-size: 20px; }
+}
