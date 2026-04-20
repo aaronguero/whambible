@@ -10,6 +10,9 @@
     },
     "Recovery": {
       "title": "Recovery"
+    },
+    "Challenge": {
+      "title": "Challenge"
     }
   }
 }
