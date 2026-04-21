@@ -174,9 +174,11 @@ function GamePlay({ level, onDone }) {
       <div className="wb-content">
         {/* Top bar */}
         <div style={{ width:"100%", display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 0 6px" }}>
-          <div style={{ fontFamily:"'Cinzel',serif", fontSize:11, color:C.cobalt, letterSpacing:1, opacity:0.7 }}>
-            {level.icon} {level.name}
-          </div>
+          <button onClick={() => window.location.href = "/"} style={{
+            background:"none", border:"none", cursor:"pointer", padding:"4px 6px",
+            fontFamily:"'Cinzel',serif", fontSize:18, lineHeight:1,
+            color:C.cobalt, opacity:0.75, letterSpacing:-2,
+          }} title="Exit to Home">⚔️⚔️</button>
           <div style={{ fontFamily:"'Cinzel',serif", fontSize:16, fontWeight:800, color:C.gold }}>
             {score} pts
           </div>
