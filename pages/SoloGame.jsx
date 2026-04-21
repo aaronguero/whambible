@@ -337,7 +337,7 @@ export default function SoloGame() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&display=swap');
 
-        .wb-screen { min-height:100vh; position:relative; overflow:hidden; }
+        .wb-screen { min-height:100vh; position:relative; overflow-y:auto; overflow-x:hidden; }
 
         .wb-bg-land {
           position:fixed; inset:0; z-index:0; pointer-events:none;
@@ -368,7 +368,8 @@ export default function SoloGame() {
         .wb-scroll-panel {
           width:100%;
           background: transparent;
-          border-radius:20px 20px 0 0; padding:24px 20px 0; position:relative; z-index:5; margin-top:-56px;
+          border-radius:20px 20px 0 0; padding:24px 20px 60px; position:relative; z-index:5; margin-top:-56px;
+          overflow-y:auto; -webkit-overflow-scrolling:touch;
         }
         .wb-scroll-curl {
           width:80%; height:5px; margin:0 auto 16px; border-radius:3px;
