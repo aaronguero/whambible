@@ -148,9 +148,9 @@ html { background: transparent; }
   font-family: 'Cinzel', serif;
   font-size: 11px;
   letter-spacing: 2px;
-  color: rgba(201,169,110,0.8);
-  background: rgba(201,169,110,0.1);
-  border: 1px solid rgba(201,169,110,0.3);
+  color: rgba(58,189,212,0.9);
+  background: rgba(58,189,212,0.1);
+  border: 1px solid rgba(58,189,212,0.3);
   border-radius: 20px;
   padding: 5px 12px;
 }
@@ -165,6 +165,10 @@ html { background: transparent; }
 
 .recovery-verse-card {
   margin-bottom: 0;
+  background: linear-gradient(160deg, rgba(13,31,53,0.78) 0%, rgba(26,58,92,0.72) 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-color: rgba(58,189,212,0.35);
 }
 
 /* ── SCROLL WHEELS ────────────────────────────────── */
@@ -194,13 +198,13 @@ html { background: transparent; }
   font-family: 'Cinzel', serif;
   font-size: 11px;
   letter-spacing: 1px;
-  color: rgba(201,169,110,0.5);
+  color: rgba(58,189,212,0.5);
   text-align: center;
   text-transform: uppercase;
   line-height: 1.8;
 }
 .scroll-instruction strong {
-  color: rgba(201,169,110,0.8);
+  color: rgba(58,189,212,0.85);
   font-weight: 700;
 }
 
@@ -229,7 +233,7 @@ html { background: transparent; }
   font-family: 'Cinzel', serif;
   font-size: 9px;
   letter-spacing: 3px;
-  color: rgba(201,169,110,0.4);
+  color: rgba(58,189,212,0.4);
   text-transform: uppercase;
 }
 
@@ -241,10 +245,10 @@ html { background: transparent; }
   border-radius: 12px;
   overflow: hidden;
   background: linear-gradient(180deg,
-    rgba(10,5,0,0.98)  0%,
-    rgba(30,18,3,0.98) 50%,
-    rgba(10,5,0,0.98)  100%);
-  border: 1px solid rgba(201,169,110,0.3);
+    rgba(8,18,35,0.97)  0%,
+    rgba(13,31,53,0.96) 50%,
+    rgba(8,18,35,0.97)  100%);
+  border: 1px solid rgba(58,189,212,0.3);
   box-shadow:
     inset 0 0 24px rgba(0,0,0,0.6),
     0 4px 16px rgba(0,0,0,0.4);
@@ -271,7 +275,7 @@ html { background: transparent; }
   justify-content: center;
   font-family: 'Cinzel', serif;
   font-size: 12px;
-  color: rgba(201,169,110,0.3);
+  color: rgba(58,189,212,0.25);
   padding: 0 5px;
   text-align: center;
   line-height: 1.15;
@@ -283,15 +287,15 @@ html { background: transparent; }
   transition: color 0.12s, font-size 0.12s, font-weight 0.12s;
 }
 /* near-1 row (adjacent to selected) */
-.scroll-item.near1 { color: rgba(201,169,110,0.55); font-size: 12.5px; }
+.scroll-item.near1 { color: rgba(58,189,212,0.6); font-size: 12.5px; }
 /* near-2 row */
-.scroll-item.near2 { color: rgba(201,169,110,0.3);  font-size: 11.5px; }
+.scroll-item.near2 { color: rgba(58,189,212,0.3);  font-size: 11.5px; }
 /* selected row */
 .scroll-item.selected {
-  color: #f0e4c0;
+  color: #F5C842;
   font-size: 14px;
   font-weight: 700;
-  text-shadow: 0 0 12px rgba(201,169,110,0.7);
+  text-shadow: 0 0 14px rgba(245,200,66,0.8), 0 0 4px rgba(58,189,212,0.3);
 }
 
 /* ── Gradient fade top & bottom ────────────────── */
@@ -306,11 +310,11 @@ html { background: transparent; }
 }
 .scroll-wheel-outer::before {
   top: 0;
-  background: linear-gradient(180deg, rgba(10,5,0,0.96) 0%, transparent 100%);
+  background: linear-gradient(180deg, rgba(8,18,35,0.97) 0%, transparent 100%);
 }
 .scroll-wheel-outer::after {
   bottom: 0;
-  background: linear-gradient(0deg,   rgba(10,5,0,0.96) 0%, transparent 100%);
+  background: linear-gradient(0deg,   rgba(8,18,35,0.97) 0%, transparent 100%);
 }
 
 /* ── Selector band (exactly centred on item height) */
@@ -319,9 +323,9 @@ html { background: transparent; }
   left: 0; right: 0;
   top: var(--wh-center);          /* 84px */
   height: var(--wh-item);         /* 42px */
-  background: rgba(201,169,110,0.07);
-  border-top:    1px solid rgba(201,169,110,0.45);
-  border-bottom: 1px solid rgba(201,169,110,0.45);
+  background: rgba(58,189,212,0.08);
+  border-top:    1px solid rgba(58,189,212,0.5);
+  border-bottom: 1px solid rgba(58,189,212,0.5);
   z-index: 4;
   pointer-events: none;
 }
