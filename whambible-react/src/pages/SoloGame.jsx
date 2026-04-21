@@ -111,17 +111,23 @@ function GamePlay({ level, onDone }) {
   const [showHint, setShowHint] = useState(false);
   const [whamSlam, setWhamSlam] = useState(false);
   const [whamCorrect, setWhamCorrect] = useState(true);
-  const timerRef = useRef(null);
-  const hintRef  = useRef(null);
+  const timerRef   = useRef(null);
+  const hintRef    = useRef(null);
+  const answeredRef = useRef(false); // ← live ref so timer always reads current value
 
   const verse = queue.current[idx];
   const correctAnswer = `${verse.book} ${verse.ch}:${verse.vs}`;
 
   useEffect(() => {
+    answeredRef.current = false;
     setTime(20); setAnswered(false); setChosen(null); setShowHint(false);
     timerRef.current = setInterval(() => {
       setTime(t => {
-        if (t <= 1) { clearInterval(timerRef.current); handleTimeout(); return 0; }
+        if (t <= 1) {
+          clearInterval(timerRef.current);
+          if (!answeredRef.current) handleAnswer(null); // safe — reads live ref
+          return 0;
+        }
         return t - 1;
       });
     }, 1000);
@@ -129,28 +135,34 @@ function GamePlay({ level, onDone }) {
     return () => { clearInterval(timerRef.current); clearTimeout(hintRef.current); };
   }, [idx]);
 
-  function handleTimeout() { if (!answered) handleAnswer(null); }
-
   function handleAnswer(opt) {
-    if (answered) return;
+    if (answeredRef.current) return; // guard against double-fire
+    answeredRef.current = true;
     clearInterval(timerRef.current);
     clearTimeout(hintRef.current);
     setAnswered(true);
     setChosen(opt);
     const correct = opt === correctAnswer;
     const pts = correct ? level.pts : 0;
-    if (correct) setScore(s => s + pts);
-    setResults(r => [...r, { correct, ref: verse.ref }]);
     setWhamCorrect(correct);
     setWhamSlam(true);
-    setTimeout(() => {
-      setWhamSlam(false);
-      setTimeout(() => {
-        if (idx + 1 >= queue.current.length) {
-          onDone({ score: score + pts, results: [...results, { correct, ref: verse.ref }] });
-        } else { setIdx(i => i + 1); }
-      }, 300);
-    }, correct ? 1400 : 900);
+    // Use functional updaters so closures always get fresh state
+    setScore(prevScore => {
+      const newScore = prevScore + (correct ? pts : 0);
+      setResults(prevResults => {
+        const newResults = [...prevResults, { correct, ref: verse.ref }];
+        setTimeout(() => {
+          setWhamSlam(false);
+          setTimeout(() => {
+            if (idx + 1 >= queue.current.length) {
+              onDone({ score: newScore, results: newResults });
+            } else { setIdx(i => i + 1); }
+          }, 300);
+        }, correct ? 1400 : 900);
+        return newResults;
+      });
+      return newScore;
+    });
   }
 
   const timerPct = (timeLeft / 20) * 100;
