@@ -258,7 +258,7 @@ function ScreenAuthGate({ onSignIn, onGuest }) {
     <div className="ch-screen">
       <BgLayers charUrl={CHAR_MP} />
       <div className="ch-content">
-        <div style={{ height:160 }} />
+        <div style={{ height:224 }} />
         <div className="ch-panel">
           <div className="ch-curl" />
           <div style={{ textAlign:"center", marginBottom:22 }}>
@@ -309,7 +309,7 @@ function ScreenLobby({ user, playerData, activeGames, onNewChallenge, onOpenGame
     <div className="ch-screen">
       <BgLayers charUrl={CHAR_MP} />
       <div className="ch-content">
-        <div style={{ height:150 }} />
+        <div style={{ height:210 }} />
         <div className="ch-panel">
           <div className="ch-curl" />
           <div style={{ textAlign:"center", marginBottom:16 }}>
@@ -396,7 +396,7 @@ function ScreenPickLevel({ game, myUid, isRound, suggestPts, onPick, onBack }) {
     <div className="ch-screen">
       <BgLayers charUrl={CHAR_KNIGHT} />
       <div className="ch-content">
-        <div style={{ height:isRound?90:110 }} />
+        <div style={{ height:isRound?126:154 }} />
         <div className="ch-panel">
           <div className="ch-curl" />
           {isRound && game ? (
@@ -466,7 +466,7 @@ function ScreenVerseStack({ level, onPick, onBack }) {
     <div className="ch-screen">
       <BgLayers charUrl={CHAR_MP} />
       <div className="ch-content">
-        <div style={{ height:90 }} />
+        <div style={{ height:126 }} />
         <div className="ch-panel">
           <div className="ch-curl" />
           <div style={{ textAlign:"center", marginBottom:16 }}>
@@ -539,7 +539,7 @@ function ScreenSelectChallenger({ myUid, recentOpps, onChallenge, onBack }) {
     <div className="ch-screen">
       <BgLayers charUrl={CHAR_MP} />
       <div className="ch-content">
-        <div style={{ height:90 }} />
+        <div style={{ height:126 }} />
         <div className="ch-panel">
           <div className="ch-curl" />
           <div style={{ textAlign:"center", marginBottom:18 }}>
@@ -611,7 +611,7 @@ function ScreenAcceptChallenge({ game, myUid, onAccept, onDecline }) {
     <div className="ch-screen">
       <BgLayers charUrl={CHAR_MP} />
       <div className="ch-content">
-        <div style={{ height:100 }} />
+        <div style={{ height:140 }} />
         <div className="ch-panel" style={{ display:"flex",flexDirection:"column",alignItems:"center",paddingBottom:32 }}>
           <div className="ch-curl" />
           <div className="ch-ac-avatar">👤</div>
@@ -703,7 +703,7 @@ function ScreenAnswer({ game, myUid, onResult }) {
       <BgLayers charUrl={CHAR_KNIGHT} />
       <WhamSlam active={whamActive} refText={correctRef} sub="Correct!" />
       <div className="ch-content">
-        <div style={{ height:70 }} />
+        <div style={{ height:98 }} />
         <div className="ch-panel">
           <div className="ch-curl" />
           <div className="ch-answer-header">
@@ -773,7 +773,7 @@ function ScreenRoundResult({ game, myUid, lastResult, gameCode, onNext }) {
     <div className="ch-screen">
       <BgLayers charUrl={CHAR_KNIGHT} />
       <div className="ch-content">
-        <div style={{ height:90 }} />
+        <div style={{ height:126 }} />
         <div className="ch-panel">
           <div className="ch-curl" />
           <div className="ch-round-result-card">
@@ -830,7 +830,7 @@ function ScreenGameComplete({ game, myUid, onNewBattle, onHome }) {
     <div className="ch-screen">
       <BgLayers charUrl={CHAR_VICTORY} />
       <div className="ch-content">
-        <div style={{ height:175 }} />
+        <div style={{ height:245 }} />
         <div className="ch-panel">
           <div className="ch-curl" />
           <div style={{ textAlign:"center", paddingBottom:32 }}>
@@ -1200,7 +1200,7 @@ export default function Challenge() {
         .ch-bg-rim  { position:fixed;inset:0;z-index:3;pointer-events:none;background:radial-gradient(ellipse at 50% -5%,rgba(212,146,26,0.20) 0%,transparent 55%); }
         .ch-screen  { min-height:100vh;position:relative;overflow-y:auto;overflow-x:hidden; }
         .ch-content { position:relative;z-index:4;max-width:480px;margin:0 auto;padding:0 16px 40px;display:flex;flex-direction:column;align-items:center; }
-        .ch-panel   { width:100%;background:transparent;border-radius:20px 20px 0 0;padding:22px 18px 60px;margin-top:-20px;overflow-y:auto;-webkit-overflow-scrolling:touch; }
+        .ch-panel   { width:100%;background:transparent;border-radius:20px 20px 0 0;padding:22px 18px 60px;margin-top:-28px;overflow-y:auto;-webkit-overflow-scrolling:touch; }
         .ch-curl    { width:70%;height:4px;margin:0 auto 14px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(212,146,26,0.7),rgba(58,189,212,0.5),rgba(212,146,26,0.7),transparent); }
         .ch-title   { font-family:'Cinzel',serif;font-size:22px;font-weight:900;color:${C.gold};letter-spacing:2px;margin:0 0 4px;text-align:center; }
         .ch-sub     { font-size:14px;font-style:italic;color:rgba(240,228,192,0.5);margin:0;text-align:center; }
