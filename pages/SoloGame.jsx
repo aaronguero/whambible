@@ -342,15 +342,15 @@ export default function SoloGame() {
         .wb-bg-land {
           position:fixed; inset:0; z-index:0; pointer-events:none;
           background-image: url('${LANDSCAPE_BG}');
-          background-size:cover; background-position:center top; opacity:0.88;
-          -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0) 100%);
-          mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 45%, rgba(0,0,0,0.5) 65%, rgba(0,0,0,0) 100%);
+          background-size:cover; background-position:center top; opacity:1;
+          
+          
         }
         .wb-bg-char {
           position:fixed; inset:0; z-index:1; pointer-events:none;
-          background-size:80% auto; background-position:center 6%; background-repeat:no-repeat; opacity:0.95;
-          -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 8%, rgba(0,0,0,1) 20%, rgba(0,0,0,1) 50%, rgba(0,0,0,0.3) 68%, rgba(0,0,0,0) 84%);
-          mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 8%, rgba(0,0,0,1) 20%, rgba(0,0,0,1) 50%, rgba(0,0,0,0.3) 68%, rgba(0,0,0,0) 84%);
+          background-size:80% auto; background-position:center 6%; background-repeat:no-repeat; opacity:1;
+          
+          
         }
         .wb-bg-tone {
           position:fixed; inset:0; z-index:2; pointer-events:none;
