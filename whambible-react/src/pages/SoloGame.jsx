@@ -182,7 +182,7 @@ function GamePlay({ level, onDone }) {
           <div style={{ fontFamily:"'Cinzel',serif", fontSize:16, fontWeight:800, color:C.gold }}>
             {score} pts
           </div>
-          <div style={{ fontFamily:"'Cinzel',serif", fontSize:11, color:C.cobalt, letterSpacing:1, opacity:0.7 }}>
+          <div style={{ fontFamily:"'Cinzel',serif", fontSize:11, color:level.color, letterSpacing:1, opacity:0.85 }}>
             {level.icon} {level.name}
           </div>
         </div>
