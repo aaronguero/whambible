@@ -98,7 +98,7 @@
   height: 8px;
   border-radius: 50%;
   background: rgba(212,146,26,0.2);
-  border: 1px solid rgba(212,146,26,0.3);
+  border: 1px solid rgba(212,146,26,0.45);
   transition: all 0.3s;
 }
 .progress-dot.done { background: var(--gold); border-color: var(--gold); }
@@ -124,7 +124,9 @@
 
 /* Verse Display Card */
 .verse-display-card {
-  background: linear-gradient(160deg, rgba(45,28,6,0.98) 0%, rgba(20,12,2,0.98) 100%);
+  background: linear-gradient(160deg, rgba(13,31,53,0.80) 0%, rgba(26,58,92,0.74) 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border: 1px solid rgba(212,146,26,0.45);
   border-radius: 14px;
   padding: 24px 20px 18px;
@@ -201,7 +203,9 @@
   width: 100%;
   min-height: 76px;
   padding: 12px 14px;
-  background: linear-gradient(135deg, rgba(35,22,4,0.95) 0%, rgba(25,15,3,0.95) 100%);
+  background: linear-gradient(135deg, rgba(13,31,53,0.72) 0%, rgba(26,58,92,0.68) 100%);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   border: 1px solid rgba(212,146,26,0.3);
   border-radius: 10px;
   cursor: pointer;
