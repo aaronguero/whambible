@@ -170,7 +170,7 @@ export default function Home() {
           line-height: 1.75; font-style: italic; margin-bottom: 10px;
         }
         .wb-verse-ref {
-          color: ${C.gold}; font-size: 12px;
+          color: #000000; font-size: 12px;
           text-align: right; letter-spacing: 1px;
           font-family: 'Cinzel', serif; font-weight: 600;
         }
