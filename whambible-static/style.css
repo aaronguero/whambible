@@ -146,7 +146,7 @@ html, body {
 }
 
 /* ══ HERO SPACER ══════════════════════════════════════════════════════════ */
-.wb-hero-space { height: 280px; width: 100%; flex-shrink: 0; }
+.wb-hero-space { height: 420px; width: 100%; flex-shrink: 0; }
 
 /* ══ SCROLL PANEL (white fade-in panel for content) ══════════════════════ */
 .wb-scroll-panel {
@@ -160,7 +160,7 @@ html, body {
   border-radius: 20px 20px 0 0;
   padding: 28px 20px 0;
   position: relative; z-index: 5;
-  margin-top: -60px;
+  margin-top: -20px;
 }
 
 /* Scroll decorative curl */
@@ -408,5 +408,5 @@ html, body {
   .logo-img { width: 200px; height: 200px; }
   .level-points { font-size: 16px; }
   .lang-btn { font-size: 10px; padding: 3px 7px; }
-  .wb-hero-space { height: 220px; }
+  .wb-hero-space { height: 340px; }
 }
