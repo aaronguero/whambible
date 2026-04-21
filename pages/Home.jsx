@@ -33,7 +33,7 @@ export default function Home() {
   const [lang, setLang] = useState("en");
 
   return (
-    <div style={{ minHeight: "100vh", background: "transparent", fontFamily: "'Georgia',serif", overflowX: "hidden", position: "relative" }}>
+    <div style={{ minHeight: "100vh", background: "transparent", fontFamily: "'Georgia',serif", overflowX: "hidden", overflowY: "auto", WebkitOverflowScrolling: "touch", position: "relative" }}>
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&display=swap');
