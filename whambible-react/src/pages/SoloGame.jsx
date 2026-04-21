@@ -177,12 +177,12 @@ function GamePlay({ level, onDone }) {
           <button onClick={() => window.location.href = "/"} style={{
             background:"none", border:"none", cursor:"pointer", padding:"4px 6px",
             fontFamily:"'Cinzel',serif", fontSize:18, lineHeight:1,
-            color:C.cobalt, opacity:0.75, letterSpacing:-2,
+            color:C.cobalt, opacity:1, letterSpacing:-2,
           }} title="Exit to Home">⚔️⚔️</button>
           <div style={{ fontFamily:"'Cinzel',serif", fontSize:16, fontWeight:800, color:C.gold }}>
             {score} pts
           </div>
-          <div style={{ fontFamily:"'Cinzel',serif", fontSize:22, color:level.color, letterSpacing:1, opacity:0.85 }}>
+          <div style={{ fontFamily:"'Cinzel',serif", fontSize:22, color:level.color, letterSpacing:1, opacity:1 }}>
             {level.icon} {level.name}
           </div>
         </div>
@@ -251,7 +251,7 @@ function GamePlay({ level, onDone }) {
                     display:"flex", alignItems:"center", gap:12,
                     boxShadow: answered && isCorrect ? `0 0 16px ${C.teal}44` : "none",
                   }}>
-                  <span style={{ fontWeight:800, fontSize:15, opacity:0.6, minWidth:18 }}>
+                  <span style={{ fontWeight:800, fontSize:15, opacity:1, minWidth:18 }}>
                     {["A","B","C","D"][i]}
                   </span>
                   {opt}
