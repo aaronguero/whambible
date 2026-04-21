@@ -168,7 +168,7 @@ export default function Home() {
         }
         .wb-verse-btn:active { background: rgba(255,255,255,0.7); }
         .wb-verse-card-body {
-          background: rgba(255,255,255,0.5);
+          background: rgba(13,31,53,0.5);
           border: 1.5px solid rgba(30,122,140,0.35);
           border-top: none;
           border-radius: 0 0 12px 12px;
