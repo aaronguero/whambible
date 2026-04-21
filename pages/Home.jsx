@@ -45,21 +45,7 @@ export default function Home() {
           position: fixed; inset: 0; z-index: 0; pointer-events: none;
           background-image: url('${LANDSCAPE_BG}');
           background-size: cover; background-position: center top;
-          opacity: 0.92;
-          -webkit-mask-image: linear-gradient(to bottom,
-            rgba(0,0,0,1)    0%,
-            rgba(0,0,0,1)   60%,
-            rgba(0,0,0,0.85) 75%,
-            rgba(0,0,0,0.65) 88%,
-            rgba(0,0,0,0.5) 100%
-          );
-          mask-image: linear-gradient(to bottom,
-            rgba(0,0,0,1)    0%,
-            rgba(0,0,0,1)   60%,
-            rgba(0,0,0,0.85) 75%,
-            rgba(0,0,0,0.65) 88%,
-            rgba(0,0,0,0.5) 100%
-          );
+          opacity: 1;
         }
 
         /* Layer 2: Logo/characters — centered, full color, fade bottom */
@@ -90,15 +76,7 @@ export default function Home() {
 
         /* Layer 3: Color toning — cobalt dark all the way down, no white */
         .wb-bg-tone {
-          position: fixed; inset: 0; z-index: 2; pointer-events: none;
-          background: linear-gradient(
-            to bottom,
-            rgba(13,31,53,0.18)   0%,
-            rgba(13,31,53,0.12)  35%,
-            rgba(13,31,53,0.20)  68%,
-            rgba(8,18,35,0.35)   85%,
-            rgba(8,18,35,0.45)  100%
-          );
+          display: none;
         }
 
         /* Layer 4: Subtle rim light at top */
