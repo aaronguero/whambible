@@ -66,7 +66,7 @@ function LevelSelect({ onSelect }) {
       <div className="wb-bg-tone" />
       <div className="wb-bg-rim" />
       <div className="wb-content">
-        <div className="wb-hero-space" style={{ height: 308 }} />
+        <div className="wb-hero-space" style={{ height: 370 }} />
         <div className="wb-scroll-panel">
           <div className="wb-scroll-curl" />
           <p className="wb-tagline">⚔️ Choose Your Challenge ⚔️</p>
@@ -197,7 +197,7 @@ function GamePlay({ level, onDone }) {
           ))}
         </div>
 
-        <div className="wb-hero-space" style={{ height: 224 }} />
+        <div className="wb-hero-space" style={{ height: 269 }} />
 
         <div className="wb-scroll-panel">
           <div className="wb-scroll-curl" />
@@ -280,7 +280,7 @@ function GameOver({ score, results, level, onReplay, onHome }) {
       <div className="wb-bg-tone" />
       <div className="wb-bg-rim" />
       <div className="wb-content">
-        <div className="wb-hero-space" style={{ height: 280 }} />
+        <div className="wb-hero-space" style={{ height: 336 }} />
         <div className="wb-scroll-panel">
           <div className="wb-scroll-curl" />
           <p className="wb-tagline" style={{ fontSize:"1rem", marginBottom:4 }}>
