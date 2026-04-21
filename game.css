@@ -16,9 +16,9 @@
 }
 
 .hud-back {
-  background: none;
-  border: 1px solid rgba(26,58,92,0.3);
-  color: rgba(26,58,92,0.7);
+  background: rgba(13,31,53,0.55);
+  border: 1px solid rgba(212,146,26,0.35);
+  color: rgba(232,213,160,0.85);
   font-family: 'Cinzel', serif;
   font-size: 11px;
   padding: 6px 10px;
@@ -103,7 +103,8 @@
 }
 .progress-dot.done { background: var(--gold); border-color: var(--gold); }
 .progress-dot.correct { background: #4caf7d; border-color: #4caf7d; }
-.progress-dot.wrong { background: #c93030; border-color: #c93030; }
+.progress-dot.wrong     { background: #c93030; border-color: #c93030; }
+.progress-dot.recovered { background: #3ABDD4; border-color: #3ABDD4; }
 .progress-dot.current {
   background: rgba(30,122,140,0.5);
   border-color: var(--gold);
