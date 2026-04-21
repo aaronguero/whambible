@@ -9,16 +9,16 @@
   align-items: center;
   justify-content: space-between;
   padding: 10px 16px;
-  background: rgba(13,31,53,0.72);
+  background: rgba(255,252,245,0.88);
   border-bottom: 1px solid rgba(30,122,140,0.25);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
 
 .hud-back {
-  background: rgba(13,31,53,0.55);
-  border: 1px solid rgba(212,146,26,0.35);
-  color: rgba(232,213,160,0.85);
+  background: none;
+  border: 1px solid rgba(26,58,92,0.3);
+  color: rgba(26,58,92,0.7);
   font-family: 'Cinzel', serif;
   font-size: 11px;
   padding: 6px 10px;
@@ -97,18 +97,17 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: rgba(212,146,26,0.2);
-  border: 1px solid rgba(212,146,26,0.45);
+  background: rgba(201,162,39,0.2);
+  border: 1px solid rgba(201,162,39,0.3);
   transition: all 0.3s;
 }
 .progress-dot.done { background: var(--gold); border-color: var(--gold); }
 .progress-dot.correct { background: #4caf7d; border-color: #4caf7d; }
-.progress-dot.wrong     { background: #c93030; border-color: #c93030; }
-.progress-dot.recovered { background: #3ABDD4; border-color: #3ABDD4; }
+.progress-dot.wrong { background: #c93030; border-color: #c93030; }
 .progress-dot.current {
   background: rgba(30,122,140,0.5);
   border-color: var(--gold);
-  box-shadow: 0 0 6px rgba(212,146,26,0.6);
+  box-shadow: 0 0 6px rgba(201,162,39,0.6);
 }
 
 /* Game Content */
@@ -125,15 +124,13 @@
 
 /* Verse Display Card */
 .verse-display-card {
-  background: linear-gradient(160deg, rgba(13,31,53,0.80) 0%, rgba(26,58,92,0.74) 100%);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(212,146,26,0.45);
+  background: linear-gradient(160deg, rgba(45,28,6,0.98) 0%, rgba(20,12,2,0.98) 100%);
+  border: 1px solid rgba(201,162,39,0.45);
   border-radius: 14px;
   padding: 24px 20px 18px;
   box-shadow:
     0 6px 30px rgba(0,0,0,0.6),
-    inset 0 1px 0 rgba(212,146,26,0.2),
+    inset 0 1px 0 rgba(201,162,39,0.2),
     inset 0 -1px 0 rgba(30,122,140,0.12);
   text-align: center;
   position: relative;
@@ -156,14 +153,14 @@
 }
 
 .verse-ornament {
-  color: rgba(212,146,26,0.3);
+  color: rgba(201,162,39,0.3);
   font-size: 10px;
   letter-spacing: 6px;
   margin: 4px 0;
 }
 
 .verse-body {
-  font-family: 'Cinzel', 'Crimson Text', serif;
+  font-family: 'Crimson Text', Georgia, serif;
   font-size: 19px;
   line-height: 1.75;
   font-style: italic;
@@ -177,7 +174,7 @@
   font-family: 'Cinzel', serif;
   font-size: 10px;
   letter-spacing: 2px;
-  color: rgba(212,146,26,0.6);
+  color: rgba(201,162,39,0.6);
   text-transform: uppercase;
   margin-top: 10px;
 }
@@ -189,7 +186,7 @@
   font-family: 'Cinzel', serif;
   font-size: 9px;
   letter-spacing: 2px;
-  color: rgba(212,146,26,0.4);
+  color: rgba(201,162,39,0.4);
   text-transform: uppercase;
   text-align: center;
 }
@@ -204,10 +201,8 @@
   width: 100%;
   min-height: 76px;
   padding: 12px 14px;
-  background: linear-gradient(135deg, rgba(13,31,53,0.72) 0%, rgba(26,58,92,0.68) 100%);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border: 1px solid rgba(212,146,26,0.3);
+  background: linear-gradient(135deg, rgba(35,22,4,0.95) 0%, rgba(25,15,3,0.95) 100%);
+  border: 1px solid rgba(201,162,39,0.3);
   border-radius: 10px;
   cursor: pointer;
   display: flex;
@@ -256,7 +251,7 @@
 
 .choice-btn:hover:not(:disabled) {
   background: linear-gradient(135deg, rgba(55,35,8,0.98) 0%, rgba(40,25,5,0.98) 100%);
-  border-color: rgba(212,146,26,0.65);
+  border-color: rgba(201,162,39,0.65);
   transform: translateX(4px);
   box-shadow: 0 4px 16px rgba(0,0,0,0.4);
 }
@@ -268,8 +263,8 @@
   height: 26px;
   flex-shrink: 0;
   border-radius: 50%;
-  background: rgba(212,146,26,0.12);
-  border: 1px solid rgba(212,146,26,0.35);
+  background: rgba(201,162,39,0.12);
+  border: 1px solid rgba(201,162,39,0.35);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -301,7 +296,7 @@
 .choice-ref {
   font-family: 'Crimson Text', serif;
   font-size: 14px;
-  color: rgba(212,146,26,0.7);
+  color: rgba(201,162,39,0.7);
   display: block;
   margin-top: 1px;
   white-space: nowrap;
@@ -332,13 +327,13 @@
 
 /* Reveal = correct button shown after wrong answer or time-up — subtle, not green */
 .choice-btn.reveal {
-  border-color: rgba(212,146,26,0.6) !important;
+  border-color: rgba(201,162,39,0.6) !important;
   background: linear-gradient(135deg, rgba(40,28,6,0.98) 0%, rgba(30,20,4,0.98) 100%) !important;
   opacity: 0.75;
 }
 .choice-btn.reveal .choice-letter {
   background: rgba(30,122,140,0.25);
-  border-color: rgba(212,146,26,0.6);
+  border-color: rgba(201,162,39,0.6);
   color: #D4921A;
 }
 
@@ -352,17 +347,14 @@
   padding: 4px 0;
   transition: all 0.3s;
 }
-.feedback-bar.correct { color: #4caf7d; font-weight: 700; }
-.feedback-bar.wrong   { color: #C05A2A; font-weight: 600; }
-.feedback-bar.streak  { color: #F5C842; font-weight: 800; text-shadow: 0 0 10px rgba(245,200,66,0.5); }
+.feedback-bar.correct { color: #4caf7d; }
+.feedback-bar.wrong   { color: #c93030; }
 
 /* Result Overlay */
 .result-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(8,18,35,0.55);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  background: rgba(0,0,0,0.85);
   z-index: 200;
   display: flex;
   align-items: center;
@@ -373,14 +365,14 @@
 @keyframes fadeIn { from { opacity:0 } to { opacity:1 } }
 
 .result-card {
-  background: linear-gradient(160deg, rgba(40,25,5,0.99) 0%, rgba(13,31,53,0.72) 100%);
+  background: linear-gradient(160deg, rgba(40,25,5,0.99) 0%, rgba(20,12,2,0.99) 100%);
   border: 1px solid rgba(30,122,140,0.5);
   border-radius: 16px;
   padding: 32px 24px;
   max-width: 360px;
   width: 100%;
   text-align: center;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(212,146,26,0.15);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(201,162,39,0.15);
   animation: cardPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 @keyframes cardPop {
@@ -407,7 +399,7 @@
 .result-body {
   font-family: 'Crimson Text', serif;
   font-size: 15px;
-  color: rgba(244,240,232,0.8);
+  color: rgba(240,228,192,0.8);
   line-height: 1.6;
   margin-bottom: 20px;
   font-style: italic;
@@ -448,7 +440,6 @@
 /* ── WHAM SLAM (exact Whamgame.base44.app spec) ─────────
    Used in both game.html and recovery.html
    ─────────────────────────────────────────────────────── */
-/* ── WHAM SLAM OVERLAY ─────────────────────────────────────── */
 .wham-slam-overlay {
   position: fixed;
   inset: 0;
@@ -457,126 +448,47 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  transition: background 0.18s ease, opacity 0.2s ease;
-  overflow: hidden;
+  transition: background 0.15s;
 }
-
-/* Phase 0: white flash — intentional jolt (Whamgame spec) */
-.wham-slam-overlay.phase-0 {
-  background: #ffffff;
-}
-
-/* Phase 1 & 2: cinematic underlay — landscape behind gold glow */
+.wham-slam-overlay.phase-0 { background: #ffffff; }
 .wham-slam-overlay.phase-1,
-.wham-slam-overlay.phase-2 {
-  background:
-    linear-gradient(180deg,
-      rgba(13,31,53,0.82) 0%,
-      rgba(26,58,92,0.70) 40%,
-      rgba(212,146,26,0.18) 100%),
-    url('https://media.base44.com/images/public/69df9a909b33058a5ce47831/33b065c94_generated_image.png')
-    center center / cover no-repeat;
-}
+.wham-slam-overlay.phase-2 { background: #020617; }
 
-/* Gold rim glow at top — cinematic */
-.wham-slam-overlay::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, #F5C842, #D4921A, #F5C842, transparent);
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-.wham-slam-overlay.phase-1::before,
-.wham-slam-overlay.phase-2::before { opacity: 1; }
-
-/* ── WHAM! word ────────────────────────────────────────────── */
 .wham-slam-word {
-  font-family: 'Cinzel', serif;
   font-weight: 900;
-  letter-spacing: 10px;
-  text-transform: uppercase;
-  background: linear-gradient(160deg, #F5C842 0%, #D4921A 40%, #E8D5A0 70%, #F5C842 100%);
+  letter-spacing: 6px;
+  background: linear-gradient(135deg, #f472b6, #c084fc, #818cf8);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin-bottom: 20px;
-  text-shadow: none;
-  filter: drop-shadow(0 0 24px rgba(245,200,66,0.55));
+  margin-bottom: 16px;
   transition:
-    font-size 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
-    opacity 0.3s ease,
-    transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
-    filter 0.3s ease;
+    font-size 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.3s,
+    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
-.wham-slam-overlay.phase-0 .wham-slam-word {
-  font-size: 64px;
-  opacity: 1;
-  transform: scale(1);
-  filter: drop-shadow(0 0 8px rgba(245,200,66,0.3));
-}
-.wham-slam-overlay.phase-1 .wham-slam-word {
-  font-size: 104px;
-  opacity: 1;
-  transform: scale(1.06);
-  filter: drop-shadow(0 0 32px rgba(245,200,66,0.7));
-}
-.wham-slam-overlay.phase-2 .wham-slam-word {
-  font-size: 104px;
-  opacity: 0;
-  transform: scale(1.02);
-  filter: drop-shadow(0 0 0px rgba(245,200,66,0));
-}
+.wham-slam-overlay.phase-0 .wham-slam-word { font-size: 60px; opacity: 1; transform: scale(1); }
+.wham-slam-overlay.phase-1 .wham-slam-word { font-size: 96px; opacity: 1; transform: scale(1.08); }
+.wham-slam-overlay.phase-2 .wham-slam-word { font-size: 96px; opacity: 0; transform: scale(1); }
 
-/* ── Verse ref (Book Chapter:Verse) ───────────────────────── */
 .wham-slam-ref {
-  font-family: 'Cinzel', serif;
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 3px;
+  color: #4ade80;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 2px;
   text-transform: uppercase;
-  color: #3ABDD4;
-  text-shadow: 0 0 16px rgba(58,189,212,0.5);
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s;
 }
 .wham-slam-overlay.phase-0 .wham-slam-ref { opacity: 0; }
 .wham-slam-overlay.phase-1 .wham-slam-ref { opacity: 1; }
 .wham-slam-overlay.phase-2 .wham-slam-ref { opacity: 0; }
 
-/* ── Sub label ("Correct!" / "Recovered!") ─────────────────── */
 .wham-slam-sub {
-  font-family: 'Cinzel', serif;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 4px;
-  text-transform: uppercase;
-  color: #E8D5A0;
-  margin-top: 10px;
-  transition: opacity 0.3s 0.1s ease;
+  color: #475569;
+  font-size: 13px;
+  margin-top: 8px;
+  transition: opacity 0.3s 0.1s;
 }
 .wham-slam-overlay.phase-0 .wham-slam-sub { opacity: 0; }
 .wham-slam-overlay.phase-1 .wham-slam-sub { opacity: 1; }
 .wham-slam-overlay.phase-2 .wham-slam-sub { opacity: 0; }
-
-
-/* ── Streak bonus badge ──────────────────────────────── */
-.result-streak-badge {
-  display: inline-block;
-  margin: 6px auto 14px;
-  padding: 5px 16px;
-  background: linear-gradient(135deg, rgba(245,200,66,0.15), rgba(212,146,26,0.1));
-  border: 1px solid rgba(245,200,66,0.4);
-  border-radius: 20px;
-  font-family: 'Cinzel', serif;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 2px;
-  color: #F5C842;
-  text-shadow: 0 0 8px rgba(245,200,66,0.5);
-  animation: streakPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-@keyframes streakPop {
-  from { transform: scale(0.7); opacity: 0; }
-  to   { transform: scale(1);   opacity: 1; }
-}
