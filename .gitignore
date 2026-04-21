@@ -1,1 +1,18 @@
+# Secrets
 .agents/.env
+
+# Dependencies
+node_modules/
+whambible-react/node_modules/
+
+# Build output (Netlify builds this fresh — no need to track it)
+dist/
+whambible-react/dist/
+
+# Dead folders — never deploy these
+whambible-static/
+whambible_preview_backup/
+whambible-react/
+incoming_files/
+*.tar.gz
+*.zip
