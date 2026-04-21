@@ -66,7 +66,7 @@ function LevelSelect({ onSelect }) {
       <div className="wb-bg-tone" />
       <div className="wb-bg-rim" />
       <div className="wb-content">
-        <div className="wb-hero-space" style={{ height: 220 }} />
+        <div className="wb-hero-space" style={{ height: 308 }} />
         <div className="wb-scroll-panel">
           <div className="wb-scroll-curl" />
           <p className="wb-tagline">⚔️ Choose Your Challenge ⚔️</p>
@@ -197,7 +197,7 @@ function GamePlay({ level, onDone }) {
           ))}
         </div>
 
-        <div className="wb-hero-space" style={{ height:160 }} />
+        <div className="wb-hero-space" style={{ height: 224 }} />
 
         <div className="wb-scroll-panel">
           <div className="wb-scroll-curl" />
@@ -280,7 +280,7 @@ function GameOver({ score, results, level, onReplay, onHome }) {
       <div className="wb-bg-tone" />
       <div className="wb-bg-rim" />
       <div className="wb-content">
-        <div className="wb-hero-space" style={{ height:200 }} />
+        <div className="wb-hero-space" style={{ height: 280 }} />
         <div className="wb-scroll-panel">
           <div className="wb-scroll-curl" />
           <p className="wb-tagline" style={{ fontSize:"1rem", marginBottom:4 }}>
@@ -368,7 +368,7 @@ export default function SoloGame() {
         .wb-scroll-panel {
           width:100%;
           background: transparent;
-          border-radius:20px 20px 0 0; padding:24px 20px 0; position:relative; z-index:5; margin-top:-40px;
+          border-radius:20px 20px 0 0; padding:24px 20px 0; position:relative; z-index:5; margin-top:-56px;
         }
         .wb-scroll-curl {
           width:80%; height:5px; margin:0 auto 16px; border-radius:3px;
