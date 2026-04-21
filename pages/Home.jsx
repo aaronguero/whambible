@@ -256,23 +256,6 @@ export default function Home() {
           color: ${C.teal}; transform: translateY(-1px);
         }
 
-        /* ─────────────── TUTORIAL ROW ─────────────── */
-        .wb-tutorial-row {
-          display: flex; align-items: center; justify-content: center;
-          gap: 10px; margin-bottom: 10px;
-          color: ${C.cobalt}; font-size: 12px; letter-spacing: 1px;
-          font-family: 'Cinzel', serif; text-transform: uppercase; opacity: 0.75;
-        }
-        .wb-toggle {
-          width: 42px; height: 22px; border-radius: 11px; border: none;
-          cursor: pointer; position: relative; background: ${C.teal};
-          box-shadow: 0 2px 8px rgba(30,122,140,0.4);
-        }
-        .wb-toggle-knob {
-          position: absolute; top: 3px; left: 22px;
-          width: 16px; height: 16px; border-radius: 50%; background: #fff;
-          box-shadow: 0 1px 4px rgba(0,0,0,0.2);
-        }
 
         /* ─────────────── DONATE ─────────────── */
         .wb-btn-donate {
@@ -352,17 +335,8 @@ export default function Home() {
           <div className="wb-btn-row">
             <button className="wb-btn-primary" onClick={() => window.location.href = createPageUrl("SoloGame")}>⚔️ Play Solo</button>
             <button className="wb-btn-secondary" onClick={() => window.location.href = createPageUrl("Challenge")}>👥 Challenge a Friend</button>
-            <button className="wb-btn-ghost">📋 World Leaderboard</button>
           </div>
 
-          {/* Tutorial Toggle */}
-          <div className="wb-tutorial-row">
-            <span>📖 Tutorial:</span>
-            <div className="wb-toggle">
-              <div className="wb-toggle-knob" />
-            </div>
-            <span style={{ color: C.teal, fontWeight: 700 }}>ON</span>
-          </div>
 
           <div className="wb-divider" />
 
