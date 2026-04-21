@@ -2,11 +2,11 @@
   "app_id": "69dfc58914309a4bd10f7a71",
   "slug": "wham-bible",
   "pages": {
-    "Home": {
-      "title": "Home"
-    },
     "Challenge": {
       "title": "Challenge"
+    },
+    "Home": {
+      "title": "Home"
     },
     "Recovery": {
       "title": "Recovery"
