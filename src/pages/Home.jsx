@@ -164,13 +164,13 @@ export default function Home() {
         .wb-verse-card-header {
           display: flex; align-items: center; justify-content: space-between;
           padding: 14px 18px; cursor: pointer; user-select: none;
-          background: rgba(30,122,140,0.12);
+          background: rgba(30,122,140,0.60);
           width: 100%; border: none; text-align: left;
           border-radius: 12px;
           transition: background 0.18s;
         }
         .wb-verse-card-header:active {
-          background: rgba(30,122,140,0.22);
+          background: rgba(30,122,140,0.70);
         }
         .wb-verse-card-body {
           padding: 0 18px 16px;
@@ -181,11 +181,11 @@ export default function Home() {
           font-family: 'Cinzel', serif; font-weight: 600;
         }
         .wb-verse-text {
-          color: ${C.sand}; font-size: 14px;
+          color: #000000; font-size: 14px;
           line-height: 1.75; font-style: italic; margin-bottom: 10px;
         }
         .wb-verse-ref {
-          color: ${C.gold}; font-size: 12px;
+          color: #000000; font-size: 12px;
           text-align: right; letter-spacing: 1px;
           font-family: 'Cinzel', serif; font-weight: 600;
         }
