@@ -1,6 +1,3 @@
-/* Recovery screen inherits global warm dark theme */
-html { background: transparent; }
-
 /* ===================================================
    WhamBible — Recovery Screen Styles
    WHAM SLAM: exact Whamgame.base44.app spec
@@ -9,11 +6,10 @@ html { background: transparent; }
 /* ── WHAM SLAM OVERLAY ─────────────────────────────────
    Exact Whamgame timing + style:
    Phase 0 (0ms):    bg=#fff, WHAM! 60px, audio fires
-   Phase 1 (300ms):  bg=transparent, WHAM! 96px + scale(1.08), verse ref appears
+   Phase 1 (300ms):  bg=#020617, WHAM! 96px + scale(1.08), verse ref appears
    Phase 2 (1120ms): WHAM! opacity=0, verse ref fades
    Done   (1620ms):  onDone() fires → next screen
    ───────────────────────────────────────────────────── */
-/* ── WHAM SLAM OVERLAY ─────────────────────────────────────── */
 .wham-slam-overlay {
   position: fixed;
   inset: 0;
@@ -22,108 +18,69 @@ html { background: transparent; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  transition: background 0.18s ease, opacity 0.2s ease;
-  overflow: hidden;
+  transition: background 0.15s;
 }
 
-/* Phase 0: white flash — intentional jolt (Whamgame spec) */
-.wham-slam-overlay.phase-0 {
-  background: #ffffff;
-}
-
-/* Phase 1 & 2: cinematic underlay — landscape behind gold glow */
+/* Phase 0 bg = white */
+.wham-slam-overlay.phase-0 { background: #ffffff; }
+/* Phase 1/2 bg = near-black */
 .wham-slam-overlay.phase-1,
-.wham-slam-overlay.phase-2 {
-  background:
-    linear-gradient(180deg,
-      rgba(13,31,53,0.82) 0%,
-      rgba(26,58,92,0.70) 40%,
-      rgba(212,146,26,0.18) 100%),
-    url('https://media.base44.com/images/public/69df9a909b33058a5ce47831/33b065c94_generated_image.png')
-    center center / cover no-repeat;
-}
+.wham-slam-overlay.phase-2 { background: #020617; }
 
-/* Gold rim glow at top — cinematic */
-.wham-slam-overlay::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, transparent, #F5C842, #D4921A, #F5C842, transparent);
-  opacity: 0;
-  transition: opacity 0.3s;
-}
-.wham-slam-overlay.phase-1::before,
-.wham-slam-overlay.phase-2::before { opacity: 1; }
-
-/* ── WHAM! word ────────────────────────────────────────────── */
+/* WHAM! word */
 .wham-slam-word {
-  font-family: 'Cinzel', serif;
   font-weight: 900;
-  letter-spacing: 10px;
-  text-transform: uppercase;
-  background: linear-gradient(160deg, #F5C842 0%, #D4921A 40%, #E8D5A0 70%, #F5C842 100%);
+  letter-spacing: 6px;
+  background: linear-gradient(135deg, #f472b6, #c084fc, #818cf8);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin-bottom: 20px;
-  text-shadow: none;
-  filter: drop-shadow(0 0 24px rgba(245,200,66,0.55));
+  margin-bottom: 16px;
   transition:
-    font-size 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
-    opacity 0.3s ease,
-    transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1),
-    filter 0.3s ease;
-}
-.wham-slam-overlay.phase-0 .wham-slam-word {
-  font-size: 64px;
-  opacity: 1;
-  transform: scale(1);
-  filter: drop-shadow(0 0 8px rgba(245,200,66,0.3));
-}
-.wham-slam-overlay.phase-1 .wham-slam-word {
-  font-size: 104px;
-  opacity: 1;
-  transform: scale(1.06);
-  filter: drop-shadow(0 0 32px rgba(245,200,66,0.7));
-}
-.wham-slam-overlay.phase-2 .wham-slam-word {
-  font-size: 104px;
-  opacity: 0;
-  transform: scale(1.02);
-  filter: drop-shadow(0 0 0px rgba(245,200,66,0));
+    font-size 0.2s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.3s,
+    transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* ── Verse ref (Book Chapter:Verse) ───────────────────────── */
+.wham-slam-overlay.phase-0 .wham-slam-word {
+  font-size: 60px;
+  opacity: 1;
+  transform: scale(1);
+}
+.wham-slam-overlay.phase-1 .wham-slam-word {
+  font-size: 96px;
+  opacity: 1;
+  transform: scale(1.08);
+}
+.wham-slam-overlay.phase-2 .wham-slam-word {
+  font-size: 96px;
+  opacity: 0;
+  transform: scale(1);
+}
+
+/* Verse ref (shows at phase 1, fades at phase 2) */
 .wham-slam-ref {
-  font-family: 'Cinzel', serif;
-  font-size: 18px;
-  font-weight: 700;
-  letter-spacing: 3px;
+  color: #4ade80;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 2px;
   text-transform: uppercase;
-  color: #3ABDD4;
-  text-shadow: 0 0 16px rgba(58,189,212,0.5);
-  transition: opacity 0.3s ease;
+  transition: opacity 0.3s;
 }
 .wham-slam-overlay.phase-0 .wham-slam-ref { opacity: 0; }
 .wham-slam-overlay.phase-1 .wham-slam-ref { opacity: 1; }
 .wham-slam-overlay.phase-2 .wham-slam-ref { opacity: 0; }
 
-/* ── Sub label ("Correct!" / "Recovered!") ─────────────────── */
+/* Sub label ("Mastered!" → WhamBible: "Correct!" / "Recovered!") */
 .wham-slam-sub {
-  font-family: 'Cinzel', serif;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 4px;
-  text-transform: uppercase;
-  color: #E8D5A0;
-  margin-top: 10px;
-  transition: opacity 0.3s 0.1s ease;
+  color: #475569;
+  font-size: 13px;
+  margin-top: 8px;
+  transition: opacity 0.3s 0.1s;
 }
 .wham-slam-overlay.phase-0 .wham-slam-sub { opacity: 0; }
 .wham-slam-overlay.phase-1 .wham-slam-sub { opacity: 1; }
 .wham-slam-overlay.phase-2 .wham-slam-sub { opacity: 0; }
-
 
 /* ── RECOVERY MAIN ────────────────────────────────── */
 .recovery-main {
@@ -148,9 +105,9 @@ html { background: transparent; }
   font-family: 'Cinzel', serif;
   font-size: 11px;
   letter-spacing: 2px;
-  color: rgba(58,189,212,0.9);
-  background: rgba(58,189,212,0.1);
-  border: 1px solid rgba(58,189,212,0.3);
+  color: rgba(201,162,39,0.8);
+  background: rgba(201,162,39,0.1);
+  border: 1px solid rgba(201,162,39,0.3);
   border-radius: 20px;
   padding: 5px 12px;
 }
@@ -159,16 +116,12 @@ html { background: transparent; }
   font-family: 'Cinzel', serif;
   font-size: 12px;
   font-weight: 700;
-  color: #C05A2A;
+  color: #c93030;
   letter-spacing: 1px;
 }
 
 .recovery-verse-card {
   margin-bottom: 0;
-  background: linear-gradient(160deg, rgba(13,31,53,0.78) 0%, rgba(26,58,92,0.72) 100%);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border-color: rgba(58,189,212,0.35);
 }
 
 /* ── SCROLL WHEELS ────────────────────────────────── */
@@ -198,13 +151,13 @@ html { background: transparent; }
   font-family: 'Cinzel', serif;
   font-size: 11px;
   letter-spacing: 1px;
-  color: rgba(58,189,212,0.5);
+  color: rgba(201,162,39,0.5);
   text-align: center;
   text-transform: uppercase;
   line-height: 1.8;
 }
 .scroll-instruction strong {
-  color: rgba(58,189,212,0.85);
+  color: rgba(201,162,39,0.8);
   font-weight: 700;
 }
 
@@ -233,7 +186,7 @@ html { background: transparent; }
   font-family: 'Cinzel', serif;
   font-size: 9px;
   letter-spacing: 3px;
-  color: rgba(58,189,212,0.4);
+  color: rgba(201,162,39,0.4);
   text-transform: uppercase;
 }
 
@@ -245,10 +198,10 @@ html { background: transparent; }
   border-radius: 12px;
   overflow: hidden;
   background: linear-gradient(180deg,
-    rgba(8,18,35,0.97)  0%,
-    rgba(13,31,53,0.96) 50%,
-    rgba(8,18,35,0.97)  100%);
-  border: 1px solid rgba(58,189,212,0.3);
+    rgba(10,5,0,0.98)  0%,
+    rgba(30,18,3,0.98) 50%,
+    rgba(10,5,0,0.98)  100%);
+  border: 1px solid rgba(201,162,39,0.3);
   box-shadow:
     inset 0 0 24px rgba(0,0,0,0.6),
     0 4px 16px rgba(0,0,0,0.4);
@@ -275,7 +228,7 @@ html { background: transparent; }
   justify-content: center;
   font-family: 'Cinzel', serif;
   font-size: 12px;
-  color: rgba(58,189,212,0.25);
+  color: rgba(201,162,39,0.3);
   padding: 0 5px;
   text-align: center;
   line-height: 1.15;
@@ -287,15 +240,15 @@ html { background: transparent; }
   transition: color 0.12s, font-size 0.12s, font-weight 0.12s;
 }
 /* near-1 row (adjacent to selected) */
-.scroll-item.near1 { color: rgba(58,189,212,0.6); font-size: 12.5px; }
+.scroll-item.near1 { color: rgba(201,162,39,0.55); font-size: 12.5px; }
 /* near-2 row */
-.scroll-item.near2 { color: rgba(58,189,212,0.3);  font-size: 11.5px; }
+.scroll-item.near2 { color: rgba(201,162,39,0.3);  font-size: 11.5px; }
 /* selected row */
 .scroll-item.selected {
-  color: #F5C842;
+  color: #f0e4c0;
   font-size: 14px;
   font-weight: 700;
-  text-shadow: 0 0 14px rgba(245,200,66,0.8), 0 0 4px rgba(58,189,212,0.3);
+  text-shadow: 0 0 12px rgba(201,162,39,0.7);
 }
 
 /* ── Gradient fade top & bottom ────────────────── */
@@ -310,11 +263,11 @@ html { background: transparent; }
 }
 .scroll-wheel-outer::before {
   top: 0;
-  background: linear-gradient(180deg, rgba(8,18,35,0.97) 0%, transparent 100%);
+  background: linear-gradient(180deg, rgba(10,5,0,0.96) 0%, transparent 100%);
 }
 .scroll-wheel-outer::after {
   bottom: 0;
-  background: linear-gradient(0deg,   rgba(8,18,35,0.97) 0%, transparent 100%);
+  background: linear-gradient(0deg,   rgba(10,5,0,0.96) 0%, transparent 100%);
 }
 
 /* ── Selector band (exactly centred on item height) */
@@ -323,9 +276,9 @@ html { background: transparent; }
   left: 0; right: 0;
   top: var(--wh-center);          /* 84px */
   height: var(--wh-item);         /* 42px */
-  background: rgba(58,189,212,0.08);
-  border-top:    1px solid rgba(58,189,212,0.5);
-  border-bottom: 1px solid rgba(58,189,212,0.5);
+  background: rgba(201,162,39,0.07);
+  border-top:    1px solid rgba(201,162,39,0.45);
+  border-bottom: 1px solid rgba(201,162,39,0.45);
   z-index: 4;
   pointer-events: none;
 }
@@ -353,7 +306,7 @@ html { background: transparent; }
 }
 .timer-track {
   fill: none;
-  stroke: rgba(201,169,110,0.1);
+  stroke: rgba(201,162,39,0.1);
   stroke-width: 4;
 }
 .timer-progress {
@@ -365,7 +318,7 @@ html { background: transparent; }
   stroke-dashoffset: 0;
   transition: stroke-dashoffset 0.1s linear, stroke 0.3s;
 }
-.timer-progress.danger { stroke: #C05A2A; }
+.timer-progress.danger { stroke: #c93030; }
 .timer-number {
   position: absolute;
   inset: 0;
@@ -377,12 +330,12 @@ html { background: transparent; }
   font-weight: 700;
   color: var(--gold);
 }
-.timer-number.danger { color: #C05A2A; }
+.timer-number.danger { color: #c93030; }
 .timer-label {
   font-family: 'Cinzel', serif;
   font-size: 9px;
   letter-spacing: 2px;
-  color: rgba(201,169,110,0.3);
+  color: rgba(201,162,39,0.3);
   text-transform: uppercase;
 }
 
@@ -402,8 +355,8 @@ html { background: transparent; }
   left: 50%;
   transform: translateX(-50%);
   z-index: 900;
-  background: linear-gradient(135deg, rgba(40,25,5,0.98), rgba(13,31,53,0.72));
-  border: 1px solid rgba(201,169,110,0.4);
+  background: linear-gradient(135deg, rgba(40,25,5,0.98), rgba(20,12,2,0.98));
+  border: 1px solid rgba(201,162,39,0.4);
   border-radius: 12px;
   padding: 12px 16px;
   display: flex;
@@ -426,6 +379,6 @@ html { background: transparent; }
 .push-banner-text span {
   font-family: 'Crimson Text', serif;
   font-size: 13px;
-  color: rgba(244,240,232,0.7);
+  color: rgba(240,228,192,0.7);
   font-style: italic;
 }
