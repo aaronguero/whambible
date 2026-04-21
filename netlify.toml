@@ -2,6 +2,9 @@
   publish = "."
   command = "node inject-env.js"
 
+[build.environment]
+  NODE_VERSION = "18"
+
 [[redirects]]
   from = "/*"
   to = "/index.html"
