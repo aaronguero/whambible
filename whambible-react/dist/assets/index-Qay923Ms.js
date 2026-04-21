@@ -370,7 +370,7 @@ Error generating stack: `+o.message+`
           box-shadow:0 3px 14px rgba(30,122,140,0.35);
         }
         .wb-btn-ghost {
-          width:100%; padding:11px 24px; background:rgba(26,58,92,0.07);
+          width:100%; padding:11px 24px; background:rgba(255,255,255,0.5);
           border:1.5px solid rgba(26,58,92,0.20); border-radius:10px; color:${A.cobalt};
           font-size:13px; font-family:'Cinzel',serif; letter-spacing:1px; text-transform:uppercase;
           cursor:pointer; transition:all 0.18s;
