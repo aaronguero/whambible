@@ -115,15 +115,7 @@ html, body {
 
 /* Layer 3 — Color toning: cobalt top → warm sand-white bottom */
 .wb-bg-tone {
-  position: fixed; inset: 0; z-index: 2; pointer-events: none;
-  background: linear-gradient(
-    to bottom,
-    rgba(13,31,53,0.08)    0%,
-    rgba(30,122,140,0.06)  35%,
-    rgba(232,213,160,0.22) 68%,
-    rgba(255,252,245,0.88) 85%,
-    rgba(255,252,245,1.0)  100%
-  );
+  display: none;
 }
 
 /* Layer 4 — Gold rim light at top */
@@ -151,12 +143,7 @@ html, body {
 /* ══ SCROLL PANEL (white fade-in panel for content) ══════════════════════ */
 .wb-scroll-panel {
   width: 100%;
-  background: linear-gradient(180deg,
-    rgba(255,252,245,0.0)  0%,
-    rgba(255,252,245,0.82) 12%,
-    rgba(255,252,245,0.97) 25%,
-    rgba(255,252,245,0.97) 100%
-  );
+  background: transparent;
   border-radius: 20px 20px 0 0;
   padding: 28px 20px 0;
   position: relative; z-index: 5;
