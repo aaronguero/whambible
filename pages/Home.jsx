@@ -117,14 +117,14 @@ export default function Home() {
 
         /* ─────────────── LANG BAR ─────────────── */
         .wb-lang-bar {
-          display: flex; flex-wrap: wrap; gap: 6px;
+          display: flex; flex-wrap: wrap; gap: 7px;
           justify-content: center; padding: 12px 0 6px; width: 100%;
         }
         .wb-lang-btn {
           background: rgba(255,255,255,0.25);
           border: 1px solid rgba(30,122,140,0.45);
-          border-radius: 20px; padding: 4px 11px;
-          color: ${C.cobalt}; font-size: 11px;
+          border-radius: 22px; padding: 4px 12px;
+          color: ${C.cobalt}; font-size: 12px;
           font-weight: 600; cursor: pointer;
           backdrop-filter: blur(4px);
           transition: all 0.18s; font-family: 'Cinzel', serif; letter-spacing: 0.5px;
@@ -263,7 +263,7 @@ export default function Home() {
         /* ─────────────── DIVIDER ─────────────── */
                 .wb-tagline {
           font-family: 'Cinzel', serif;
-          font-size: 11px;
+          font-size: 12px;
           letter-spacing: 2px;
           text-transform: uppercase;
           color: rgba(212,146,26,0.7);
