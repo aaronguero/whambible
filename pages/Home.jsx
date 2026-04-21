@@ -33,7 +33,7 @@ export default function Home() {
   const [lang, setLang] = useState("en");
 
   return (
-    <div style={{ minHeight: "100vh", background: "transparent", fontFamily: "'Georgia',serif", overflowX: "hidden", overflowY: "auto", WebkitOverflowScrolling: "touch", position: "relative" }}>
+    <div style={{ height: "100vh", background: "transparent", fontFamily: "'Georgia',serif", overflowX: "hidden", overflowY: "scroll", WebkitOverflowScrolling: "touch", position: "relative" }}>
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&display=swap');
@@ -89,7 +89,7 @@ export default function Home() {
         .wb-content {
           position: relative; z-index: 4;
           max-width: 480px; margin: 0 auto;
-          padding: 0 16px 40px;
+          padding: 0 16px 120px;
           display: flex; flex-direction: column; align-items: center;
         }
 
@@ -124,9 +124,7 @@ export default function Home() {
           position: relative;
           z-index: 5;
           margin-top: -118px;
-          max-height: 72vh;
-          overflow-y: auto;
-          -webkit-overflow-scrolling: touch;
+          overflow-y: visible;
         }
 
         /* Scroll top curl decoration */
