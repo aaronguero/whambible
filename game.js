@@ -93,9 +93,12 @@ window.addEventListener('DOMContentLoaded', () => {
       updateDot(retIndex, 'wrong');
       state.results[retIndex] = { correct: false };
     }
-    // Show answer reveal for the recovered verse before advancing
-    loadVerse();
-    showResult(recovered === '1');
+    state.currentIndex++;
+    if (state.currentIndex >= state.queue.length) {
+      showGameOver();
+    } else {
+      showLevelSelectBetweenVerses();
+    }
     return;
   }
 
@@ -126,7 +129,7 @@ window.soloPickLevel = function(pts, name, icon) {
     if (!el) return;
     const isSelected = n === pts;
     el.style.background   = isSelected ? 'rgba(201,162,39,0.15)' : 'rgba(201,162,39,0.07)';
-    el.style.border       = isSelected ? '2px solid #D4921A'     : '1px solid rgba(201,162,39,0.2)';
+    el.style.border       = isSelected ? '2px solid #c9a227'     : '1px solid rgba(201,162,39,0.2)';
     el.style.boxShadow    = isSelected ? '0 0 0 2px rgba(201,162,39,0.3),0 6px 20px rgba(0,0,0,0.5)' : 'none';
     el.style.transform    = isSelected ? 'translateY(-2px) scale(1.04)' : 'none';
   });
@@ -157,7 +160,7 @@ function preHighlightLevelCard(pts) {
     if (!el) return;
     const isSelected = n === pts;
     el.style.background = isSelected ? 'rgba(201,162,39,0.15)' : 'rgba(201,162,39,0.07)';
-    el.style.border     = isSelected ? '2px solid #D4921A'     : '1px solid rgba(201,162,39,0.2)';
+    el.style.border     = isSelected ? '2px solid #c9a227'     : '1px solid rgba(201,162,39,0.2)';
     el.style.boxShadow  = isSelected ? '0 0 0 2px rgba(201,162,39,0.3),0 6px 20px rgba(0,0,0,0.5)' : 'none';
     el.style.transform  = isSelected ? 'translateY(-2px) scale(1.04)' : 'none';
   });
@@ -348,11 +351,13 @@ function handleAnswer(choiceIndex, isCorrect) {
   if (isCorrect) {
     const bonus = awardPoints();
     showFeedback(true, bonus);
-    state.results.push({ correct: true, recovered: true });
+    state.results.push({ correct: true });
     updateDot(state.currentIndex, 'correct');
     // WHAM SLAM fires on correct — exact Whamgame spec
     setTimeout(() => fireWhamSlam(`${state.currentVerse.book} ${state.currentVerse.chapter}:${state.currentVerse.verse}`, 'Correct!', () => {
-      setTimeout(() => showResult(true), 120);
+      state.currentIndex++;
+      if (state.currentIndex >= state.queue.length) { showGameOver(); return; }
+      showLevelSelectBetweenVerses();
     }), 200);
   } else {
     buttons.forEach(btn => {
@@ -360,7 +365,7 @@ function handleAnswer(choiceIndex, isCorrect) {
     });
     state.streak = 0;
     showFeedback(false);
-    state.results.push({ correct: false, recovered: false });
+    state.results.push({ correct: false });
     updateDot(state.currentIndex, 'wrong');
     // Wrong — go straight to recovery, no level select
     setTimeout(() => launchRecovery(), 800);
@@ -471,27 +476,17 @@ function showResult(isCorrect) {
   const v = state.currentVerse;
   document.getElementById('result-icon').textContent       = isCorrect
     ? ['⚔️','✝️','🌟','🏆','📖'][Math.floor(Math.random()*5)] : '📖';
-  const _streakLabel = isCorrect && state.streak >= 3 ? `🔥 ${state.streak}x Streak!` : (isCorrect ? 'Correct!' : 'Study the Word');
-  document.getElementById('result-title').textContent      = _streakLabel;
-  document.getElementById('result-title').style.color      = isCorrect ? (state.streak >= 3 ? '#F5C842' : '#4caf7d') : '#c93030';
-  // Show streak bonus badge if bonus was just awarded this round
-  const _bonusBadge = document.getElementById('result-streak-badge');
-  if (_bonusBadge) {
-    const _justBonus = isCorrect && (state.streak % 5 === 0) && state.streak > 0;
-    _bonusBadge.textContent = _justBonus ? `+${STREAK_BONUS} Streak Bonus!` : '';
-    _bonusBadge.style.display = _justBonus ? 'block' : 'none';
-  }
+  document.getElementById('result-title').textContent      = isCorrect
+    ? (state.streak >= 3 ? `🔥 ${state.streak}x Streak!` : 'Correct!') : 'Study the Word';
+  document.getElementById('result-title').style.color      = isCorrect ? '#4caf7d' : '#c93030';
   document.getElementById('result-verse-ref').textContent  = `${v.book} ${v.chapter}:${v.verse}`;
   document.getElementById('result-body').textContent       = `"${v.text}"`;
-  const _nBtn = document.getElementById('result-next-btn');
-  if (_nBtn) _nBtn.textContent = isCorrect ? 'Next Verse ⚔️' : 'Continue 📖';
   document.getElementById('result-overlay').style.display  = 'flex';
 }
 
 window.nextVerse = function () {
   document.getElementById('result-overlay').style.display = 'none';
   state.currentIndex++;
-  if (state.currentIndex >= state.queue.length) { showGameOver(); return; }
   loadVerse();
 };
 
@@ -598,14 +593,8 @@ window.restartGame = function () {
 };
 
 window.confirmExit = function () {
-  const modal = document.getElementById('exit-confirm-modal');
-  if (modal) modal.style.display = 'flex';
-};
-window.exitConfirmYes = function () {
-  clearTimer();
-  window.location.href = 'index.html';
-};
-window.exitConfirmNo = function () {
-  const modal = document.getElementById('exit-confirm-modal');
-  if (modal) modal.style.display = 'none';
+  if (confirm('Leave the battle? Your progress will be lost.')) {
+    clearTimer();
+    window.location.href = 'index.html';
+  }
 };
