@@ -30,9 +30,14 @@
   --text-mid:     rgba(26,58,92,0.75);
 }
 
-html, body {
+html {
   min-height: 100vh;
-  background: var(--cobalt-dark);
+  background: var(--cobalt-dark); /* fallback — wb-bg layers paint over this */
+  overflow-x: hidden;
+}
+body {
+  min-height: 100vh;
+  background: transparent;        /* let wb-bg-* fixed layers show through */
   color: var(--text-dark);
   font-family: 'Crimson Text', Georgia, serif;
   overflow-x: hidden;
