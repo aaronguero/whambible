@@ -1206,10 +1206,10 @@ export default function Challenge() {
         .ch-bg-char { position:fixed;inset:0;z-index:1;pointer-events:none;background-size:90% auto;background-position:center 4%;background-repeat:no-repeat;opacity:1; }
         .ch-bg-dark { display:none; }
         .ch-bg-rim  { position:fixed;inset:0;z-index:3;pointer-events:none;background:radial-gradient(ellipse at 50% -5%,rgba(212,146,26,0.20) 0%,transparent 55%); }
-        .ch-screen  { height:100vh;position:fixed;top:0;left:0;right:0;bottom:0;overflow:hidden; }
+        .ch-screen  { height:100vh;position:relative;overflow-y:hidden;overflow-x:hidden;overscroll-behavior:none; }
         .ch-content { position:relative;z-index:4;max-width:480px;margin:0 auto;padding:0 16px 140px;display:flex;flex-direction:column;align-items:center;width:100%; }
-        .ch-panel   { width:100%;max-width:480px;margin:0 auto;background:transparent;border-radius:20px 20px 0 0;padding:22px 18px 120px; }
-        .ch-auth-scroll { position:absolute;top:0;left:0;right:0;bottom:0;z-index:4;overflow-y:scroll;-webkit-overflow-scrolling:touch;overscroll-behavior:none; }
+        .ch-panel   { width:100%;background:transparent;border-radius:20px 20px 0 0;padding:22px 18px 80px;margin-top:-28px;max-height:60vh;overflow-y:scroll;-webkit-overflow-scrolling:touch;scroll-snap-type:none;overscroll-behavior:contain; }
+        .ch-auth-scroll { position:relative;z-index:4;width:100%;max-width:480px;margin:0 auto;padding:0 16px; }
         .ch-curl    { width:70%;height:4px;margin:0 auto 14px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(212,146,26,0.7),rgba(58,189,212,0.5),rgba(212,146,26,0.7),transparent); }
         .ch-title   { font-family:'Cinzel',serif;font-size:22px;font-weight:900;color:${C.gold};letter-spacing:2px;margin:0 0 4px;text-align:center; }
         .ch-sub     { font-size:14px;font-style:italic;color:rgba(240,228,192,0.5);margin:0;text-align:center; }
