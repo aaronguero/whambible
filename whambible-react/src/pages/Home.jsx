@@ -282,7 +282,7 @@ export default function Home() {
 
         /* ─────────────── FOOTER ─────────────── */
         .wb-footer {
-          color: rgba(26,58,92,0.40); font-size: 10px; letter-spacing: 1px;
+          color: rgba(255,255,255,0.85); font-size: 10px; letter-spacing: 1px;
           text-align: center; line-height: 1.8; padding-top: 8px;
         }
       `}</style>
