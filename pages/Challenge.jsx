@@ -266,7 +266,7 @@ function ScreenAuthGate({ onSignIn, onGuest }) {
     <div className="ch-screen">
       <BgLayers charUrl={CHAR_MP} />
       <div className="ch-auth-scroll">
-        <div style={{ height:220 }} />
+        <div style={{ height:128 }} />
         <div className="ch-panel">
           <div className="ch-curl" />
           <div style={{ textAlign:"center", marginBottom:22 }}>
