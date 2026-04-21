@@ -164,18 +164,19 @@ export default function Home() {
         .wb-verse-card-header {
           display: flex; align-items: center; justify-content: space-between;
           padding: 14px 18px; cursor: pointer; user-select: none;
-          background: rgba(212,146,26,0.12);
+          background: rgba(30,122,140,0.12);
           width: 100%; border: none; text-align: left;
+          border-radius: 12px;
           transition: background 0.18s;
         }
         .wb-verse-card-header:active {
-          background: rgba(212,146,26,0.22);
+          background: rgba(30,122,140,0.22);
         }
         .wb-verse-card-body {
           padding: 0 18px 16px;
         }
         .wb-verse-label {
-          color: ${C.goldLight}; font-size: 10px; letter-spacing: 2px;
+          color: #FFFFFF; font-size: 10px; letter-spacing: 2px;
           text-transform: uppercase; margin: 0;
           font-family: 'Cinzel', serif; font-weight: 600;
         }
