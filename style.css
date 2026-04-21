@@ -39,7 +39,7 @@ body {
   min-height: 100vh;
   background: transparent;        /* let wb-bg-* fixed layers show through */
   color: var(--text-dark);
-  font-family: 'Crimson Text', Georgia, serif;
+  font-family: 'Cinzel', 'Crimson Text', serif;
   overflow-x: hidden;
 }
 
