@@ -2480,28 +2480,68 @@
 
       <p class="pick-instruction">⚔️ Select a difficulty to challenge your opponent</p>
 
-      <div class="level-row" style="margin-bottom:20px">
-        <div class="level-card" onclick="pickLevel(5,'Squire','🗡️')">
-          <span class="level-icon">🗡️</span>
-          <div class="level-info"><span class="level-title">SQUIRE</span><span class="level-sub">Easiest · Common verses</span></div>
-          <div class="level-pts-wrap"><span class="level-points">5</span><span class="level-pt-label">PTS</span></div>
+      <div style="display:flex; flex-direction:column; gap:10px; width:100%; margin-bottom:20px;">
+
+        <!-- Squire -->
+        <div class="level-card" onclick="pickLevel(5,'Squire','🗡️')" style="
+          display:flex; flex-direction:row; align-items:center; gap:16px;
+          padding:16px 20px; text-align:left; flex-direction:row;">
+          <span class="level-icon" style="font-size:26px; flex-shrink:0;">🗡️</span>
+          <div class="level-info">
+            <span class="level-title">SQUIRE</span>
+            <span class="level-sub">Easiest · Common verses</span>
+          </div>
+          <div class="level-pts-wrap">
+            <span class="level-points">5</span>
+            <span class="level-pt-label">PTS</span>
+          </div>
         </div>
-        <div class="level-card warrior-featured" onclick="pickLevel(10,'Warrior','⚔️')">
-          <span class="level-icon">⚔️</span>
-          <div class="level-info"><span class="level-title">WARRIOR</span><span class="level-sub">Moderate · Popular verses</span></div>
-          <div class="level-pts-wrap"><span class="level-points">10</span><span class="level-pt-label">PTS</span></div>
+
+        <!-- Warrior -->
+        <div class="level-card warrior-featured" onclick="pickLevel(10,'Warrior','⚔️')" style="
+          display:flex; flex-direction:row; align-items:center; gap:16px;
+          padding:16px 20px; text-align:left; flex-direction:row;">
+          <span class="level-icon" style="font-size:26px; flex-shrink:0;">⚔️</span>
+          <div class="level-info">
+            <span class="level-title">WARRIOR</span>
+            <span class="level-sub">Moderate · Popular verses</span>
+          </div>
+          <div class="level-pts-wrap">
+            <span class="level-points">10</span>
+            <span class="level-pt-label">PTS</span>
+          </div>
         </div>
-        <div class="level-card" onclick="pickLevel(15,'Knight','🛡️')">
-          <span class="level-icon">🛡️</span>
-          <div class="level-info"><span class="level-title">KNIGHT</span><span class="level-title"></span><span class="level-sub">Hard · Deeper verses</span></div>
-          <div class="level-pts-wrap"><span class="level-points">15</span><span class="level-pt-label">PTS</span></div>
+
+        <!-- Knight -->
+        <div class="level-card" onclick="pickLevel(15,'Knight','🛡️')" style="
+          display:flex; flex-direction:row; align-items:center; gap:16px;
+          padding:16px 20px; text-align:left; flex-direction:row;">
+          <span class="level-icon" style="font-size:26px; flex-shrink:0;">🛡️</span>
+          <div class="level-info">
+            <span class="level-title">KNIGHT</span>
+            <span class="level-sub">Hard · Deeper verses</span>
+          </div>
+          <div class="level-pts-wrap">
+            <span class="level-points">15</span>
+            <span class="level-pt-label">PTS</span>
+          </div>
         </div>
-        <div class="level-card" onclick="pickLevel(20,'Champion','👑')">
-          <span class="level-icon">👑</span>
-          <div class="level-info"><span class="level-title">CHAMPION</span><span class="level-sub">Hardest · Rare verses</span></div>
-          <div class="level-pts-wrap"><span class="level-points">20</span><span class="level-pt-label">PTS</span></div>
+
+        <!-- Champion -->
+        <div class="level-card" onclick="pickLevel(20,'Champion','👑')" style="
+          display:flex; flex-direction:row; align-items:center; gap:16px;
+          padding:16px 20px; text-align:left; flex-direction:row;">
+          <span class="level-icon" style="font-size:26px; flex-shrink:0;">👑</span>
+          <div class="level-info">
+            <span class="level-title">CHAMPION</span>
+            <span class="level-sub">Hardest · Rare verses</span>
+          </div>
+          <div class="level-pts-wrap">
+            <span class="level-points" style="font-size:26px;">20</span>
+            <span class="level-pt-label">PTS</span>
+          </div>
         </div>
-        <!-- Custom Verse Pack -->
+
         <button class="level-card" id="cvp-mp-btn" onclick="mpOpenCustomVersePack()" style="
           border: 1px dashed rgba(212,146,26,0.4);
           background: rgba(212,146,26,0.04);
