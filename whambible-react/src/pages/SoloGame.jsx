@@ -188,11 +188,11 @@ function GamePlay({ level, onDone }) {
         <div style={{ width:"100%", display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 0 6px" }}>
           <button onClick={() => window.location.href = "/"} style={{
             background:C.teal, border:"none", cursor:"pointer",
-            width:40, height:40, borderRadius:"50%",
+            width:44, height:44, borderRadius:10,
             display:"flex", alignItems:"center", justifyContent:"center",
-            fontFamily:"'Cinzel',serif", fontSize:16, lineHeight:1,
-            letterSpacing:-2, boxShadow:`0 2px 8px ${C.teal}66`,
-          }} title="Exit to Home">⚔️⚔️</button>
+            fontSize:22, lineHeight:1,
+            boxShadow:`0 2px 8px ${C.teal}66`,
+          }} title="Exit to Home">⚔️</button>
           <div style={{ fontFamily:"'Cinzel',serif", fontSize:16, fontWeight:800, color:C.gold }}>
             {score} pts
           </div>
