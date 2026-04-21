@@ -278,7 +278,7 @@ function ScreenAuthGate({ onSignIn, onGuest }) {
           {mode === "choose" && (
             <>
               <button className="ch-btn-google" onClick={handleGoogle} disabled={busy}>
-                <span style={{ fontSize:18 }}>G</span> Continue with Google
+                Continue with Google
               </button>
               <div className="ch-divider-or" style={{ margin:"14px 0" }}>
                 <div className="ch-divider-line" /><span className="ch-divider-text">OR</span><div className="ch-divider-line" />
