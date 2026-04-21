@@ -258,8 +258,8 @@ export default function Home() {
           margin: 10px 0;
           color: rgba(212,146,26,0.75);
         }
-        .wb-mission-prefix { color: rgba(212,146,26,0.75); }
-        .wb-mission-wham   { color: #F5C842; font-weight: 700; }
+        .wb-mission-prefix { color: #FFFFFF; }
+        .wb-mission-wham   { color: #FFFFFF; font-weight: 700; }
 
         .wb-divider {
           width: 80%; height: 1.5px; margin: 14px 0;
