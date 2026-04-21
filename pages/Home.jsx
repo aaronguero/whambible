@@ -317,7 +317,15 @@ export default function Home() {
           </div>
 
 
-          <div className="wb-divider" />
+          <p style={{
+            textAlign: "center",
+            fontFamily: "'Cinzel', serif",
+            fontSize: "12px",
+            letterSpacing: "2px",
+            textTransform: "uppercase",
+            color: "rgba(212,146,26,0.75)",
+            margin: "10px 0",
+          }}>We Have A Mission · <span style={{ color: "#F5C842", fontWeight: 700 }}>WHAM</span></p>
 
           {/* Donate */}
           <button className="wb-btn-donate" onClick={() => window.open("https://whambible.org", "_blank")}>
