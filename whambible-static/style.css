@@ -45,21 +45,7 @@ html, body {
   position: fixed; inset: 0; z-index: 0; pointer-events: none;
   background-image: url('https://media.base44.com/images/public/69df9a909b33058a5ce47831/33b065c94_generated_image.png');
   background-size: cover; background-position: center top;
-  opacity: 0.92;
-  -webkit-mask-image: linear-gradient(to bottom,
-    rgba(0,0,0,1)   0%,
-    rgba(0,0,0,1)  48%,
-    rgba(0,0,0,0.6) 65%,
-    rgba(0,0,0,0.1) 82%,
-    rgba(0,0,0,0)   100%
-  );
-  mask-image: linear-gradient(to bottom,
-    rgba(0,0,0,1)   0%,
-    rgba(0,0,0,1)  48%,
-    rgba(0,0,0,0.6) 65%,
-    rgba(0,0,0,0.1) 82%,
-    rgba(0,0,0,0)   100%
-  );
+  opacity: 1;
 }
 
 /* Layer 2 — Logo/character overlay, centered */

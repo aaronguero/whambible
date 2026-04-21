@@ -1,5 +1,34 @@
-/* Recovery screen inherits global warm dark theme */
-html { background: linear-gradient(180deg, #1C0F04 0%, #2C1A08 40%, #3A2010 70%, #1C0F04 100%); }
+
+/* ── Background Layers (match Base44 preview) ── */
+.rec-bg-land {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url('https://media.base44.com/images/public/69df9a909b33058a5ce47831/33b065c94_generated_image.png');
+  background-size: cover; background-position: center top; opacity: 0.55;
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 40%, rgba(0,0,0,0.3) 65%, rgba(0,0,0,0) 100%);
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 40%, rgba(0,0,0,0.3) 65%, rgba(0,0,0,0) 100%);
+}
+.rec-bg-char {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background-image: url('https://media.base44.com/images/public/69df9a909b33058a5ce47831/833513c9d_generated_image.png');
+  background-size: 78% auto; background-position: center 5%;
+  background-repeat: no-repeat; opacity: 0.9;
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.7) 7%, rgba(0,0,0,1) 18%, rgba(0,0,0,1) 48%, rgba(0,0,0,0.3) 65%, rgba(0,0,0,0) 80%);
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.7) 7%, rgba(0,0,0,1) 18%, rgba(0,0,0,1) 48%, rgba(0,0,0,0.3) 65%, rgba(0,0,0,0) 80%);
+}
+.rec-bg-dark {
+  position: fixed; inset: 0; z-index: 2; pointer-events: none;
+  background: linear-gradient(to bottom,
+    rgba(10,5,0,0.18) 0%,
+    rgba(10,5,0,0.35) 45%,
+    rgba(10,5,0,0.80) 70%,
+    rgba(10,5,0,0.97) 85%,
+    rgba(10,5,0,1.0)  100%
+  );
+}
+.rec-bg-rim {
+  position: fixed; inset: 0; z-index: 3; pointer-events: none;
+  background: radial-gradient(ellipse at 50% -5%, rgba(212,146,26,0.18) 0%, transparent 55%);
+}
 
 /* ===================================================
    WhamBible — Recovery Screen Styles
@@ -9,7 +38,7 @@ html { background: linear-gradient(180deg, #1C0F04 0%, #2C1A08 40%, #3A2010 70%,
 /* ── WHAM SLAM OVERLAY ─────────────────────────────────
    Exact Whamgame timing + style:
    Phase 0 (0ms):    bg=#fff, WHAM! 60px, audio fires
-   Phase 1 (300ms):  bg=#1C0F04, WHAM! 96px + scale(1.08), verse ref appears
+   Phase 1 (300ms):  bg=#020617, WHAM! 96px + scale(1.08), verse ref appears
    Phase 2 (1120ms): WHAM! opacity=0, verse ref fades
    Done   (1620ms):  onDone() fires → next screen
    ───────────────────────────────────────────────────── */
@@ -28,7 +57,7 @@ html { background: linear-gradient(180deg, #1C0F04 0%, #2C1A08 40%, #3A2010 70%,
 .wham-slam-overlay.phase-0 { background: #ffffff; }
 /* Phase 1/2 bg = near-black */
 .wham-slam-overlay.phase-1,
-.wham-slam-overlay.phase-2 { background: #1C0F04; }
+.wham-slam-overlay.phase-2 { background: #020617; }
 
 /* WHAM! word */
 .wham-slam-word {
@@ -63,7 +92,7 @@ html { background: linear-gradient(180deg, #1C0F04 0%, #2C1A08 40%, #3A2010 70%,
 
 /* Verse ref (shows at phase 1, fades at phase 2) */
 .wham-slam-ref {
-  color: #56CC7F;
+  color: #4ade80;
   font-size: 22px;
   font-weight: 800;
   letter-spacing: 2px;
@@ -108,9 +137,9 @@ html { background: linear-gradient(180deg, #1C0F04 0%, #2C1A08 40%, #3A2010 70%,
   font-family: 'Cinzel', serif;
   font-size: 11px;
   letter-spacing: 2px;
-  color: rgba(212,146,26,0.8);
-  background: rgba(212,146,26,0.1);
-  border: 1px solid rgba(212,146,26,0.3);
+  color: rgba(201,162,39,0.8);
+  background: rgba(201,162,39,0.1);
+  border: 1px solid rgba(201,162,39,0.3);
   border-radius: 20px;
   padding: 5px 12px;
 }
@@ -119,7 +148,7 @@ html { background: linear-gradient(180deg, #1C0F04 0%, #2C1A08 40%, #3A2010 70%,
   font-family: 'Cinzel', serif;
   font-size: 12px;
   font-weight: 700;
-  color: #9B1C1C;
+  color: #c93030;
   letter-spacing: 1px;
 }
 
@@ -154,13 +183,13 @@ html { background: linear-gradient(180deg, #1C0F04 0%, #2C1A08 40%, #3A2010 70%,
   font-family: 'Cinzel', serif;
   font-size: 11px;
   letter-spacing: 1px;
-  color: rgba(212,146,26,0.5);
+  color: rgba(201,162,39,0.5);
   text-align: center;
   text-transform: uppercase;
   line-height: 1.8;
 }
 .scroll-instruction strong {
-  color: rgba(212,146,26,0.8);
+  color: rgba(201,162,39,0.8);
   font-weight: 700;
 }
 
@@ -189,7 +218,7 @@ html { background: linear-gradient(180deg, #1C0F04 0%, #2C1A08 40%, #3A2010 70%,
   font-family: 'Cinzel', serif;
   font-size: 9px;
   letter-spacing: 3px;
-  color: rgba(212,146,26,0.4);
+  color: rgba(201,162,39,0.4);
   text-transform: uppercase;
 }
 
@@ -204,7 +233,7 @@ html { background: linear-gradient(180deg, #1C0F04 0%, #2C1A08 40%, #3A2010 70%,
     rgba(10,5,0,0.98)  0%,
     rgba(30,18,3,0.98) 50%,
     rgba(10,5,0,0.98)  100%);
-  border: 1px solid rgba(212,146,26,0.3);
+  border: 1px solid rgba(201,162,39,0.3);
   box-shadow:
     inset 0 0 24px rgba(0,0,0,0.6),
     0 4px 16px rgba(0,0,0,0.4);
@@ -231,7 +260,7 @@ html { background: linear-gradient(180deg, #1C0F04 0%, #2C1A08 40%, #3A2010 70%,
   justify-content: center;
   font-family: 'Cinzel', serif;
   font-size: 12px;
-  color: rgba(212,146,26,0.3);
+  color: rgba(201,162,39,0.3);
   padding: 0 5px;
   text-align: center;
   line-height: 1.15;
@@ -243,15 +272,15 @@ html { background: linear-gradient(180deg, #1C0F04 0%, #2C1A08 40%, #3A2010 70%,
   transition: color 0.12s, font-size 0.12s, font-weight 0.12s;
 }
 /* near-1 row (adjacent to selected) */
-.scroll-item.near1 { color: rgba(212,146,26,0.55); font-size: 12.5px; }
+.scroll-item.near1 { color: rgba(201,162,39,0.55); font-size: 12.5px; }
 /* near-2 row */
-.scroll-item.near2 { color: rgba(212,146,26,0.3);  font-size: 11.5px; }
+.scroll-item.near2 { color: rgba(201,162,39,0.3);  font-size: 11.5px; }
 /* selected row */
 .scroll-item.selected {
   color: #f0e4c0;
   font-size: 14px;
   font-weight: 700;
-  text-shadow: 0 0 12px rgba(212,146,26,0.7);
+  text-shadow: 0 0 12px rgba(201,162,39,0.7);
 }
 
 /* ── Gradient fade top & bottom ────────────────── */
@@ -279,9 +308,9 @@ html { background: linear-gradient(180deg, #1C0F04 0%, #2C1A08 40%, #3A2010 70%,
   left: 0; right: 0;
   top: var(--wh-center);          /* 84px */
   height: var(--wh-item);         /* 42px */
-  background: rgba(212,146,26,0.07);
-  border-top:    1px solid rgba(212,146,26,0.45);
-  border-bottom: 1px solid rgba(212,146,26,0.45);
+  background: rgba(201,162,39,0.07);
+  border-top:    1px solid rgba(201,162,39,0.45);
+  border-bottom: 1px solid rgba(201,162,39,0.45);
   z-index: 4;
   pointer-events: none;
 }
@@ -309,7 +338,7 @@ html { background: linear-gradient(180deg, #1C0F04 0%, #2C1A08 40%, #3A2010 70%,
 }
 .timer-track {
   fill: none;
-  stroke: rgba(212,146,26,0.1);
+  stroke: rgba(201,162,39,0.1);
   stroke-width: 4;
 }
 .timer-progress {
@@ -321,7 +350,7 @@ html { background: linear-gradient(180deg, #1C0F04 0%, #2C1A08 40%, #3A2010 70%,
   stroke-dashoffset: 0;
   transition: stroke-dashoffset 0.1s linear, stroke 0.3s;
 }
-.timer-progress.danger { stroke: #9B1C1C; }
+.timer-progress.danger { stroke: #c93030; }
 .timer-number {
   position: absolute;
   inset: 0;
@@ -333,12 +362,12 @@ html { background: linear-gradient(180deg, #1C0F04 0%, #2C1A08 40%, #3A2010 70%,
   font-weight: 700;
   color: var(--gold);
 }
-.timer-number.danger { color: #9B1C1C; }
+.timer-number.danger { color: #c93030; }
 .timer-label {
   font-family: 'Cinzel', serif;
   font-size: 9px;
   letter-spacing: 2px;
-  color: rgba(212,146,26,0.3);
+  color: rgba(201,162,39,0.3);
   text-transform: uppercase;
 }
 
@@ -359,7 +388,7 @@ html { background: linear-gradient(180deg, #1C0F04 0%, #2C1A08 40%, #3A2010 70%,
   transform: translateX(-50%);
   z-index: 900;
   background: linear-gradient(135deg, rgba(40,25,5,0.98), rgba(20,12,2,0.98));
-  border: 1px solid rgba(212,146,26,0.4);
+  border: 1px solid rgba(201,162,39,0.4);
   border-radius: 12px;
   padding: 12px 16px;
   display: flex;

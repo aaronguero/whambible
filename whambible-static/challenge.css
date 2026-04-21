@@ -1,3 +1,29 @@
+
+/* ── Background Layers (match Base44 preview) ── */
+.ch-bg-land {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url('https://media.base44.com/images/public/69df9a909b33058a5ce47831/33b065c94_generated_image.png');
+  background-size: cover; background-position: center top; opacity: 1;
+}
+.ch-bg-char {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background-image: url('https://media.base44.com/images/public/69df9a909b33058a5ce47831/10c016255_generated_image.png');
+  background-size: 90% auto; background-position: center 4%;
+  background-repeat: no-repeat; opacity: 1;
+}
+.ch-bg-dark { display: none; }
+.ch-bg-rim {
+  position: fixed; inset: 0; z-index: 3; pointer-events: none;
+  background: radial-gradient(ellipse at 50% -5%, rgba(212,146,26,0.20) 0%, transparent 55%);
+}
+.ch-panel {
+  width: 100%; background: transparent;
+  border-radius: 20px 20px 0 0; padding: 22px 18px 80px;
+  margin-top: -28px; max-height: 60vh;
+  overflow-y: scroll; -webkit-overflow-scrolling: touch;
+  scroll-snap-type: none; overscroll-behavior: contain;
+}
+
 /* ===== WhamBible Challenge Screen ===== */
 
 /* ── Screens ─────────────────────────────────────────── */
