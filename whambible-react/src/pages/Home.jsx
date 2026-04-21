@@ -155,7 +155,7 @@ export default function Home() {
         /* ─────────────── VERSE CARD ─────────────── */
         .wb-verse-card {
           width: 100%; box-sizing: border-box;
-          background: rgba(255,255,255,0.9);
+          background: rgba(255,255,255,0.5);
           border: 1.5px solid rgba(30,122,140,0.35);
           border-radius: 12px;
           box-shadow: 0 3px 18px rgba(26,58,92,0.10);
