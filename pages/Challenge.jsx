@@ -116,20 +116,29 @@ async function getFirebase() {
       createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut },
     { getFirestore, doc, setDoc, getDoc, collection, addDoc, updateDoc,
       onSnapshot, serverTimestamp, query, where, orderBy, limit, getDocs },
-    { getMessaging, getToken, onMessage },
   ] = await Promise.all([
     import("https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js"),
     import("https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js"),
     import("https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js"),
-    import("https://www.gstatic.com/firebasejs/10.11.0/firebase-messaging.js"),
   ]);
 
   const app  = getApps().length ? getApps()[0] : initializeApp(FB_CONFIG);
   const auth = getAuth(app);
   const db   = getFirestore(app);
 
-  let messaging = null;
-  try { messaging = getMessaging(app); } catch(e) { console.warn("FCM:", e); }
+  let messaging = null, getToken = null, onMessage = null;
+  try {
+    const { isSupported } = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-messaging.js");
+    const supported = await isSupported();
+    if (supported) {
+      const msgMod = await import("https://www.gstatic.com/firebasejs/10.11.0/firebase-messaging.js");
+      getToken = msgMod.getToken;
+      onMessage = msgMod.onMessage;
+      try { messaging = msgMod.getMessaging(app); } catch(e) { console.warn("FCM init:", e); }
+    } else {
+      console.info("FCM: browser does not support messaging — push notifications disabled.");
+    }
+  } catch(e) { console.warn("FCM load:", e); }
 
   _fb = {
     auth, db, messaging,
