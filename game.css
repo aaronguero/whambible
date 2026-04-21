@@ -351,8 +351,9 @@
   padding: 4px 0;
   transition: all 0.3s;
 }
-.feedback-bar.correct { color: #4caf7d; }
-.feedback-bar.wrong   { color: #c93030; }
+.feedback-bar.correct { color: #4caf7d; font-weight: 700; }
+.feedback-bar.wrong   { color: #C05A2A; font-weight: 600; }
+.feedback-bar.streak  { color: #F5C842; font-weight: 800; text-shadow: 0 0 10px rgba(245,200,66,0.5); }
 
 /* Result Overlay */
 .result-overlay {
@@ -555,3 +556,24 @@
 .wham-slam-overlay.phase-1 .wham-slam-sub { opacity: 1; }
 .wham-slam-overlay.phase-2 .wham-slam-sub { opacity: 0; }
 
+
+/* ── Streak bonus badge ──────────────────────────────── */
+.result-streak-badge {
+  display: inline-block;
+  margin: 6px auto 14px;
+  padding: 5px 16px;
+  background: linear-gradient(135deg, rgba(245,200,66,0.15), rgba(212,146,26,0.1));
+  border: 1px solid rgba(245,200,66,0.4);
+  border-radius: 20px;
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  color: #F5C842;
+  text-shadow: 0 0 8px rgba(245,200,66,0.5);
+  animation: streakPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+@keyframes streakPop {
+  from { transform: scale(0.7); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
