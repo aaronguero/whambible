@@ -244,7 +244,7 @@ export default function Home() {
           font-size: 12px;
           letter-spacing: 2px;
           text-transform: uppercase;
-          color: rgba(212,146,26,0.7);
+          color: #1E7A8C;
           text-align: center;
           margin: 4px 0 12px;
         }
