@@ -261,6 +261,28 @@ export default function Home() {
         }
 
         /* ─────────────── DIVIDER ─────────────── */
+                .wb-tagline {
+          font-family: 'Cinzel', serif;
+          font-size: 11px;
+          letter-spacing: 2px;
+          text-transform: uppercase;
+          color: rgba(212,146,26,0.7);
+          text-align: center;
+          margin: 4px 0 12px;
+        }
+
+        .wb-mission {
+          font-family: 'Cinzel', serif;
+          font-size: 12px;
+          letter-spacing: 2px;
+          text-transform: uppercase;
+          text-align: center;
+          margin: 10px 0;
+          color: rgba(212,146,26,0.75);
+        }
+        .wb-mission-prefix { color: rgba(212,146,26,0.75); }
+        .wb-mission-wham   { color: #F5C842; font-weight: 700; }
+
         .wb-divider {
           width: 80%; height: 1.5px; margin: 14px 0;
           background: linear-gradient(90deg, transparent, ${C.teal}, ${C.gold}, ${C.teal}, transparent);
@@ -312,6 +334,9 @@ export default function Home() {
             <p className="wb-verse-ref">— John 3:16</p>
           </div>
 
+          {/* Tagline */}
+          <p className="wb-tagline">⚔️ Know the Word · Win the Battle ⚔️</p>
+
           {/* Main CTA Buttons */}
           <div className="wb-btn-row">
             <button className="wb-btn-primary" onClick={() => window.location.href = createPageUrl("SoloGame")}>⚔️ Play Solo</button>
@@ -319,15 +344,10 @@ export default function Home() {
           </div>
 
 
-          <p style={{
-            textAlign: "center",
-            fontFamily: "'Cinzel', serif",
-            fontSize: "12px",
-            letterSpacing: "2px",
-            textTransform: "uppercase",
-            color: "rgba(212,146,26,0.75)",
-            margin: "10px 0",
-          }}>We Have A Mission · <span style={{ color: "#F5C842", fontWeight: 700 }}>WHAM</span></p>
+          <p className="wb-mission">
+            <span className="wb-mission-prefix">We Have A Mission · </span>
+            <span className="wb-mission-wham">WHAM</span>
+          </p>
 
           {/* Donate */}
           <button className="wb-btn-donate" onClick={() => window.open("https://whambible.org", "_blank")}>
