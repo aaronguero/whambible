@@ -33,7 +33,7 @@ export default function Home() {
   const [lang, setLang] = useState("en");
 
   return (
-    <div style={{ minHeight: "100vh", background: C.cobaltDark, fontFamily: "'Georgia',serif", overflowX: "hidden", position: "relative" }}>
+    <div style={{ minHeight: "100vh", background: "transparent", fontFamily: "'Georgia',serif", overflowX: "hidden", position: "relative" }}>
 
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;800&display=swap');
@@ -47,18 +47,18 @@ export default function Home() {
           background-size: cover; background-position: center top;
           opacity: 0.92;
           -webkit-mask-image: linear-gradient(to bottom,
-            rgba(0,0,0,1)   0%,
-            rgba(0,0,0,1)  48%,
-            rgba(0,0,0,0.6) 65%,
-            rgba(0,0,0,0.1) 82%,
-            rgba(0,0,0,0)   100%
+            rgba(0,0,0,1)    0%,
+            rgba(0,0,0,1)   60%,
+            rgba(0,0,0,0.85) 75%,
+            rgba(0,0,0,0.65) 88%,
+            rgba(0,0,0,0.5) 100%
           );
           mask-image: linear-gradient(to bottom,
-            rgba(0,0,0,1)   0%,
-            rgba(0,0,0,1)  48%,
-            rgba(0,0,0,0.6) 65%,
-            rgba(0,0,0,0.1) 82%,
-            rgba(0,0,0,0)   100%
+            rgba(0,0,0,1)    0%,
+            rgba(0,0,0,1)   60%,
+            rgba(0,0,0,0.85) 75%,
+            rgba(0,0,0,0.65) 88%,
+            rgba(0,0,0,0.5) 100%
           );
         }
 
@@ -88,18 +88,17 @@ export default function Home() {
           );
         }
 
-        /* Layer 3: Color toning — cobalt/teal cast, bottom fades to warm sand-white */
+        /* Layer 3: Color toning — cobalt dark all the way down, no white */
         .wb-bg-tone {
           position: fixed; inset: 0; z-index: 2; pointer-events: none;
-          background:
-            linear-gradient(
-              to bottom,
-              rgba(13,31,53,0.08)  0%,
-              rgba(30,122,140,0.06) 35%,
-              rgba(232,213,160,0.22) 68%,
-              rgba(255,252,245,0.88) 85%,
-              rgba(255,252,245,1.0)  100%
-            );
+          background: linear-gradient(
+            to bottom,
+            rgba(13,31,53,0.45)   0%,
+            rgba(13,31,53,0.30)  35%,
+            rgba(13,31,53,0.42)  68%,
+            rgba(8,18,35,0.62)   85%,
+            rgba(8,18,35,0.75)  100%
+          );
         }
 
         /* Layer 4: Subtle rim light at top */
@@ -141,12 +140,7 @@ export default function Home() {
         /* ─────────────── SCROLL PANEL ─────────────── */
         .wb-scroll-panel {
           width: 100%;
-          background: linear-gradient(180deg,
-            rgba(255,252,245,0.0)  0%,
-            rgba(255,252,245,0.82) 12%,
-            rgba(255,252,245,0.97) 25%,
-            rgba(255,252,245,0.97) 100%
-          );
+          background: transparent;
           border-radius: 20px 20px 0 0;
           padding: 28px 20px 0;
           position: relative;
