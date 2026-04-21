@@ -116,7 +116,9 @@
   display: flex;
   align-items: center;
   gap: 0;
-  background: rgba(20,12,2,0.9);
+  background: rgba(8,18,35,0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   border: 1px solid rgba(212,146,26,0.2);
   border-radius: 10px;
   overflow: hidden;
