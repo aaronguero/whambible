@@ -156,11 +156,7 @@ export default function Home() {
           opacity: 0.55;
         }
 
-        /* ─────────────── TAGLINE ─────────────── */
-        .wb-tagline {
-          font-family: 'Cinzel', serif;
-          font-size: 0.80rem; letter-spacing: 0.18em;
-          color: ${C.cobalt}; text-transform: uppercase;
+        /* ─────────────── TAGLINE ─────────────── */; text-transform: uppercase;
           text-align: center; margin: 0 0 18px;
           opacity: 0.85;
           text-shadow: 0 1px 4px rgba(255,255,255,0.6);
@@ -315,8 +311,6 @@ export default function Home() {
         {/* Scroll Panel — rises from below the logo */}
         <div className="wb-scroll-panel">
           <div className="wb-scroll-curl" />
-
-          <p className="wb-tagline">⚔️ Know the Word · Win the Battle ⚔️</p>
           <p className="wb-mission">
             <span className="wb-mission-prefix">We Have A Mission · </span>
             <span className="wb-mission-wham">WHAM</span>
