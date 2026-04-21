@@ -348,7 +348,7 @@ function handleAnswer(choiceIndex, isCorrect) {
   if (isCorrect) {
     const bonus = awardPoints();
     showFeedback(true, bonus);
-    state.results.push({ correct: true });
+    state.results.push({ correct: true, recovered: true });
     updateDot(state.currentIndex, 'correct');
     // WHAM SLAM fires on correct — exact Whamgame spec
     setTimeout(() => fireWhamSlam(`${state.currentVerse.book} ${state.currentVerse.chapter}:${state.currentVerse.verse}`, 'Correct!', () => {
@@ -360,7 +360,7 @@ function handleAnswer(choiceIndex, isCorrect) {
     });
     state.streak = 0;
     showFeedback(false);
-    state.results.push({ correct: false });
+    state.results.push({ correct: false, recovered: false });
     updateDot(state.currentIndex, 'wrong');
     // Wrong — go straight to recovery, no level select
     setTimeout(() => launchRecovery(), 800);
