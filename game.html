@@ -2210,6 +2210,7 @@
       <h2 class="result-title" id="result-title">Correct!</h2>
       <p class="result-verse" id="result-verse-ref"></p>
       <p class="result-body" id="result-body"></p>
+      <div id="result-streak-badge" class="result-streak-badge" style="display:none"></div>
       <button class="btn-primary result-next" id="result-next-btn" onclick="nextVerse()">Next Verse ⚔️</button>
     </div>
   </div>
@@ -3457,5 +3458,18 @@ window.triggerPapaHint = function(mode) {
     </div>
   </div>
 
+
+  <!-- Exit Confirm Modal -->
+  <div id="exit-confirm-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(8,18,35,0.88);align-items:center;justify-content:center;padding:20px;">
+    <div style="background:linear-gradient(160deg,rgba(13,31,53,0.98),rgba(26,58,92,0.98));border:1px solid rgba(212,146,26,0.4);border-radius:18px;padding:32px 24px;max-width:320px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.7);">
+      <div style="font-size:36px;margin-bottom:12px;">⚔️</div>
+      <h3 style="font-family:'Cinzel',serif;color:#F5C842;font-size:16px;letter-spacing:2px;margin:0 0 10px;">Leave The Battle?</h3>
+      <p style="font-family:'Crimson Text',serif;font-size:15px;color:rgba(232,213,160,0.8);margin:0 0 24px;font-style:italic;">Your progress will be lost.</p>
+      <div style="display:flex;gap:12px;">
+        <button onclick="exitConfirmNo()" style="flex:1;padding:14px;background:rgba(58,189,212,0.12);border:1px solid rgba(58,189,212,0.3);border-radius:10px;color:#3ABDD4;font-family:'Cinzel',serif;font-size:12px;letter-spacing:1px;cursor:pointer;">Stay</button>
+        <button onclick="exitConfirmYes()" style="flex:1;padding:14px;background:linear-gradient(135deg,#C05A2A,#8B3A18);border:none;border-radius:10px;color:#F4F0E8;font-family:'Cinzel',serif;font-size:12px;letter-spacing:1px;cursor:pointer;">Exit</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
