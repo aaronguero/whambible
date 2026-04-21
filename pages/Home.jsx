@@ -120,10 +120,10 @@ export default function Home() {
           width: 100%;
           background: transparent;
           border-radius: 20px 20px 0 0;
-          padding: 28px 20px 56px;
+          padding: 28px 20px 78px;
           position: relative;
           z-index: 5;
-          margin-top: -84px;
+          margin-top: -118px;
           overflow-y: auto;
           -webkit-overflow-scrolling: touch;
         }
