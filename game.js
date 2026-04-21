@@ -126,7 +126,7 @@ window.soloPickLevel = function(pts, name, icon) {
     if (!el) return;
     const isSelected = n === pts;
     el.style.background   = isSelected ? 'rgba(201,162,39,0.15)' : 'rgba(201,162,39,0.07)';
-    el.style.border       = isSelected ? '2px solid #c9a227'     : '1px solid rgba(201,162,39,0.2)';
+    el.style.border       = isSelected ? '2px solid #D4921A'     : '1px solid rgba(201,162,39,0.2)';
     el.style.boxShadow    = isSelected ? '0 0 0 2px rgba(201,162,39,0.3),0 6px 20px rgba(0,0,0,0.5)' : 'none';
     el.style.transform    = isSelected ? 'translateY(-2px) scale(1.04)' : 'none';
   });
@@ -157,7 +157,7 @@ function preHighlightLevelCard(pts) {
     if (!el) return;
     const isSelected = n === pts;
     el.style.background = isSelected ? 'rgba(201,162,39,0.15)' : 'rgba(201,162,39,0.07)';
-    el.style.border     = isSelected ? '2px solid #c9a227'     : '1px solid rgba(201,162,39,0.2)';
+    el.style.border     = isSelected ? '2px solid #D4921A'     : '1px solid rgba(201,162,39,0.2)';
     el.style.boxShadow  = isSelected ? '0 0 0 2px rgba(201,162,39,0.3),0 6px 20px rgba(0,0,0,0.5)' : 'none';
     el.style.transform  = isSelected ? 'translateY(-2px) scale(1.04)' : 'none';
   });
