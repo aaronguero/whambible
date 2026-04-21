@@ -1,11 +1,8 @@
 [build]
-  publish = "."
-  command = "node inject-env.js"
-
-[build.environment]
-  NODE_VERSION = "18"
+  command = "npm install && npm run build"
+  publish = "dist"
 
 [[redirects]]
   from = "/*"
-  to = "/index.html"
+  to   = "/index.html"
   status = 200
