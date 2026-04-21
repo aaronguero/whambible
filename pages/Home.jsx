@@ -93,11 +93,11 @@ export default function Home() {
           position: fixed; inset: 0; z-index: 2; pointer-events: none;
           background: linear-gradient(
             to bottom,
-            rgba(13,31,53,0.45)   0%,
-            rgba(13,31,53,0.30)  35%,
-            rgba(13,31,53,0.42)  68%,
-            rgba(8,18,35,0.62)   85%,
-            rgba(8,18,35,0.75)  100%
+            rgba(13,31,53,0.18)   0%,
+            rgba(13,31,53,0.12)  35%,
+            rgba(13,31,53,0.20)  68%,
+            rgba(8,18,35,0.35)   85%,
+            rgba(8,18,35,0.45)  100%
           );
         }
 
