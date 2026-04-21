@@ -224,7 +224,7 @@
 
 /* ── Round Result ────────────────────────────────────── */
 .round-result-card {
-  background: linear-gradient(160deg, rgba(40,25,5,0.98) 0%, rgba(20,12,2,0.98) 100%);
+  background: linear-gradient(160deg, rgba(40,25,5,0.98) 0%, rgba(8,18,35,0.75) 100%);
   border: 1px solid rgba(212,146,26,0.4);
   border-radius: 16px;
   padding: 28px 20px 24px;
