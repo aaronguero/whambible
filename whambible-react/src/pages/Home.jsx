@@ -31,6 +31,7 @@ const LANGUAGES = [
 
 export default function Home() {
   const [lang, setLang] = useState("en");
+  const [verseOpen, setVerseOpen] = useState(false);
 
   return (
     <div style={{ height: "100vh", background: "transparent", fontFamily: "'Georgia',serif", overflowX: "hidden", overflowY: "scroll", WebkitOverflowScrolling: "touch", position: "relative" }}>
@@ -153,16 +154,23 @@ export default function Home() {
 
         /* ─────────────── VERSE CARD ─────────────── */
         .wb-verse-card {
-          width: 100%;
-          background: linear-gradient(135deg, rgba(26,58,92,0.08) 0%, rgba(30,122,140,0.06) 100%);
+          width: 100%; box-sizing: border-box;
+          background: rgba(255,255,255,0.9);
           border: 1.5px solid rgba(30,122,140,0.35);
-          border-radius: 12px; padding: 18px 22px;
-          box-shadow: 0 3px 18px rgba(26,58,92,0.10), inset 0 1px 0 rgba(255,255,255,0.7);
-          margin-bottom: 18px;
+          border-radius: 12px;
+          box-shadow: 0 3px 18px rgba(26,58,92,0.10);
+          margin-bottom: 18px; overflow: hidden;
+        }
+        .wb-verse-card-header {
+          display: flex; align-items: center; justify-content: space-between;
+          padding: 14px 18px; cursor: pointer; user-select: none;
+        }
+        .wb-verse-card-body {
+          padding: 0 18px 16px;
         }
         .wb-verse-label {
           color: ${C.teal}; font-size: 10px; letter-spacing: 2px;
-          text-transform: uppercase; margin-bottom: 10px;
+          text-transform: uppercase; margin: 0;
           font-family: 'Cinzel', serif; font-weight: 600;
         }
         .wb-verse-text {
@@ -304,11 +312,18 @@ export default function Home() {
 
           {/* Verse Card */}
           <div className="wb-verse-card">
-            <div className="wb-verse-label">📜 Today's Challenge Verse</div>
-            <p className="wb-verse-text">
-              "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life."
-            </p>
-            <p className="wb-verse-ref">— John 3:16</p>
+            <div className="wb-verse-card-header" onClick={() => setVerseOpen(v => !v)}>
+              <div className="wb-verse-label">📜 Today's Challenge Verse</div>
+              <span style={{ fontSize:14, color:C.teal, fontWeight:700, transition:"transform 0.25s", display:"inline-block", transform: verseOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▾</span>
+            </div>
+            {verseOpen && (
+              <div className="wb-verse-card-body">
+                <p className="wb-verse-text">
+                  "For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life."
+                </p>
+                <p className="wb-verse-ref">— John 3:16</p>
+              </div>
+            )}
           </div>
 
           {/* Tagline */}
