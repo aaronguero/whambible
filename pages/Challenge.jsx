@@ -147,15 +147,7 @@ async function sendPush(token, title, body, gameId, fromName) {
   if (!token) return;
   try {
     // Dynamically import Base44 SDK client
-    const { createClient } = await import("@/api/client").catch(() => ({ createClient: null }));
-    if (createClient) {
-      const client = createClient();
-      await client.functions.invoke("sendPushNotification", {
-        token, title, body, gameId: gameId||"", fromName: fromName||"", type:"game_update"
-      });
-      return;
-    }
-    // Fallback: direct call to deployed function URL
+    // Direct call to deployed Base44 backend function
     await fetch("https://designer-5ce47831.base44.app/functions/sendPushNotification", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
