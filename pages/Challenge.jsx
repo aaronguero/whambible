@@ -265,8 +265,8 @@ function ScreenAuthGate({ onSignIn, onGuest }) {
   return (
     <div className="ch-screen">
       <BgLayers charUrl={CHAR_MP} />
-      <div className="ch-content">
-        <div style={{ height:224 }} />
+      <div className="ch-auth-scroll">
+        <div style={{ height:220 }} />
         <div className="ch-panel">
           <div className="ch-curl" />
           <div style={{ textAlign:"center", marginBottom:22 }}>
@@ -301,7 +301,7 @@ function ScreenAuthGate({ onSignIn, onGuest }) {
               <button className="ch-btn-ghost" onClick={() => { setMode("choose"); setErr(""); }}>← Back</button>
             </>
           )}
-          <div style={{ height:30 }} />
+          <div style={{ height:80 }} />
         </div>
       </div>
     </div>
@@ -1209,6 +1209,7 @@ export default function Challenge() {
         .ch-screen  { height:100vh;position:relative;overflow-y:scroll;overflow-x:hidden;-webkit-overflow-scrolling:touch; }
         .ch-content { position:relative;z-index:4;max-width:480px;margin:0 auto;padding:0 16px 140px;display:flex;flex-direction:column;align-items:center;width:100%; }
         .ch-panel   { width:100%;background:transparent;border-radius:20px 20px 0 0;padding:22px 18px 80px;margin-top:-28px;overflow-y:visible; }
+        .ch-auth-scroll { position:relative;z-index:4;width:100%;max-width:480px;margin:0 auto;height:100vh;overflow-y:scroll;-webkit-overflow-scrolling:touch;padding:0 16px; }
         .ch-curl    { width:70%;height:4px;margin:0 auto 14px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(212,146,26,0.7),rgba(58,189,212,0.5),rgba(212,146,26,0.7),transparent); }
         .ch-title   { font-family:'Cinzel',serif;font-size:22px;font-weight:900;color:${C.gold};letter-spacing:2px;margin:0 0 4px;text-align:center; }
         .ch-sub     { font-size:14px;font-style:italic;color:rgba(240,228,192,0.5);margin:0;text-align:center; }
