@@ -170,7 +170,7 @@ export default function Home() {
           transition: background 0.18s;
         }
         .wb-verse-card-header:active {
-          background: rgba(30,122,140,0.70);
+          background: rgba(30,122,140,0.90);
         }
         .wb-verse-card-body {
           padding: 0 18px 16px;
