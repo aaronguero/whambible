@@ -1194,13 +1194,13 @@ export default function Challenge() {
     <div style={{ minHeight:"100vh",background:C.dark,fontFamily:"'Georgia',serif",overflowX:"hidden",position:"relative" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&display=swap');
-        .ch-bg-land { position:fixed;inset:0;z-index:0;pointer-events:none;background-image:url('${LANDSCAPE_BG}');background-size:cover;background-position:center top;opacity:0.55;-webkit-mask-image:linear-gradient(to bottom,rgba(0,0,0,1) 0%,rgba(0,0,0,1) 38%,rgba(0,0,0,0.25) 62%,rgba(0,0,0,0) 100%);mask-image:linear-gradient(to bottom,rgba(0,0,0,1) 0%,rgba(0,0,0,1) 38%,rgba(0,0,0,0.25) 62%,rgba(0,0,0,0) 100%); }
-        .ch-bg-char { position:fixed;inset:0;z-index:1;pointer-events:none;background-size:90% auto;background-position:center 4%;background-repeat:no-repeat;opacity:0.92;-webkit-mask-image:linear-gradient(to bottom,rgba(0,0,0,0) 0%,rgba(0,0,0,0.75) 6%,rgba(0,0,0,1) 16%,rgba(0,0,0,1) 46%,rgba(0,0,0,0.25) 63%,rgba(0,0,0,0) 78%);mask-image:linear-gradient(to bottom,rgba(0,0,0,0) 0%,rgba(0,0,0,0.75) 6%,rgba(0,0,0,1) 16%,rgba(0,0,0,1) 46%,rgba(0,0,0,0.25) 63%,rgba(0,0,0,0) 78%); }
+        .ch-bg-land { position:fixed;inset:0;z-index:0;pointer-events:none;background-image:url('${LANDSCAPE_BG}');background-size:cover;background-position:center top;opacity:1; }
+        .ch-bg-char { position:fixed;inset:0;z-index:1;pointer-events:none;background-size:90% auto;background-position:center 4%;background-repeat:no-repeat;opacity:1; }
         .ch-bg-dark { position:fixed;inset:0;z-index:2;pointer-events:none;background:linear-gradient(to bottom,rgba(10,5,0,0.12) 0%,rgba(10,5,0,0.42) 44%,rgba(10,5,0,0.85) 68%,rgba(10,5,0,0.98) 84%,rgba(10,5,0,1) 100%); }
         .ch-bg-rim  { position:fixed;inset:0;z-index:3;pointer-events:none;background:radial-gradient(ellipse at 50% -5%,rgba(212,146,26,0.20) 0%,transparent 55%); }
-        .ch-screen  { min-height:100vh;position:relative;overflow:hidden; }
+        .ch-screen  { min-height:100vh;position:relative;overflow-y:auto;overflow-x:hidden; }
         .ch-content { position:relative;z-index:4;max-width:480px;margin:0 auto;padding:0 16px 40px;display:flex;flex-direction:column;align-items:center; }
-        .ch-panel   { width:100%;background:linear-gradient(180deg,rgba(10,5,0,0) 0%,rgba(10,5,0,0.84) 9%,rgba(10,5,0,0.97) 20%,rgba(10,5,0,0.97) 100%);border-radius:20px 20px 0 0;padding:22px 18px 0;margin-top:-20px; }
+        .ch-panel   { width:100%;background:transparent;border-radius:20px 20px 0 0;padding:22px 18px 60px;margin-top:-20px;overflow-y:auto;-webkit-overflow-scrolling:touch; }
         .ch-curl    { width:70%;height:4px;margin:0 auto 14px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(212,146,26,0.7),rgba(58,189,212,0.5),rgba(212,146,26,0.7),transparent); }
         .ch-title   { font-family:'Cinzel',serif;font-size:22px;font-weight:900;color:${C.gold};letter-spacing:2px;margin:0 0 4px;text-align:center; }
         .ch-sub     { font-size:14px;font-style:italic;color:rgba(240,228,192,0.5);margin:0;text-align:center; }
