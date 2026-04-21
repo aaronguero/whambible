@@ -354,7 +354,7 @@ export default function SoloGame() {
         }
         .wb-bg-tone {
           position:fixed; inset:0; z-index:2; pointer-events:none;
-          background: linear-gradient(to bottom, rgba(13,31,53,0.06) 0%, rgba(30,122,140,0.05) 35%, rgba(232,213,160,0.20) 68%, rgba(255,252,245,0.90) 85%, rgba(255,252,245,1.0) 100%);
+          display: none;
         }
         .wb-bg-rim {
           position:fixed; inset:0; z-index:3; pointer-events:none;
@@ -367,7 +367,7 @@ export default function SoloGame() {
         .wb-hero-space { width:100%; }
         .wb-scroll-panel {
           width:100%;
-          background: linear-gradient(180deg, rgba(255,252,245,0.0) 0%, rgba(255,252,245,0.84) 10%, rgba(255,252,245,0.97) 22%, rgba(255,252,245,0.97) 100%);
+          background: transparent;
           border-radius:20px 20px 0 0; padding:24px 20px 0; position:relative; z-index:5; margin-top:-40px;
         }
         .wb-scroll-curl {
