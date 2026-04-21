@@ -180,11 +180,11 @@ export default function Home() {
           font-family: 'Cinzel', serif; font-weight: 600;
         }
         .wb-verse-text {
-          color: ${C.cobaltDark}; font-size: 14px;
+          color: #ffffff; font-size: 14px;
           line-height: 1.75; font-style: italic; margin-bottom: 10px;
         }
         .wb-verse-ref {
-          color: #000000; font-size: 12px;
+          color: #ffffff; font-size: 12px;
           text-align: right; letter-spacing: 1px;
           font-family: 'Cinzel', serif; font-weight: 600;
         }
