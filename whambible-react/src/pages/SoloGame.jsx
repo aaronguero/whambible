@@ -240,10 +240,11 @@ function GamePlay({ level, onDone }) {
           {/* Papa hint */}
           {showHint && !answered && (
             <div style={{
-              width:"100%", background:"rgba(26,58,92,0.06)", border:`1px solid ${C.teal}44`,
+              width:"100%", boxSizing:"border-box",
+              background:"rgba(26,58,92,0.06)", border:`1px solid ${C.teal}44`,
               borderRadius:10, padding:"10px 14px", marginBottom:10,
               fontFamily:"'Cinzel',serif", fontSize:11, color:C.cobalt, letterSpacing:0.5,
-              animation:"wb-hint-in 0.4s ease",
+              animation:"wb-hint-in 0.4s ease", overflowWrap:"break-word", wordBreak:"break-word",
             }}>
               💡 <strong>Papa says:</strong> This verse is from <em>{verse.book}</em>, chapter {verse.ch}.
             </div>
@@ -402,12 +403,14 @@ export default function SoloGame() {
           color:${C.cobalt}; text-transform:uppercase; text-align:center; margin:0 0 16px; opacity:0.85;
         }
         .wb-verse-card {
-          width:100%; background:linear-gradient(135deg, rgba(26,58,92,0.07) 0%, rgba(30,122,140,0.05) 100%);
+          width:100%; box-sizing:border-box;
+          background:linear-gradient(135deg, rgba(26,58,92,0.07) 0%, rgba(30,122,140,0.05) 100%);
           border:1.5px solid rgba(30,122,140,0.30); border-radius:12px; padding:16px 20px;
           box-shadow:0 3px 16px rgba(26,58,92,0.08), inset 0 1px 0 rgba(255,255,255,0.7); margin-bottom:14px;
+          overflow:hidden;
         }
-        .wb-verse-label { color:${C.teal}; font-size:10px; letter-spacing:2px; text-transform:uppercase; margin-bottom:8px; font-family:'Cinzel',serif; font-weight:600; }
-        .wb-verse-text  { color:${C.cobaltDark}; font-size:13px; line-height:1.7; font-style:italic; margin:0; }
+        .wb-verse-label { color:${C.teal}; font-size:10px; letter-spacing:2px; text-transform:uppercase; margin-bottom:8px; font-family:'Cinzel',serif; font-weight:600; word-break:break-word; }
+        .wb-verse-text  { color:${C.cobaltDark}; font-size:13px; line-height:1.7; font-style:italic; margin:0; overflow-wrap:break-word; word-break:break-word; }
         .wb-btn-primary {
           width:100%; padding:15px 24px;
           background:linear-gradient(135deg, ${C.gold} 0%, #b87614 50%, ${C.gold} 100%);
