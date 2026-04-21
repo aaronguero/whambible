@@ -187,7 +187,7 @@ function GamePlay({ level, onDone }) {
         {/* Top bar */}
         <div style={{ width:"100%", display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 0 6px" }}>
           <button onClick={() => window.location.href = "/"} style={{
-            background:C.teal, border:"none", cursor:"pointer",
+            background:`${C.teal}80`, border:"none", cursor:"pointer",
             width:44, height:44, borderRadius:10,
             display:"flex", alignItems:"center", justifyContent:"center",
             fontSize:22, lineHeight:1,
