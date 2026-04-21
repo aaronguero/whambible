@@ -206,7 +206,6 @@ function BgLayers({ charUrl }) {
     <>
       <div className="ch-bg-land" />
       <div className="ch-bg-char" style={{ backgroundImage:`url('${charUrl}')` }} />
-      <div className="ch-bg-dark" />
       <div className="ch-bg-rim" />
     </>
   );
@@ -1205,7 +1204,7 @@ export default function Challenge() {
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&display=swap');
         .ch-bg-land { position:fixed;inset:0;z-index:0;pointer-events:none;background-image:url('${LANDSCAPE_BG}');background-size:cover;background-position:center top;opacity:1; }
         .ch-bg-char { position:fixed;inset:0;z-index:1;pointer-events:none;background-size:90% auto;background-position:center 4%;background-repeat:no-repeat;opacity:1; }
-        .ch-bg-dark { position:fixed;inset:0;z-index:2;pointer-events:none;background:linear-gradient(to bottom,rgba(10,5,0,0.12) 0%,rgba(10,5,0,0.42) 44%,rgba(10,5,0,0.85) 68%,rgba(10,5,0,0.98) 84%,rgba(10,5,0,1) 100%); }
+        .ch-bg-dark { display:none; }
         .ch-bg-rim  { position:fixed;inset:0;z-index:3;pointer-events:none;background:radial-gradient(ellipse at 50% -5%,rgba(212,146,26,0.20) 0%,transparent 55%); }
         .ch-screen  { min-height:100vh;position:relative;overflow-y:auto;overflow-x:hidden; }
         .ch-content { position:relative;z-index:4;max-width:480px;margin:0 auto;padding:0 16px 40px;display:flex;flex-direction:column;align-items:center; }
