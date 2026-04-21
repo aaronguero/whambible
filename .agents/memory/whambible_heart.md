@@ -163,3 +163,10 @@ Working through these sections in order:
 ---
 
 *Written April 20, 2026. Updated each session. This is home base.*
+
+---
+
+## Stashed Text (removed from UI — save for possible future use)
+
+- **"⚔️ Know the Word · Win the Battle ⚔️"** — was the home screen tagline below the logo/title. Removed April 21, 2026 per Designer. May be repurposed elsewhere (loading screen, level select header, etc.).
+- **"We Have A Mission · WHAM"** — was the home screen sub-tagline below the title. Removed April 21, 2026 per Designer. May be repurposed elsewhere (loading screen, level select, challenge screen, etc.).
