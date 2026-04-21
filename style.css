@@ -141,7 +141,7 @@ body {
 /* ══ HERO SPACER ══════════════════════════════════════════════════════════ */
 .wb-hero-space { height: 280px; width: 100%; flex-shrink: 0; }
 
-/* ══ SCROLL PANEL (white fade-in panel for content) ══════════════════════ */
+/* ══ SCROLL PANEL (transparent — cinematic bg shows through) ════════════ */
 .wb-scroll-panel {
   width: 100%;
   background: transparent;
@@ -330,7 +330,9 @@ body {
   display: flex; flex-direction: column; align-items: center; gap: 2px;
   transition: all 0.2s;
   border: 1.5px solid rgba(30,122,140,0.25);
-  background: rgba(255,252,245,0.55);
+  background: rgba(13,31,53,0.55);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
   backdrop-filter: blur(4px);
 }
 .level-card:hover {
