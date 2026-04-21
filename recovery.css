@@ -1,3 +1,35 @@
+
+/* ── Background Layers (match Base44 preview) ── */
+.rec-bg-land {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url('https://media.base44.com/images/public/69df9a909b33058a5ce47831/33b065c94_generated_image.png');
+  background-size: cover; background-position: center top; opacity: 0.55;
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 40%, rgba(0,0,0,0.3) 65%, rgba(0,0,0,0) 100%);
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 40%, rgba(0,0,0,0.3) 65%, rgba(0,0,0,0) 100%);
+}
+.rec-bg-char {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background-image: url('https://media.base44.com/images/public/69df9a909b33058a5ce47831/833513c9d_generated_image.png');
+  background-size: 78% auto; background-position: center 5%;
+  background-repeat: no-repeat; opacity: 0.9;
+  -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.7) 7%, rgba(0,0,0,1) 18%, rgba(0,0,0,1) 48%, rgba(0,0,0,0.3) 65%, rgba(0,0,0,0) 80%);
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.7) 7%, rgba(0,0,0,1) 18%, rgba(0,0,0,1) 48%, rgba(0,0,0,0.3) 65%, rgba(0,0,0,0) 80%);
+}
+.rec-bg-dark {
+  position: fixed; inset: 0; z-index: 2; pointer-events: none;
+  background: linear-gradient(to bottom,
+    rgba(10,5,0,0.18) 0%,
+    rgba(10,5,0,0.35) 45%,
+    rgba(10,5,0,0.80) 70%,
+    rgba(10,5,0,0.97) 85%,
+    rgba(10,5,0,1.0)  100%
+  );
+}
+.rec-bg-rim {
+  position: fixed; inset: 0; z-index: 3; pointer-events: none;
+  background: radial-gradient(ellipse at 50% -5%, rgba(212,146,26,0.18) 0%, transparent 55%);
+}
+
 /* ===================================================
    WhamBible — Recovery Screen Styles
    WHAM SLAM: exact Whamgame.base44.app spec
