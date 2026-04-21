@@ -352,7 +352,7 @@ function handleAnswer(choiceIndex, isCorrect) {
     updateDot(state.currentIndex, 'correct');
     // WHAM SLAM fires on correct — exact Whamgame spec
     setTimeout(() => fireWhamSlam(`${state.currentVerse.book} ${state.currentVerse.chapter}:${state.currentVerse.verse}`, 'Correct!', () => {
-      showResult(true);
+      setTimeout(() => showResult(true), 120);
     }), 200);
   } else {
     buttons.forEach(btn => {
@@ -471,9 +471,16 @@ function showResult(isCorrect) {
   const v = state.currentVerse;
   document.getElementById('result-icon').textContent       = isCorrect
     ? ['⚔️','✝️','🌟','🏆','📖'][Math.floor(Math.random()*5)] : '📖';
-  document.getElementById('result-title').textContent      = isCorrect
-    ? (state.streak >= 3 ? `🔥 ${state.streak}x Streak!` : 'Correct!') : 'Study the Word';
-  document.getElementById('result-title').style.color      = isCorrect ? '#4caf7d' : '#c93030';
+  const _streakLabel = isCorrect && state.streak >= 3 ? `🔥 ${state.streak}x Streak!` : (isCorrect ? 'Correct!' : 'Study the Word');
+  document.getElementById('result-title').textContent      = _streakLabel;
+  document.getElementById('result-title').style.color      = isCorrect ? (state.streak >= 3 ? '#F5C842' : '#4caf7d') : '#c93030';
+  // Show streak bonus badge if bonus was just awarded this round
+  const _bonusBadge = document.getElementById('result-streak-badge');
+  if (_bonusBadge) {
+    const _justBonus = isCorrect && (state.streak % 5 === 0) && state.streak > 0;
+    _bonusBadge.textContent = _justBonus ? `+${STREAK_BONUS} Streak Bonus!` : '';
+    _bonusBadge.style.display = _justBonus ? 'block' : 'none';
+  }
   document.getElementById('result-verse-ref').textContent  = `${v.book} ${v.chapter}:${v.verse}`;
   document.getElementById('result-body').textContent       = `"${v.text}"`;
   const _nBtn = document.getElementById('result-next-btn');
@@ -591,8 +598,14 @@ window.restartGame = function () {
 };
 
 window.confirmExit = function () {
-  if (confirm('Leave the battle? Your progress will be lost.')) {
-    clearTimer();
-    window.location.href = 'index.html';
-  }
+  const modal = document.getElementById('exit-confirm-modal');
+  if (modal) modal.style.display = 'flex';
+};
+window.exitConfirmYes = function () {
+  clearTimer();
+  window.location.href = 'index.html';
+};
+window.exitConfirmNo = function () {
+  const modal = document.getElementById('exit-confirm-modal');
+  if (modal) modal.style.display = 'none';
 };
