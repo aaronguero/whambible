@@ -113,17 +113,17 @@ export default function Home() {
         }
 
         /* ─────────────── HERO SPACER (logo bleeds through bg) ─────────────── */
-        .wb-hero-space { height: 280px; width: 100%; }
+        .wb-hero-space { height: 392px; width: 100%; }
 
         /* ─────────────── SCROLL PANEL ─────────────── */
         .wb-scroll-panel {
           width: 100%;
           background: transparent;
           border-radius: 20px 20px 0 0;
-          padding: 28px 20px 40px;
+          padding: 28px 20px 56px;
           position: relative;
           z-index: 5;
-          margin-top: -60px;
+          margin-top: -84px;
           overflow-y: auto;
           -webkit-overflow-scrolling: touch;
         }
