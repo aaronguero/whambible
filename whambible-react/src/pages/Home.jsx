@@ -155,30 +155,35 @@ export default function Home() {
         /* ─────────────── VERSE CARD ─────────────── */
         .wb-verse-card {
           width: 100%; box-sizing: border-box;
-          background: rgba(255,255,255,0.5);
-          border: 1.5px solid rgba(30,122,140,0.35);
+          background: rgba(13,31,53,0.72);
+          border: 1.5px solid rgba(212,146,26,0.5);
           border-radius: 12px;
-          box-shadow: 0 3px 18px rgba(26,58,92,0.10);
+          box-shadow: 0 4px 20px rgba(0,0,0,0.35);
           margin-bottom: 18px; overflow: hidden;
         }
-        .wb-verse-card-header {
+        .wb-verse-btn {
           display: flex; align-items: center; justify-content: space-between;
-          padding: 14px 18px; cursor: pointer; user-select: none;
+          width: 100%; padding: 14px 18px;
+          background: rgba(212,146,26,0.18);
+          border: none; border-bottom: 1px solid rgba(212,146,26,0.3);
+          cursor: pointer; user-select: none;
+          border-radius: 10px 10px 0 0;
         }
+        .wb-verse-btn:active { background: rgba(212,146,26,0.30); }
         .wb-verse-card-body {
-          padding: 0 18px 16px;
+          padding: 14px 18px 16px;
         }
         .wb-verse-label {
-          color: ${C.teal}; font-size: 10px; letter-spacing: 2px;
+          color: ${C.goldLight}; font-size: 10px; letter-spacing: 2px;
           text-transform: uppercase; margin: 0;
-          font-family: 'Cinzel', serif; font-weight: 600;
+          font-family: 'Cinzel', serif; font-weight: 700;
         }
         .wb-verse-text {
-          color: ${C.cobaltDark}; font-size: 14px;
+          color: ${C.sand}; font-size: 14px;
           line-height: 1.75; font-style: italic; margin-bottom: 10px;
         }
         .wb-verse-ref {
-          color: #000000; font-size: 12px;
+          color: ${C.goldLight}; font-size: 12px;
           text-align: right; letter-spacing: 1px;
           font-family: 'Cinzel', serif; font-weight: 600;
         }
@@ -312,10 +317,10 @@ export default function Home() {
 
           {/* Verse Card */}
           <div className="wb-verse-card">
-            <div className="wb-verse-card-header" onClick={() => setVerseOpen(v => !v)}>
+            <button className="wb-verse-btn" onClick={() => setVerseOpen(v => !v)}>
               <div className="wb-verse-label">📜 Today's Challenge Verse</div>
-              <span style={{ fontSize:14, color:C.teal, fontWeight:700, transition:"transform 0.25s", display:"inline-block", transform: verseOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▾</span>
-            </div>
+              <span style={{ fontSize:16, color:C.goldLight, fontWeight:700, transition:"transform 0.25s", display:"inline-block", transform: verseOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▾</span>
+            </button>
             {verseOpen && (
               <div className="wb-verse-card-body">
                 <p className="wb-verse-text">
