@@ -241,7 +241,7 @@ function GamePlay({ level, onDone }) {
           {showHint && !answered && (
             <div style={{
               width:"100%", boxSizing:"border-box",
-              background:"rgba(26,58,92,0.06)", border:`1px solid ${C.teal}44`,
+              background:"rgba(255,255,255,0.5)", border:`1px solid ${C.teal}44`,
               borderRadius:10, padding:"10px 14px", marginBottom:10,
               fontFamily:"'Cinzel',serif", fontSize:11, color:C.cobalt, letterSpacing:0.5,
               animation:"wb-hint-in 0.4s ease", overflowWrap:"break-word", wordBreak:"break-word",
@@ -404,7 +404,7 @@ export default function SoloGame() {
         }
         .wb-verse-card {
           width:100%; box-sizing:border-box;
-          background:linear-gradient(135deg, rgba(26,58,92,0.07) 0%, rgba(30,122,140,0.05) 100%);
+          background:rgba(255,255,255,0.5);
           border:1.5px solid rgba(30,122,140,0.30); border-radius:12px; padding:16px 20px;
           box-shadow:0 3px 16px rgba(26,58,92,0.08), inset 0 1px 0 rgba(255,255,255,0.7); margin-bottom:14px;
           overflow:hidden;
