@@ -2121,7 +2121,7 @@
         border-radius:10px; padding:16px 20px; cursor:pointer;
         display:flex; flex-direction:row; align-items:center; gap:16px;
         backdrop-filter:blur(10px); transition:all 0.2s;
-        box-shadow:0 4px 20px rgba(212,146,26,0.20);">
+        box-shadow:0 4px 28px rgba(212,146,26,0.35), 0 0 0 1px rgba(212,146,26,0.2);">
         <span style="font-size:26px; flex-shrink:0;">👑</span>
         <div style="flex:1; text-align:left;">
           <div style="font-family:'Cinzel',serif; font-size:13px; font-weight:700; color:#1A3A5C; letter-spacing:1px;">CHAMPION</div>
@@ -2151,7 +2151,7 @@
 
   <!-- HUD -->
   <header class="game-hud">
-    <button class="hud-back" onclick="confirmExit()">← Exit</button>
+    <button class="hud-back" onclick="confirmExit()" title="Exit Game">⚔ Exit</button>
     <div class="hud-center">
       <span class="hud-level" id="hud-level">· · ·</span>
     </div>
@@ -2216,7 +2216,7 @@
   </div>
 
   <!-- Game Over Overlay -->
-  <div class="result-overlay" id="gameover-overlay" style="display:none">
+  <div class="result-overlay" id="gameover-overlay" style="display:none; position:fixed; inset:0; z-index:200; background:rgba(8,18,35,0.55); backdrop-filter:blur(2px); -webkit-backdrop-filter:blur(2px); display:none; align-items:center; justify-content:center; padding:20px;">
     <div class="result-card">
       <div class="result-icon">🏆</div>
       <h2 class="result-title" id="final-title">Battle Complete!</h2>
