@@ -301,7 +301,7 @@ function ScreenAuthGate({ onSignIn, onGuest }) {
               <button className="ch-btn-ghost" onClick={() => { setMode("choose"); setErr(""); }}>← Back</button>
             </>
           )}
-          <div style={{ height:600 }} />
+          <div style={{ height:300 }} />
         </div>
       </div>
     </div>
