@@ -1199,7 +1199,7 @@ export default function Challenge() {
   );
 
   return (
-    <div style={{ minHeight:"100vh",background:C.dark,fontFamily:"'Georgia',serif",overflowX:"hidden",position:"relative" }}>
+    <div style={{ minHeight:"100vh",background:C.dark,fontFamily:"'Georgia',serif",overflowX:"hidden",overflowY:"hidden",position:"relative" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&display=swap');
         .ch-bg-land { position:fixed;inset:0;z-index:0;pointer-events:none;background-image:url('${LANDSCAPE_BG}');background-size:cover;background-position:center top;opacity:1; }
