@@ -285,7 +285,7 @@ function ScreenAuthGate({ onSignIn, onGuest }) {
               </div>
               <button className="ch-btn-primary" onClick={() => setMode("email")}>📧 Sign In with Email</button>
               {err && <div className="ch-err">{err}</div>}
-              <button className="ch-btn-ghost" style={{ marginTop:10, color:"#000000" }} onClick={onGuest}>← Play Solo as Guest</button>
+              <button className="ch-btn-ghost" style={{ marginTop:10, color:"#000000", background:"rgba(30,122,140,0.50)" }} onClick={onGuest}>← Play Solo as Guest</button>
             </>
           )}
 
@@ -1209,7 +1209,7 @@ export default function Challenge() {
         .ch-screen  { height:100vh;position:relative;overflow-y:hidden;overflow-x:hidden;overscroll-behavior:none; }
         .ch-content { position:relative;z-index:4;max-width:480px;margin:0 auto;padding:0 16px 140px;display:flex;flex-direction:column;align-items:center;width:100%; }
         .ch-panel   { width:100%;background:transparent;border-radius:20px 20px 0 0;padding:120px 16px 80px;margin-top:-28px;min-height:60vh;max-height:60vh;overflow-y:scroll;-webkit-overflow-scrolling:touch;scroll-snap-type:none;overscroll-behavior:contain;box-sizing:border-box; }
-        .ch-auth-scroll { position:relative;z-index:5;width:100%;max-width:480px;margin:0 auto;padding:280px 16px 0;box-sizing:border-box; }
+        .ch-auth-scroll { position:relative;z-index:5;width:100%;max-width:480px;margin:0 auto;padding:120px 16px 0;box-sizing:border-box; }
         .ch-curl    { width:70%;height:4px;margin:0 auto 14px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(212,146,26,0.7),rgba(58,189,212,0.5),rgba(212,146,26,0.7),transparent); }
         .ch-title   { font-family:'Cinzel',serif;font-size:22px;font-weight:900;color:${C.gold};letter-spacing:2px;margin:0 0 4px;text-align:center; }
         .ch-sub     { font-size:14px;font-style:italic;color:#3ABDD4;margin:0;text-align:center; }
