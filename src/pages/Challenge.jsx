@@ -1209,10 +1209,10 @@ export default function Challenge() {
         .ch-screen  { height:100vh;position:relative;overflow-y:hidden;overflow-x:hidden;overscroll-behavior:none; }
         .ch-content { position:relative;z-index:4;max-width:480px;margin:0 auto;padding:0 16px 140px;display:flex;flex-direction:column;align-items:center;width:100%; }
         .ch-panel   { width:100%;background:transparent;border-radius:20px 20px 0 0;padding:120px 16px 80px;margin-top:-28px;min-height:60vh;max-height:60vh;overflow-y:scroll;-webkit-overflow-scrolling:touch;scroll-snap-type:none;overscroll-behavior:contain;box-sizing:border-box; }
-        .ch-auth-scroll { position:relative;z-index:4;width:100%;max-width:480px;margin:0 auto;padding:280px 16px 0;box-sizing:border-box; }
+        .ch-auth-scroll { position:relative;z-index:5;width:100%;max-width:480px;margin:0 auto;padding:280px 16px 0;box-sizing:border-box; }
         .ch-curl    { width:70%;height:4px;margin:0 auto 14px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(212,146,26,0.7),rgba(58,189,212,0.5),rgba(212,146,26,0.7),transparent); }
         .ch-title   { font-family:'Cinzel',serif;font-size:22px;font-weight:900;color:${C.gold};letter-spacing:2px;margin:0 0 4px;text-align:center; }
-        .ch-sub     { font-size:14px;font-style:italic;color:rgba(240,228,192,0.5);margin:0;text-align:center; }
+        .ch-sub     { font-size:14px;font-style:italic;color:#3ABDD4;margin:0;text-align:center; }
         .ch-label-tiny { font-family:'Cinzel',serif;font-size:10px;letter-spacing:3px;color:${C.goldDim};text-transform:uppercase;margin-bottom:6px;text-align:center; }
         .ch-section-label { font-family:'Cinzel',serif;font-size:10px;letter-spacing:2px;color:rgba(201,162,39,0.45);text-transform:uppercase;margin-bottom:10px; }
         .ch-pick-instruction { font-family:'Cinzel',serif;font-size:12px;color:rgba(201,162,39,0.6);text-align:center;margin-bottom:14px;letter-spacing:1px; }
@@ -1360,7 +1360,7 @@ export default function Challenge() {
         .ch-btn-secondary { width:100%;padding:13px;background:${C.teal};border:none;border-radius:12px;color:#fff;font-family:'Cinzel',serif;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.18s; }
         .ch-btn-ghost     { width:100%;padding:11px 20px;background:transparent;border:1px solid rgba(201,162,39,0.25);border-radius:12px;color:rgba(201,162,39,0.65);font-family:'Cinzel',serif;font-size:12px;letter-spacing:1px;text-transform:uppercase;cursor:pointer;transition:all 0.15s; }
         .ch-btn-ghost:hover { background:rgba(201,162,39,0.08);color:${C.gold}; }
-        .ch-btn-google    { width:100%;padding:13px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.2);border-radius:12px;color:#e2e8f0;font-family:'Cinzel',serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all 0.15s;margin-bottom:6px; }
+        .ch-btn-google    { width:100%;padding:13px;background:rgba(255,255,255,0.50);border:1px solid rgba(255,255,255,0.2);border-radius:12px;color:#000000;font-family:'Cinzel',serif;font-size:13px;font-weight:700;letter-spacing:1px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;transition:all 0.15s;margin-bottom:6px; }
         .ch-btn-google:hover { background:rgba(255,255,255,0.14); }
 
         @keyframes chHintIn    { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
