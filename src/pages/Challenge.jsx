@@ -258,7 +258,7 @@ function ScreenAuthGate({ onSignIn, onGuest }) {
       const fb = await getFirebase();
       if (isNew) await fb.createUserWithEmailAndPassword(fb.auth, email, pass);
       else       await fb.signInWithEmailAndPassword(fb.auth, email, pass);
-    } catch(e) { setErr(e.message.replace("Firebase: ","").replace(/\s*\(.*\)/,"")); }
+    } catch(e) { setErr(e.code ? e.code + ": " + e.message : e.message); }
     finally { setBusy(false); }
   }
 
