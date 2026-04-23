@@ -1,21 +1,83 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 // ══════════════════════════════════════════════════════════════
-// WhamBible — Challenge.jsx v9.0  (Netlify-compatible)
-// ZERO @/api/* imports. ZERO Firebase. ZERO Base44 SDK.
-// Auth  → localStorage session (email/password stored locally)
-// Profile → localStorage (total_score, games_played, games_won)
-// This file is 100% self-contained — builds clean on Netlify.
+// WhamBible — Challenge.jsx v10.0  REAL MULTIPLAYER
+// NO Firebase. NO FCM. NO @/api/* imports. NO Base44 SDK.
+//
+// Auth     → localStorage (accounts + sessions)
+// Profiles → Base44 REST API (PlayerProfile entity)
+// Sessions → Base44 REST API (GameSession entity)
+// Notify   → Twilio SMS via /.netlify/functions/send-sms
+//
+// Multiplayer turn model (mirrors Whamgame):
+//   Player 1 = Challenger  (creates game, picks level each odd round)
+//   Player 2 = Answerer    (joins game, picks level each even round)
+//   Roles alternate who picks level each round.
+//   10 rounds total. Async — each player acts on their own device/time.
+//   Both players poll every 4s to see game state updates.
 // ══════════════════════════════════════════════════════════════
 
+// ── Asset URLs ──
 const LANDSCAPE_BG  = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/33b065c94_generated_image.png";
-const CHAR_MP       = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/10c016255_generated_image.png";
+const CHAR_MP       = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/b23c98cb8_generated_image.png";
 const CHAR_KNIGHT   = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/9b51fedfd_generated_image.png";
 const CHAR_VICTORY  = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/c5aa4771c_generated_image.png";
 const WHAM_CHARS    = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/85be9d10e_generated_image.png";
 const WHAM_TEXT_IMG = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/5e80bbcf2_generated_image.png";
 const WHAM_AUDIO    = "https://media.base44.com/videos/public/69c40c6701d9dfdb1df69d2b/5d143ab80_51a54c36d_wham-slam-voice1.webm";
 
+// ── Base44 API config ──
+const APP_ID    = "69df9a909b33058a5ce47831";
+const API_BASE  = `https://app.base44.com/api/apps/${APP_ID}/entities`;
+const API_HEADERS = { "Content-Type": "application/json" };
+
+// ── Base44 REST helpers ──
+const B44 = {
+  async list(entity, query = {}) {
+    const params = Object.keys(query).length
+      ? "?" + new URLSearchParams({ json_query: JSON.stringify(query) })
+      : "";
+    const r = await fetch(`${API_BASE}/${entity}${params}`, { headers: API_HEADERS });
+    if (!r.ok) throw new Error(`B44 list ${entity}: ${r.status}`);
+    const d = await r.json();
+    return Array.isArray(d) ? d : (d.records || []);
+  },
+  async get(entity, id) {
+    const r = await fetch(`${API_BASE}/${entity}/${id}`, { headers: API_HEADERS });
+    if (!r.ok) throw new Error(`B44 get ${entity}/${id}: ${r.status}`);
+    return r.json();
+  },
+  async create(entity, data) {
+    const r = await fetch(`${API_BASE}/${entity}`, {
+      method: "POST", headers: API_HEADERS, body: JSON.stringify(data),
+    });
+    if (!r.ok) throw new Error(`B44 create ${entity}: ${r.status}`);
+    return r.json();
+  },
+  async update(entity, id, data) {
+    const r = await fetch(`${API_BASE}/${entity}/${id}`, {
+      method: "PUT", headers: API_HEADERS, body: JSON.stringify(data),
+    });
+    if (!r.ok) throw new Error(`B44 update ${entity}/${id}: ${r.status}`);
+    return r.json();
+  },
+};
+
+// ── SMS via Twilio (Netlify function) ──
+async function sendSMS(to, message, gameId) {
+  if (!to) return;
+  try {
+    await fetch("/.netlify/functions/send-sms", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ to, message, gameId }),
+    });
+  } catch (e) {
+    console.warn("[sendSMS] failed:", e.message);
+  }
+}
+
+// ── Palette ──
 const C = {
   cobaltDark: "#0D1F35",
   teal:       "#1E7A8C",
@@ -26,11 +88,19 @@ const C = {
   goldDim:    "rgba(201,162,39,0.4)",
 };
 
+// ── Constants ──
 const TOTAL_ROUNDS = 10;
 const TIME_LIMIT   = 20;
+const POLL_MS      = 4000;
 const LETTERS      = ["A","B","C","D"];
-const PROFILE_KEY  = "wb_player_profile";
-const SESSION_KEY  = "wb_session";
+const SESSION_KEY  = "wb_session_v2";
+
+const LEVELS = [
+  { pts:5,  name:"Squire",   icon:"🗡️", sub:"Easiest · Common verses",   color:"#1E7A8C", featured:false },
+  { pts:10, name:"Warrior",  icon:"⚔️", sub:"Moderate · Popular verses", color:"#D4921A", featured:true  },
+  { pts:15, name:"Knight",   icon:"🛡️", sub:"Hard · Deeper verses",      color:"#C05A2A", featured:false },
+  { pts:20, name:"Champion", icon:"👑", sub:"Hardest · Rare verses",      color:"#7B2D8B", featured:false },
+];
 
 const ALL_BOOKS = [
   "Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges","Ruth",
@@ -44,13 +114,6 @@ const ALL_BOOKS = [
   "Hebrews","James","1 Peter","2 Peter","1 John","2 John","3 John","Jude","Revelation"
 ];
 
-const LEVELS = [
-  { pts:5,  name:"Squire",   icon:"🗡️", sub:"Easiest · Common verses",   color:"#1E7A8C", featured:false },
-  { pts:10, name:"Warrior",  icon:"⚔️", sub:"Moderate · Popular verses", color:"#D4921A", featured:true  },
-  { pts:15, name:"Knight",   icon:"🛡️", sub:"Hard · Deeper verses",      color:"#C05A2A", featured:false },
-  { pts:20, name:"Champion", icon:"👑", sub:"Hardest · Rare verses",      color:"#7B2D8B", featured:false },
-];
-
 const VERSES = [
   { book:"John",        chapter:3,  verse:16, text:"For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life." },
   { book:"Psalms",      chapter:23, verse:1,  text:"The Lord is my shepherd; I shall not want." },
@@ -62,6 +125,11 @@ const VERSES = [
   { book:"Matthew",     chapter:5,  verse:9,  text:"Blessed are the peacemakers, for they will be called children of God." },
   { book:"Psalms",      chapter:46, verse:1,  text:"God is our refuge and strength, an ever-present help in trouble." },
   { book:"John",        chapter:14, verse:6,  text:"Jesus answered, I am the way and the truth and the life. No one comes to the Father except through me." },
+  { book:"Genesis",     chapter:1,  verse:1,  text:"In the beginning God created the heavens and the earth." },
+  { book:"Matthew",     chapter:6,  verse:33, text:"But seek first his kingdom and his righteousness, and all these things will be given to you as well." },
+  { book:"Ephesians",   chapter:2,  verse:8,  text:"For it is by grace you have been saved, through faith — and this is not from yourselves, it is the gift of God." },
+  { book:"Romans",      chapter:3,  verse:23, text:"For all have sinned and fall short of the glory of God." },
+  { book:"Hebrews",     chapter:11, verse:1,  text:"Now faith is confidence in what we hope for and assurance about what we do not see." },
 ];
 
 // ── Utilities ──
@@ -91,94 +159,53 @@ function rankBadge(score) {
 
 function parseError(e) {
   const msg = e?.message || String(e || "");
-  if (/password/i.test(msg))    return "Incorrect email or password.";
-  if (/not found|no user/i.test(msg)) return "No account found. Try creating one.";
   if (/already exist/i.test(msg)) return "Account already exists. Sign in instead.";
+  if (/not found|no account/i.test(msg)) return "No account found. Try creating one.";
+  if (/password/i.test(msg))    return "Incorrect password.";
   if (/email/i.test(msg))       return "Please enter a valid email address.";
   if (/network|fetch/i.test(msg)) return "Network error. Check your connection.";
-  return msg || "Something went wrong. Please try again.";
+  return msg || "Something went wrong. Try again.";
 }
 
-// ── Local Auth (self-contained, no SDK) ──
+// ── Local Auth (localStorage — no SDK) ──
 const LocalAuth = {
-  _key: "wb_accounts",
-
-  _accounts() {
-    try { return JSON.parse(localStorage.getItem(this._key) || "{}"); } catch { return {}; }
-  },
-
-  _save(accounts) {
-    localStorage.setItem(this._key, JSON.stringify(accounts));
-  },
-
+  _key: "wb_accounts_v2",
+  _accounts() { try { return JSON.parse(localStorage.getItem(this._key) || "{}"); } catch { return {}; } },
+  _save(a)    { localStorage.setItem(this._key, JSON.stringify(a)); },
   create(email, password, displayName) {
     const accounts = this._accounts();
     const key = email.toLowerCase().trim();
     if (accounts[key]) throw new Error("Account already exists. Sign in instead.");
-    const user = { email: key, displayName: displayName || key.split("@")[0], createdAt: Date.now() };
+    const user = { email: key, displayName: displayName || key.split("@")[0] };
     accounts[key] = { ...user, password };
     this._save(accounts);
     localStorage.setItem(SESSION_KEY, JSON.stringify(user));
     return user;
   },
-
   signIn(email, password) {
     const accounts = this._accounts();
     const key = email.toLowerCase().trim();
-    const account = accounts[key];
-    if (!account) throw new Error("No account found for this email.");
-    if (account.password !== password) throw new Error("Incorrect password.");
-    const user = { email: account.email, displayName: account.displayName };
+    const acct = accounts[key];
+    if (!acct)                    throw new Error("No account found for this email.");
+    if (acct.password !== password) throw new Error("Incorrect password.");
+    const user = { email: acct.email, displayName: acct.displayName };
     localStorage.setItem(SESSION_KEY, JSON.stringify(user));
     return user;
   },
-
-  currentUser() {
-    try { return JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); } catch { return null; }
-  },
-
-  signOut() {
-    localStorage.removeItem(SESSION_KEY);
-  },
+  currentUser() { try { return JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); } catch { return null; } },
+  signOut()     { localStorage.removeItem(SESSION_KEY); },
 };
 
-// ── Local Profile (localStorage) ──
-const LocalProfile = {
-  get(email) {
-    try {
-      const all = JSON.parse(localStorage.getItem(PROFILE_KEY) || "{}");
-      return all[email] || { email, display_name: email.split("@")[0], total_score:0, games_played:0, games_won:0 };
-    } catch {
-      return { email, display_name: email.split("@")[0], total_score:0, games_played:0, games_won:0 };
-    }
-  },
-  save(profile) {
-    try {
-      const all = JSON.parse(localStorage.getItem(PROFILE_KEY) || "{}");
-      all[profile.email] = profile;
-      localStorage.setItem(PROFILE_KEY, JSON.stringify(all));
-    } catch {}
-    return profile;
-  },
-  update(email, delta) {
-    const p = this.get(email);
-    return this.save({
-      ...p,
-      total_score:  (p.total_score  || 0) + (delta.score || 0),
-      games_played: (p.games_played || 0) + 1,
-      games_won:    (p.games_won    || 0) + (delta.won ? 1 : 0),
-    });
-  },
-};
-
-// ── Styles ──
+// ══════════════════════════════════════════════════════════════
+// CSS
+// ══════════════════════════════════════════════════════════════
 const S = `
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&display=swap');
 *,*::before,*::after{box-sizing:border-box;}
 html,body,#root{height:100%;margin:0;padding:0;overflow:hidden;}
 .c-screen{position:fixed;inset:0;font-family:'Cinzel',serif;}
 .c-scroll{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;z-index:10;}
-.c-pad{padding:80px 16px 48px;}
+.c-pad{padding:80px 16px 56px;}
 .c-hdr{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;background:linear-gradient(180deg,rgba(13,31,53,0.97) 0%,transparent 100%);}
 .c-logo{font-size:20px;font-weight:900;color:#F5C842;letter-spacing:3px;}
 .c-pill{display:flex;align-items:center;gap:7px;background:rgba(30,122,140,0.25);border:1px solid rgba(245,200,66,0.25);border-radius:20px;padding:5px 12px 5px 8px;cursor:pointer;}
@@ -188,22 +215,20 @@ html,body,#root{height:100%;margin:0;padding:0;overflow:hidden;}
 .c-curl{position:absolute;top:0;left:50%;transform:translateX(-50%);width:40px;height:4px;background:rgba(245,200,66,0.35);border-radius:0 0 6px 6px;}
 .c-h1{font-size:22px;font-weight:900;color:#F5C842;margin:0 0 6px;letter-spacing:2px;text-align:center;}
 .c-sub{font-size:12px;color:rgba(212,146,26,0.7);text-align:center;margin:0 0 22px;letter-spacing:1px;line-height:1.5;}
-.c-status{display:inline-flex;align-items:center;gap:6px;background:rgba(192,58,43,0.15);border:1px solid rgba(192,58,43,0.3);border-radius:20px;padding:6px 14px;font-size:11px;color:rgba(244,240,232,0.6);letter-spacing:1.5px;margin-bottom:22px;}
-.c-dot{width:7px;height:7px;border-radius:50%;background:#e74c3c;animation:blink 1.4s ease-in-out infinite;}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.c-badge{display:inline-flex;align-items:center;gap:6px;border-radius:20px;padding:6px 14px;font-size:11px;letter-spacing:1.5px;margin-bottom:16px;}
 .c-btn-a{width:100%;padding:16px;background:linear-gradient(135deg,#1E7A8C,#D4921A);color:#F4F0E8;font-family:'Cinzel',serif;font-size:15px;font-weight:900;letter-spacing:2px;border:none;border-radius:12px;cursor:pointer;margin-bottom:12px;text-transform:uppercase;transition:opacity .15s,transform .1s;}
-.c-btn-a:hover{opacity:.92}.c-btn-a:active{transform:scale(.98)}.c-btn-a:disabled{opacity:.5;cursor:not-allowed;}
-.c-btn-b{width:100%;padding:15px;background:rgba(245,200,66,0.07);color:rgba(245,200,66,0.85);font-family:'Cinzel',serif;font-size:14px;font-weight:700;letter-spacing:2px;border:1.5px solid rgba(245,200,66,0.35);border-radius:12px;cursor:pointer;margin-bottom:20px;text-transform:uppercase;transition:background .15s,transform .1s;}
-.c-btn-b:hover{background:rgba(245,200,66,0.14)}.c-btn-b:active{transform:scale(.98)}.c-btn-b:disabled{opacity:.5;cursor:not-allowed;}
+.c-btn-a:hover{opacity:.92}.c-btn-a:active{transform:scale(.98)}.c-btn-a:disabled{opacity:.4;cursor:not-allowed;}
+.c-btn-b{width:100%;padding:15px;background:rgba(245,200,66,0.07);color:rgba(245,200,66,0.85);font-family:'Cinzel',serif;font-size:14px;font-weight:700;letter-spacing:2px;border:1.5px solid rgba(245,200,66,0.35);border-radius:12px;cursor:pointer;margin-bottom:12px;text-transform:uppercase;transition:background .15s,transform .1s;}
+.c-btn-b:hover{background:rgba(245,200,66,0.14)}.c-btn-b:active{transform:scale(.98)}.c-btn-b:disabled{opacity:.4;cursor:not-allowed;}
 .c-btn-c{width:100%;padding:15px;background:linear-gradient(135deg,rgba(26,58,92,0.9),rgba(13,31,53,0.95));color:#F4F0E8;font-family:'Cinzel',serif;font-size:14px;font-weight:700;letter-spacing:1.5px;border:1px solid rgba(30,122,140,0.4);border-radius:12px;cursor:pointer;margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .15s,transform .1s;}
-.c-btn-c:hover{background:rgba(30,122,140,0.25)}.c-btn-c:active{transform:scale(.98)}.c-btn-c:disabled{opacity:.5;cursor:not-allowed;}
-.c-div{display:flex;align-items:center;gap:10px;margin:4px 0 20px;}
+.c-btn-c:hover{background:rgba(30,122,140,0.25)}.c-btn-c:active{transform:scale(.98)}.c-btn-c:disabled{opacity:.4;cursor:not-allowed;}
+.c-div{display:flex;align-items:center;gap:10px;margin:4px 0 16px;}
 .c-div-line{flex:1;height:1px;background:rgba(245,200,66,0.12);}
 .c-div-txt{font-size:10px;color:rgba(245,200,66,0.35);letter-spacing:3px;}
 .c-lbl{font-size:10px;color:rgba(212,146,26,0.7);letter-spacing:2px;margin-bottom:6px;display:block;text-transform:uppercase;}
 .c-inp{width:100%;padding:13px 14px;background:rgba(255,255,255,0.05);border:1px solid rgba(245,200,66,0.2);border-radius:10px;color:#F4F0E8;font-family:'Cinzel',serif;font-size:13px;margin-bottom:14px;outline:none;transition:border-color .15s;}
 .c-inp:focus{border-color:rgba(245,200,66,0.5);}
-.c-err{color:#e74c3c;font-size:12px;text-align:center;margin:0 0 14px;letter-spacing:0.5px;line-height:1.6;min-height:18px;padding:0 8px;}
+.c-err{color:#e74c3c;font-size:12px;text-align:center;margin:0 0 14px;letter-spacing:0.5px;line-height:1.6;min-height:18px;}
 .c-back{display:block;text-align:center;margin-top:14px;font-size:11px;color:rgba(244,240,232,0.3);letter-spacing:1.5px;cursor:pointer;padding:8px;}
 .c-back:hover{color:rgba(244,240,232,0.55);}
 .c-spin{width:32px;height:32px;border:3px solid rgba(245,200,66,0.15);border-top-color:#F5C842;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px;}
@@ -214,7 +239,7 @@ html,body,#root{height:100%;margin:0;padding:0;overflow:hidden;}
 .c-score-lbl{font-size:9px;color:rgba(212,146,26,0.6);letter-spacing:2px;}
 .c-pips{display:flex;justify-content:center;gap:5px;margin-bottom:16px;flex-wrap:wrap;}
 .c-pip{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.15);}
-.c-pip.done{background:#1E7A8C;}.c-pip.now{background:#F5C842;}
+.c-pip.done{background:#1E7A8C;}.c-pip.now{background:#F5C842;}.c-pip.win{background:#1A7A4A;}.c-pip.loss{background:#C0392B;}
 .c-tbar{height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;margin-bottom:16px;}
 .c-tfill{height:100%;border-radius:2px;transition:width 1s linear,background .5s;}
 .c-vcard{background:rgba(26,58,92,0.38);border:1px solid rgba(245,200,66,0.13);border-radius:14px;padding:18px 16px;margin-bottom:16px;text-align:center;}
@@ -233,9 +258,19 @@ html,body,#root{height:100%;margin:0;padding:0;overflow:hidden;}
 .c-lv-name{font-size:15px;font-weight:900;color:#F5C842;letter-spacing:2px;}
 .c-lv-sub{font-size:10px;color:rgba(212,146,26,0.6);letter-spacing:1px;margin-top:3px;}
 .c-lv-pts{font-size:20px;font-weight:900;color:#F5C842;margin-left:auto;flex-shrink:0;}
+.c-wait{text-align:center;padding:32px 0;}
+.c-wait-icon{font-size:48px;margin-bottom:12px;animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.6;transform:scale(0.92)}}
+.c-pl-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(26,58,92,0.3);border:1px solid rgba(245,200,66,0.1);border-radius:12px;margin-bottom:8px;cursor:pointer;transition:all .15s;}
+.c-pl-row:hover{background:rgba(30,122,140,0.2);border-color:rgba(245,200,66,0.3);}
+.c-pl-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#1E7A8C,#D4921A);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0;}
+.c-pl-name{font-size:13px;color:#F4F0E8;font-weight:700;letter-spacing:1px;}
+.c-pl-rank{font-size:10px;color:rgba(212,146,26,0.65);letter-spacing:1.5px;}
+.c-empty{text-align:center;padding:24px;color:rgba(245,200,66,0.35);font-size:12px;letter-spacing:1.5px;}
+.c-result-banner{padding:12px 16px;border-radius:12px;text-align:center;margin-bottom:14px;font-size:13px;font-weight:700;letter-spacing:1px;}
 `;
 
-// ── Background layers ──
+// ── Background ──
 function Bg({ char }) {
   return (
     <>
@@ -287,29 +322,42 @@ function Slam({ active, pts, onDone }) {
 }
 
 // ══════════════════════════════════════════════════════════════
-// AUTH — 100% local, no SDK, no Firebase
-// Accounts stored in localStorage. Session stored in localStorage.
+// AUTH SCREEN
 // ══════════════════════════════════════════════════════════════
 function Auth({ onIn }) {
   const [mode,  setMode]  = useState("choice");
   const [email, setEmail] = useState("");
   const [pass,  setPass]  = useState("");
   const [name,  setName]  = useState("");
+  const [phone, setPhone] = useState("");
   const [err,   setErr]   = useState("");
   const [busy,  setBusy]  = useState(false);
 
-  // Check for existing session on mount
   useEffect(() => {
-    const existing = LocalAuth.currentUser();
-    if (existing) {
-      const profile = LocalProfile.get(existing.email);
-      onIn(existing, profile);
-    }
+    const u = LocalAuth.currentUser();
+    if (u) loadAndEnter(u);
   }, []);
 
-  function reset() { setMode("choice"); setEmail(""); setPass(""); setName(""); setErr(""); setBusy(false); }
+  async function loadAndEnter(u) {
+    try {
+      let profiles = await B44.list("PlayerProfile", { email: u.email });
+      let profile  = profiles[0];
+      if (!profile) {
+        profile = await B44.create("PlayerProfile", {
+          email: u.email, display_name: u.displayName || u.email.split("@")[0],
+          total_score: 0, games_played: 0, games_won: 0,
+        });
+      }
+      onIn(u, profile);
+    } catch (e) {
+      // If B44 fails, still let them in with local profile
+      onIn(u, { email: u.email, display_name: u.displayName, total_score:0, games_played:0, games_won:0 });
+    }
+  }
 
-  function doCreate(e) {
+  function reset() { setMode("choice"); setEmail(""); setPass(""); setName(""); setPhone(""); setErr(""); setBusy(false); }
+
+  async function doCreate(e) {
     e.preventDefault();
     if (!name.trim())    return setErr("Display name is required.");
     if (!email.trim())   return setErr("Email is required.");
@@ -317,21 +365,24 @@ function Auth({ onIn }) {
     setErr(""); setBusy(true);
     try {
       const user = LocalAuth.create(email.trim(), pass, name.trim());
-      const profile = LocalProfile.get(user.email);
+      const profile = await B44.create("PlayerProfile", {
+        email: user.email, display_name: name.trim(),
+        phone: phone.trim() || "", sms_enabled: !!phone.trim(),
+        total_score: 0, games_played: 0, games_won: 0,
+      });
       onIn(user, profile);
-    } catch (e) { setErr(parseError(e)); setBusy(false); }
+    } catch (e2) { setErr(parseError(e2)); setBusy(false); }
   }
 
-  function doSignIn(e) {
+  async function doSignIn(e) {
     e.preventDefault();
     if (!email.trim()) return setErr("Email is required.");
     if (!pass.trim())  return setErr("Password is required.");
     setErr(""); setBusy(true);
     try {
       const user = LocalAuth.signIn(email.trim(), pass);
-      const profile = LocalProfile.get(user.email);
-      onIn(user, profile);
-    } catch (e) { setErr(parseError(e)); setBusy(false); }
+      await loadAndEnter(user);
+    } catch (e2) { setErr(parseError(e2)); setBusy(false); }
   }
 
   return (
@@ -348,19 +399,10 @@ function Auth({ onIn }) {
               <h1 className="c-h1">Verse Challenge</h1>
               <p className="c-sub">Know the Word · Win the Battle</p>
             </div>
-            <div style={{display:"flex",justifyContent:"center",marginBottom:20}}>
-              <div className="c-status"><div className="c-dot"/>Not signed in</div>
-            </div>
-            <button className="c-btn-a" onClick={()=>{setMode("create");setErr("");}}>
-              🕊️ Create Account — Free
-            </button>
-            <button className="c-btn-b" onClick={()=>{setMode("signin");setErr("");}}>
-              🔐 Already have an account? Sign In
-            </button>
+            <button className="c-btn-a" onClick={()=>{ setMode("create"); setErr(""); }}>🕊️ Create Free Account</button>
+            <button className="c-btn-b" onClick={()=>{ setMode("signin"); setErr(""); }}>🔐 Sign In</button>
             <div className="c-div"><div className="c-div-line"/><div className="c-div-txt">OR</div><div className="c-div-line"/></div>
-            <button className="c-btn-c" onClick={()=>window.location.href="/"}>
-              ⚔️ Single Player — Play as Guest
-            </button>
+            <button className="c-btn-c" onClick={()=>window.location.href="/"}>⚔️ Play Solo as Guest</button>
           </div>
         )}
 
@@ -370,11 +412,11 @@ function Auth({ onIn }) {
             <div style={{textAlign:"center",marginBottom:20}}>
               <div style={{fontSize:32,marginBottom:6}}>🕊️</div>
               <h1 className="c-h1">Create Account</h1>
-              <p className="c-sub">Free · No payment required</p>
+              <p className="c-sub">Free · SMS alerts optional</p>
             </div>
             <form onSubmit={doCreate} autoComplete="on">
-              <label className="c-lbl">Display Name</label>
-              <input className="c-inp" type="text" autoComplete="name" placeholder="Your warrior name"
+              <label className="c-lbl">Warrior Name</label>
+              <input className="c-inp" type="text" autoComplete="name" placeholder="Your display name"
                 value={name} onChange={e=>{setName(e.target.value);setErr("");}} disabled={busy}/>
               <label className="c-lbl">Email</label>
               <input className="c-inp" type="email" autoComplete="email" placeholder="you@example.com"
@@ -382,10 +424,11 @@ function Auth({ onIn }) {
               <label className="c-lbl">Password</label>
               <input className="c-inp" type="password" autoComplete="new-password" placeholder="6+ characters"
                 value={pass} onChange={e=>{setPass(e.target.value);setErr("");}} disabled={busy}/>
-              {err ? <div className="c-err">⚠️ {err}</div> : <div className="c-err"/>}
-              <button className="c-btn-a" type="submit" disabled={busy}>
-                {busy ? "Creating…" : "🕊️ Create Account — Free"}
-              </button>
+              <label className="c-lbl">Phone (optional · for challenge alerts)</label>
+              <input className="c-inp" type="tel" autoComplete="tel" placeholder="+1 555 000 0000"
+                value={phone} onChange={e=>{setPhone(e.target.value);setErr("");}} disabled={busy}/>
+              {err ? <div className="c-err">⚠️ {err}</div> : <div style={{height:18}}/>}
+              <button className="c-btn-a" type="submit" disabled={busy}>{busy?"Creating…":"🕊️ Create Account"}</button>
             </form>
             <a className="c-back" onClick={reset}>← Back</a>
           </div>
@@ -406,10 +449,8 @@ function Auth({ onIn }) {
               <label className="c-lbl">Password</label>
               <input className="c-inp" type="password" autoComplete="current-password" placeholder="••••••••"
                 value={pass} onChange={e=>{setPass(e.target.value);setErr("");}} disabled={busy}/>
-              {err ? <div className="c-err">⚠️ {err}</div> : <div className="c-err"/>}
-              <button className="c-btn-a" type="submit" disabled={busy}>
-                {busy ? "Signing In…" : "🔐 Enter the Arena"}
-              </button>
+              {err ? <div className="c-err">⚠️ {err}</div> : <div style={{height:18}}/>}
+              <button className="c-btn-a" type="submit" disabled={busy}>{busy?"Signing In…":"🔐 Enter the Arena"}</button>
             </form>
             <a className="c-back" onClick={reset}>← Back</a>
           </div>
@@ -420,41 +461,205 @@ function Auth({ onIn }) {
   );
 }
 
-// ── LOBBY ──
-function Lobby({ user, profile, onStart, onOut }) {
+// ══════════════════════════════════════════════════════════════
+// LOBBY — start new game OR see active games
+// ══════════════════════════════════════════════════════════════
+function Lobby({ user, profile, onChallenge, onResumeGame, onOut }) {
+  const [tab,       setTab]       = useState("new");  // "new" | "active"
+  const [players,   setPlayers]   = useState([]);
+  const [games,     setGames]     = useState([]);
+  const [loading,   setLoading]   = useState(false);
   const rank = rankBadge(profile?.total_score || 0);
-  const name = profile?.display_name || user?.displayName || user?.email?.split("@")[0] || "Warrior";
+  const myName = profile?.display_name || user?.displayName || user?.email?.split("@")[0];
+
+  useEffect(() => { if (tab === "new") loadPlayers(); else loadGames(); }, [tab]);
+
+  async function loadPlayers() {
+    setLoading(true);
+    try {
+      const all = await B44.list("PlayerProfile");
+      setPlayers(all.filter(p => p.email !== user.email));
+    } catch {}
+    setLoading(false);
+  }
+
+  async function loadGames() {
+    setLoading(true);
+    try {
+      const [asChallenger, asAnswerer] = await Promise.all([
+        B44.list("GameSession", { challenger_id: profile?.id }),
+        B44.list("GameSession", { answerer_id:   profile?.id }),
+      ]);
+      const all = [...asChallenger, ...asAnswerer]
+        .filter(g => g.status !== "complete" && g.status !== "cancelled")
+        .sort((a,b) => new Date(b.updated_date||0) - new Date(a.updated_date||0));
+      setGames(all);
+    } catch {}
+    setLoading(false);
+  }
+
+  async function challenge(opponent) {
+    // Create new game session
+    const verse   = rndVerse();
+    const options = buildOptions(verse);
+    try {
+      const game = await B44.create("GameSession", {
+        challenger_id:   profile?.id || user.email,
+        challenger_name: myName,
+        answerer_id:     opponent.id || opponent.email,
+        answerer_name:   opponent.display_name,
+        status:          "pick_level",
+        current_turn:    profile?.id || user.email,
+        round:           0,
+        challenger_score: 0,
+        answerer_score:   0,
+        pending_verse:   verse,
+        pending_options: options,
+        progress:        [],
+      });
+      // SMS the opponent if they have a phone
+      if (opponent.phone && opponent.sms_enabled) {
+        await sendSMS(
+          opponent.phone,
+          `⚔️ ${myName} challenged you to a WhamBible verse battle! Your move.`,
+          game.id
+        );
+      }
+      onChallenge(game, "challenger");
+    } catch (e) {
+      alert("Could not create game: " + e.message);
+    }
+  }
+
   return (
     <div className="c-screen">
       <Bg char={CHAR_KNIGHT}/>
       <Hdr user={user} onOut={onOut}/>
       <div className="c-scroll"><div className="c-pad">
+
+        {/* Profile card */}
         <div className="c-card" style={{textAlign:"center",marginBottom:14}}>
           <div className="c-curl"/>
           <div style={{fontSize:36,marginBottom:8}}>{rank.icon}</div>
-          <h1 className="c-h1" style={{fontSize:18}}>{name}</h1>
+          <h1 className="c-h1" style={{fontSize:18}}>{myName}</h1>
           <div style={{fontSize:11,color:rank.color,letterSpacing:2,marginBottom:14}}>{rank.label} · {profile?.total_score||0} pts</div>
           <div style={{display:"flex",justifyContent:"space-around",borderTop:"1px solid rgba(245,200,66,0.1)",paddingTop:14}}>
             {[["Games",profile?.games_played||0],["Wins",profile?.games_won||0]].map(([l,v])=>(
               <div key={l}>
                 <div style={{fontSize:20,fontWeight:900,color:C.goldLight}}>{v}</div>
-                <div style={{fontSize:9,color:C.goldDim,letterSpacing:2}}>{l.toUpperCase()}</div>
+                <div style={{fontSize:9,color:C.goldDim,letterSpacing:2}}>{l}</div>
               </div>
             ))}
           </div>
         </div>
+
+        {/* Tabs */}
+        <div style={{display:"flex",gap:8,marginBottom:14}}>
+          {[["new","⚔️ Challenge"],["active","📬 My Games"]].map(([t,l])=>(
+            <button key={t} onClick={()=>setTab(t)}
+              style={{flex:1,padding:"10px 0",borderRadius:10,border:`1.5px solid ${tab===t?"rgba(245,200,66,0.5)":"rgba(245,200,66,0.12)"}`,background:tab===t?"rgba(212,146,26,0.15)":"transparent",color:tab===t?"#F5C842":"rgba(245,200,66,0.45)",fontFamily:"'Cinzel',serif",fontSize:12,fontWeight:700,cursor:"pointer",letterSpacing:1}}>
+              {l}
+            </button>
+          ))}
+        </div>
+
         <div className="c-card">
           <div className="c-curl"/>
-          <button className="c-btn-a" onClick={onStart}>⚔️ Start Challenge</button>
+          {loading && <div style={{textAlign:"center",padding:24}}><div className="c-spin"/></div>}
+
+          {/* New game — player list */}
+          {!loading && tab === "new" && (
+            <>
+              <h2 style={{fontSize:13,color:C.goldLight,letterSpacing:2,margin:"0 0 14px",textAlign:"center"}}>CHOOSE YOUR OPPONENT</h2>
+              {players.length === 0 && <div className="c-empty">No other players yet.<br/>Invite friends to join!</div>}
+              {players.map(p => {
+                const r = rankBadge(p.total_score || 0);
+                return (
+                  <div key={p.id} className="c-pl-row" onClick={()=>challenge(p)}>
+                    <div className="c-pl-av">{(p.display_name||"W")[0].toUpperCase()}</div>
+                    <div>
+                      <div className="c-pl-name">{p.display_name}</div>
+                      <div className="c-pl-rank">{r.icon} {r.label} · {p.total_score||0} pts</div>
+                    </div>
+                    <div style={{marginLeft:"auto",fontSize:20}}>⚔️</div>
+                  </div>
+                );
+              })}
+            </>
+          )}
+
+          {/* Active games */}
+          {!loading && tab === "active" && (
+            <>
+              <h2 style={{fontSize:13,color:C.goldLight,letterSpacing:2,margin:"0 0 14px",textAlign:"center"}}>ACTIVE BATTLES</h2>
+              {games.length === 0 && <div className="c-empty">No active games.<br/>Challenge someone!</div>}
+              {games.map(g => {
+                const isChallenger = g.challenger_id === (profile?.id || user.email);
+                const oppName = isChallenger ? g.answerer_name : g.challenger_name;
+                const myScore = isChallenger ? g.challenger_score : g.answerer_score;
+                const oppScore = isChallenger ? g.answerer_score  : g.challenger_score;
+                const isMyTurn = g.current_turn === (profile?.id || user.email);
+                return (
+                  <div key={g.id} className="c-pl-row" onClick={()=>onResumeGame(g, isChallenger?"challenger":"answerer")}>
+                    <div style={{flex:1}}>
+                      <div className="c-pl-name">vs {oppName}</div>
+                      <div className="c-pl-rank">Round {(g.round||0)+1}/{TOTAL_ROUNDS} · {myScore||0}–{oppScore||0}</div>
+                    </div>
+                    <div style={{fontSize:11,fontWeight:700,color:isMyTurn?"#F5C842":"rgba(245,200,66,0.35)",letterSpacing:1}}>
+                      {isMyTurn ? "YOUR TURN ▶" : "WAITING…"}
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
+
+          <div style={{height:8}}/>
           <button className="c-btn-c" onClick={()=>window.location.href="/"} style={{marginTop:8}}>← Back to Home</button>
         </div>
+
       </div></div>
     </div>
   );
 }
 
-// ── SELECT LEVEL ──
-function SelectLevel({ user, onPick, onBack }) {
+// ══════════════════════════════════════════════════════════════
+// SELECT LEVEL — challenger picks difficulty for this round
+// ══════════════════════════════════════════════════════════════
+function SelectLevel({ user, game, role, onPick }) {
+  const myName = user?.displayName || user?.email?.split("@")[0];
+  const oppName = role === "challenger" ? game?.answerer_name : game?.challenger_name;
+
+  async function pick(lv) {
+    try {
+      const verse   = rndVerse();
+      const options = buildOptions(verse);
+      await B44.update("GameSession", game.id, {
+        status:          "waiting_for_answer",
+        current_turn:    role === "challenger" ? game.answerer_id : game.challenger_id,
+        pending_pts:     lv.pts,
+        pending_icon:    lv.icon,
+        pending_name:    lv.name,
+        pending_verse:   verse,
+        pending_options: options,
+      });
+      // Notify opponent
+      const oppProfile = await B44.list("PlayerProfile", {
+        id: role === "challenger" ? game.answerer_id : game.challenger_id
+      }).then(r => r[0]).catch(()=>null);
+      if (oppProfile?.phone && oppProfile?.sms_enabled) {
+        await sendSMS(
+          oppProfile.phone,
+          `📖 ${myName} sent you a ${lv.name} challenge! Answer the verse.`,
+          game.id
+        );
+      }
+      onPick(lv, verse, options);
+    } catch (e) {
+      alert("Error picking level: " + e.message);
+    }
+  }
+
   return (
     <div className="c-screen">
       <Bg char={CHAR_KNIGHT}/>
@@ -465,90 +670,210 @@ function SelectLevel({ user, onPick, onBack }) {
           <div style={{textAlign:"center",marginBottom:20}}>
             <div style={{fontSize:28,marginBottom:6}}>📜</div>
             <h1 className="c-h1">Choose Level</h1>
-            <p className="c-sub">Select your difficulty</p>
+            <p className="c-sub">vs {oppName} · Round {(game?.round||0)+1}/{TOTAL_ROUNDS}</p>
           </div>
           {LEVELS.map(lv=>(
             <div key={lv.pts} className="c-lv"
               style={{borderColor:lv.featured?lv.color:"rgba(245,200,66,0.12)",background:lv.featured?"rgba(30,122,140,0.18)":"rgba(13,31,53,0.4)"}}
-              onClick={()=>onPick(lv)}>
+              onClick={()=>pick(lv)}>
               <div className="c-lv-icon">{lv.icon}</div>
               <div><div className="c-lv-name">{lv.name}</div><div className="c-lv-sub">{lv.sub}</div></div>
               <div className="c-lv-pts">{lv.pts}pt</div>
             </div>
           ))}
-          <a className="c-back" onClick={onBack}>← Back</a>
         </div>
       </div></div>
     </div>
   );
 }
 
-// ── ANSWER ──
-function Answer({ user, game, onDone }) {
+// ══════════════════════════════════════════════════════════════
+// WAITING SCREEN — polling until opponent acts
+// ══════════════════════════════════════════════════════════════
+function Waiting({ user, game, role, onUpdate }) {
+  const [g, setG]       = useState(game);
+  const [dots, setDots] = useState(".");
+  const pollRef = useRef(null);
+
+  const oppName = role === "challenger" ? g?.answerer_name : g?.challenger_name;
+
+  useEffect(() => {
+    // Animate dots
+    const dotTimer = setInterval(() => setDots(d => d.length >= 3 ? "." : d + "."), 600);
+
+    // Poll game state
+    pollRef.current = setInterval(async () => {
+      try {
+        const updated = await B44.get("GameSession", game.id);
+        setG(updated);
+        onUpdate(updated);
+      } catch {}
+    }, POLL_MS);
+
+    return () => { clearInterval(dotTimer); clearInterval(pollRef.current); };
+  }, []);
+
+  const myScore  = role === "challenger" ? g?.challenger_score||0 : g?.answerer_score||0;
+  const oppScore = role === "challenger" ? g?.answerer_score||0   : g?.challenger_score||0;
+
+  return (
+    <div className="c-screen">
+      <Bg/>
+      <Hdr user={user}/>
+      <div style={{position:"absolute",inset:0,zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}}>
+        <div className="c-card" style={{textAlign:"center",width:"100%",maxWidth:400}}>
+          <div className="c-curl"/>
+          <div className="c-wait">
+            <div className="c-wait-icon">⏳</div>
+            <h1 className="c-h1" style={{fontSize:18}}>Waiting{dots}</h1>
+            <p className="c-sub">Waiting for {oppName} to answer</p>
+          </div>
+          <div style={{display:"flex",justifyContent:"space-around",borderTop:"1px solid rgba(245,200,66,0.1)",paddingTop:16,marginBottom:20}}>
+            <div className="c-score-box"><div className="c-score-val">{myScore}</div><div className="c-score-lbl">You</div></div>
+            <div style={{fontSize:10,color:C.goldDim,alignSelf:"center",letterSpacing:2}}>R{(g?.round||0)+1}/{TOTAL_ROUNDS}</div>
+            <div className="c-score-box"><div className="c-score-val">{oppScore}</div><div className="c-score-lbl">{oppName}</div></div>
+          </div>
+          <button className="c-btn-c" onClick={()=>window.location.href="/challenge"}>← Back to Lobby</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// ANSWER SCREEN — opponent answers the verse
+// ══════════════════════════════════════════════════════════════
+function Answer({ user, game, role, onDone }) {
   const [opts,   setOpts]   = useState([]);
   const [sel,    setSel]    = useState(null);
   const [tLeft,  setTLeft]  = useState(TIME_LIMIT);
   const [locked, setLocked] = useState(false);
   const [slam,   setSlam]   = useState(false);
   const doneRef = useRef(false);
-  const tmr     = useRef(null);
-  const v   = game?.verse || VERSES[0];
-  const pts = game?.pts   || 5;
-  const lv  = LEVELS.find(l=>l.pts===pts) || LEVELS[0];
+  const tmrRef  = useRef(null);
 
-  useEffect(()=>{
-    setOpts(buildOptions(v)); doneRef.current=false;
+  const v    = game?.pending_verse   || VERSES[0];
+  const pts  = game?.pending_pts     || 5;
+  const lv   = LEVELS.find(l=>l.pts===pts) || LEVELS[0];
+  const myScore  = role === "challenger" ? game?.challenger_score||0 : game?.answerer_score||0;
+  const oppScore = role === "challenger" ? game?.answerer_score||0   : game?.challenger_score||0;
+  const oppName  = role === "challenger" ? game?.answerer_name       : game?.challenger_name;
+
+  useEffect(() => {
+    // Use pre-built options from game session (same options challenger saw)
+    if (game?.pending_options?.length === 4) {
+      setOpts(game.pending_options);
+    } else {
+      setOpts(buildOptions(v));
+    }
+    doneRef.current = false;
     setSel(null); setLocked(false); setTLeft(TIME_LIMIT); setSlam(false);
-  },[game?.round]);
+  }, [game?.id]);
 
-  useEffect(()=>{
-    tmr.current=setInterval(()=>setTLeft(t=>{
-      if(t<=1){clearInterval(tmr.current);if(!doneRef.current)submit(null);return 0;}
-      return t-1;
-    }),1000);
-    return()=>clearInterval(tmr.current);
-  },[]);
+  useEffect(() => {
+    tmrRef.current = setInterval(() => setTLeft(t => {
+      if (t <= 1) { clearInterval(tmrRef.current); if (!doneRef.current) submit(null); return 0; }
+      return t - 1;
+    }), 1000);
+    return () => clearInterval(tmrRef.current);
+  }, []);
 
-  function submit(opt){
-    if(doneRef.current)return;
-    doneRef.current=true; clearInterval(tmr.current);
+  async function submit(opt) {
+    if (doneRef.current) return;
+    doneRef.current = true;
+    clearInterval(tmrRef.current);
     setSel(opt); setLocked(true);
-    if(opt?.isCorrect) setSlam(true);
-    else onDone({correct:false,pts:0});
+    const correct = !!opt?.isCorrect;
+    if (correct) setSlam(true);
+    else await commitResult(correct, 0);
   }
 
-  const pct=tLeft/TIME_LIMIT*100;
-  const tc=tLeft>10?C.teal:tLeft>5?C.gold:C.red;
+  async function commitResult(correct, earnedPts) {
+    const newRound = (game.round || 0) + 1;
+    const isGameOver = newRound >= TOTAL_ROUNDS;
+
+    // Update my score
+    const myNewScore = myScore + earnedPts;
+    const updateData = {
+      round:        newRound,
+      last_correct: correct,
+      last_pts_awarded: earnedPts,
+      progress:     [...(game.progress||[]), { round: game.round, correct, pts: earnedPts }],
+    };
+
+    if (role === "challenger") {
+      updateData.challenger_score = myNewScore;
+    } else {
+      updateData.answerer_score = myNewScore;
+    }
+
+    if (isGameOver) {
+      const challengerFinal = role === "challenger" ? myNewScore : (game.challenger_score||0);
+      const answererFinal   = role === "answerer"   ? myNewScore : (game.answerer_score||0);
+      updateData.status     = "complete";
+      updateData.winner_id  = challengerFinal >= answererFinal ? game.challenger_id : game.answerer_id;
+      updateData.winner_name = challengerFinal >= answererFinal ? game.challenger_name : game.answerer_name;
+    } else {
+      // Alternate who picks next level
+      const nextPicker = role === "challenger" ? game.answerer_id : game.challenger_id;
+      updateData.status       = "pick_level";
+      updateData.current_turn = nextPicker;
+    }
+
+    try {
+      const updated = await B44.update("GameSession", game.id, updateData);
+      // SMS the OTHER player it's their turn
+      if (!isGameOver) {
+        const myName    = user?.displayName || user?.email?.split("@")[0];
+        const oppId     = role === "challenger" ? game.answerer_id : game.challenger_id;
+        const oppProfile = await B44.list("PlayerProfile", { id: oppId }).then(r=>r[0]).catch(()=>null);
+        if (oppProfile?.phone && oppProfile?.sms_enabled) {
+          await sendSMS(oppProfile.phone, `⚔️ ${myName} answered! Your turn to pick a verse.`, game.id);
+        }
+      }
+      onDone({ correct, pts: earnedPts, game: updated });
+    } catch (e) {
+      console.error("commitResult error:", e);
+      onDone({ correct, pts: earnedPts, game });
+    }
+  }
+
+  const pct = tLeft / TIME_LIMIT * 100;
+  const tc  = tLeft > 10 ? C.teal : tLeft > 5 ? C.gold : C.red;
 
   return (
     <div className="c-screen">
       <Bg/>
       <Hdr user={user}/>
-      <Slam active={slam} pts={pts} onDone={()=>onDone({correct:true,pts})}/>
+      <Slam active={slam} pts={pts} onDone={()=>commitResult(true, pts)}/>
       <div className="c-scroll"><div className="c-pad">
         <div className="c-score-row">
-          <div className="c-score-box"><div className="c-score-val">{game?.myScore||0}</div><div className="c-score-lbl">You</div></div>
+          <div className="c-score-box"><div className="c-score-val">{myScore}</div><div className="c-score-lbl">You</div></div>
           <div style={{fontSize:10,color:C.goldDim,letterSpacing:2,textAlign:"center"}}>Round {(game?.round||0)+1}/{TOTAL_ROUNDS}</div>
-          <div className="c-score-box"><div className="c-score-val">{game?.oppScore||0}</div><div className="c-score-lbl">Opp</div></div>
+          <div className="c-score-box"><div className="c-score-val">{oppScore}</div><div className="c-score-lbl">{oppName}</div></div>
         </div>
         <div className="c-tbar"><div className="c-tfill" style={{width:`${pct}%`,background:tc}}/></div>
         <div className="c-pips">
-          {Array.from({length:TOTAL_ROUNDS}).map((_,i)=>(
-            <div key={i} className={`c-pip${i<(game?.round||0)?" done":i===(game?.round||0)?" now":""}`}/>
-          ))}
+          {Array.from({length:TOTAL_ROUNDS}).map((_,i) => {
+            const p = game?.progress?.[i];
+            let cls = "c-pip";
+            if (p)              cls += p.correct ? " win" : " loss";
+            else if (i === (game?.round||0)) cls += " now";
+            return <div key={i} className={cls}/>;
+          })}
         </div>
         <div className="c-vcard">
+          <div style={{fontSize:10,color:lv.color,letterSpacing:2,marginBottom:8}}>{lv.icon} {lv.name} · {pts} pts</div>
           <div className="c-vtxt">"{v.text}"</div>
           <div className="c-vq">Where is this verse found?</div>
-          <div style={{fontSize:10,color:lv.color,letterSpacing:2,marginTop:6}}>{lv.icon} {lv.name} · {pts} pts</div>
         </div>
         <div className="c-opts">
-          {opts.map((opt,i)=>{
-            let cls="c-opt";
-            if(locked&&opt===sel) cls+=opt.isCorrect?" correct":" wrong";
-            if(locked&&opt.isCorrect&&sel&&!sel.isCorrect) cls+=" correct";
+          {opts.map((opt,i) => {
+            let cls = "c-opt";
+            if (locked && opt === sel)                       cls += opt.isCorrect ? " correct" : " wrong";
+            if (locked && opt.isCorrect && sel && !sel.isCorrect) cls += " correct";
             return (
-              <div key={i} className={cls} onClick={()=>!locked&&submit(opt)}>
+              <div key={i} className={cls} onClick={()=>!locked && submit(opt)}>
                 <div className="c-opt-ltr">{LETTERS[i]}</div>
                 <div className="c-opt-txt">{opt.book} {opt.chapter}:{opt.verse}</div>
               </div>
@@ -561,12 +886,63 @@ function Answer({ user, game, onDone }) {
   );
 }
 
-// ── GAME OVER ──
-function GameOver({ myScore, oppScore, onRematch, onHome }) {
-  const won = myScore >= oppScore;
+// ══════════════════════════════════════════════════════════════
+// ROUND RESULT — brief screen between rounds
+// ══════════════════════════════════════════════════════════════
+function RoundResult({ correct, pts, game, role, onNext }) {
+  const myScore  = role === "challenger" ? game?.challenger_score||0 : game?.answerer_score||0;
+  const oppScore = role === "challenger" ? game?.answerer_score||0   : game?.challenger_score||0;
+  const oppName  = role === "challenger" ? game?.answerer_name       : game?.challenger_name;
+
   return (
     <div className="c-screen">
-      <Bg char={won?CHAR_VICTORY:CHAR_KNIGHT}/>
+      <Bg/>
+      <div style={{position:"absolute",inset:0,zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}}>
+        <div className="c-card" style={{textAlign:"center",width:"100%",maxWidth:400}}>
+          <div className="c-curl"/>
+          <div style={{fontSize:48,marginBottom:8}}>{correct?"✅":"❌"}</div>
+          <h1 className="c-h1" style={{fontSize:18}}>{correct?`+${pts} Points!`:"Miss"}</h1>
+          <p className="c-sub">{correct?"Correct! The Word is in you.":"Study and return stronger."}</p>
+          <div style={{display:"flex",justifyContent:"space-around",margin:"20px 0 24px",borderTop:"1px solid rgba(245,200,66,0.1)",paddingTop:16}}>
+            <div className="c-score-box"><div className="c-score-val">{myScore}</div><div className="c-score-lbl">You</div></div>
+            <div className="c-score-box"><div className="c-score-val">{oppScore}</div><div className="c-score-lbl">{oppName}</div></div>
+          </div>
+          <button className="c-btn-a" onClick={onNext}>Continue ▶</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// GAME OVER
+// ══════════════════════════════════════════════════════════════
+function GameOver({ user, game, role, onHome }) {
+  const myScore  = role === "challenger" ? game?.challenger_score||0 : game?.answerer_score||0;
+  const oppScore = role === "challenger" ? game?.answerer_score||0   : game?.challenger_score||0;
+  const won      = myScore >= oppScore;
+
+  // Update profile stats
+  useEffect(() => {
+    async function updateStats() {
+      try {
+        const profiles = await B44.list("PlayerProfile", { email: user.email });
+        const p = profiles[0];
+        if (p) {
+          await B44.update("PlayerProfile", p.id, {
+            total_score:  (p.total_score  || 0) + myScore,
+            games_played: (p.games_played || 0) + 1,
+            games_won:    (p.games_won    || 0) + (won ? 1 : 0),
+          });
+        }
+      } catch {}
+    }
+    updateStats();
+  }, []);
+
+  return (
+    <div className="c-screen">
+      <Bg char={won ? CHAR_VICTORY : CHAR_KNIGHT}/>
       <div style={{position:"absolute",inset:0,zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}}>
         <div className="c-card" style={{textAlign:"center",width:"100%",maxWidth:400}}>
           <div className="c-curl"/>
@@ -577,8 +953,7 @@ function GameOver({ myScore, oppScore, onRematch, onHome }) {
             <div className="c-score-box"><div className="c-score-val" style={{color:won?C.goldLight:C.offWhite}}>{myScore}</div><div className="c-score-lbl">Your Score</div></div>
             <div className="c-score-box"><div className="c-score-val">{oppScore}</div><div className="c-score-lbl">Opponent</div></div>
           </div>
-          <button className="c-btn-a" onClick={onRematch}>⚔️ Play Again</button>
-          <button className="c-btn-c" onClick={onHome} style={{marginTop:8}}>← Back to Home</button>
+          <button className="c-btn-a" onClick={onHome}>⚔️ Back to Arena</button>
         </div>
       </div>
     </div>
@@ -586,15 +961,17 @@ function GameOver({ myScore, oppScore, onRematch, onHome }) {
 }
 
 // ══════════════════════════════════════════════════════════════
-// ROOT
+// ROOT CONTROLLER
 // ══════════════════════════════════════════════════════════════
 export default function Challenge() {
   const [user,    setUser]    = useState(null);
   const [profile, setProfile] = useState(null);
   const [screen,  setScreen]  = useState("auth");
   const [game,    setGame]    = useState(null);
+  const [role,    setRole]    = useState(null);   // "challenger" | "answerer"
+  const [lastResult, setLastResult] = useState(null);
 
-  useEffect(()=>{
+  useEffect(() => {
     const el = document.getElementById("wb-ch-s");
     if (!el) {
       const s = document.createElement("style");
@@ -602,47 +979,94 @@ export default function Challenge() {
       s.textContent = S;
       document.head.appendChild(s);
     }
-  },[]);
+  }, []);
 
-  function onIn(u, p) { setUser(u); setProfile(p); setScreen("lobby"); }
+  // URL-based deep link: /challenge?game=<id>
+  useEffect(() => {
+    if (!user) return;
+    const params = new URLSearchParams(window.location.search);
+    const gid    = params.get("game");
+    if (gid) resumeGameById(gid);
+  }, [user]);
+
+  async function resumeGameById(gid) {
+    try {
+      const g = await B44.get("GameSession", gid);
+      const isChallenger = g.challenger_id === (profile?.id || user?.email);
+      setGame(g);
+      setRole(isChallenger ? "challenger" : "answerer");
+      routeGame(g, isChallenger ? "challenger" : "answerer");
+    } catch {}
+  }
+
+  function routeGame(g, r) {
+    if (!g) return setScreen("lobby");
+    if (g.status === "complete")             return setScreen("gameover");
+    const myId = profile?.id || user?.email;
+    const isMyTurn = g.current_turn === myId;
+    if (g.status === "pick_level"          && isMyTurn) return setScreen("level");
+    if (g.status === "waiting_for_answer"  && isMyTurn) return setScreen("answer");
+    return setScreen("waiting");
+  }
+
+  function onIn(u, p) {
+    setUser(u); setProfile(p); setScreen("lobby");
+  }
 
   function onOut() {
     LocalAuth.signOut();
-    setUser(null); setProfile(null); setGame(null); setScreen("auth");
+    setUser(null); setProfile(null); setGame(null); setRole(null); setScreen("auth");
   }
 
-  function startGame() {
-    setGame({round:0, myScore:0, oppScore:0, verse:rndVerse(), pts:5});
+  function onChallenge(g, r) {
+    setGame(g); setRole(r);
+    // Challenger just created — it's their turn to pick level
     setScreen("level");
   }
 
-  function onPick(lv) {
-    setGame(g => ({...g, pts:lv.pts, verse:rndVerse()}));
-    setScreen("answer");
+  function onResumeGame(g, r) {
+    setGame(g); setRole(r);
+    routeGame(g, r);
   }
 
-  function onDone({correct, pts}) {
-    setGame(g => {
-      const score = (g.myScore||0) + (correct ? pts : 0);
-      const round = (g.round||0) + 1;
-      if (round >= TOTAL_ROUNDS) {
-        const updated = LocalProfile.update(user.email, {score, won: score > (g.oppScore||0)});
-        setProfile(updated);
-        setTimeout(() => setScreen("gameover"), 50);
-        return {...g, myScore:score, round};
-      }
-      setTimeout(() => setScreen("level"), 50);
-      return {...g, myScore:score, round, verse:rndVerse()};
-    });
+  function onLevelPicked(lv, verse, options) {
+    // After challenger picks level, go to waiting screen until opponent answers
+    setGame(g => ({...g, pending_pts:lv.pts, pending_icon:lv.icon, pending_name:lv.name, pending_verse:verse, pending_options:options, status:"waiting_for_answer"}));
+    setScreen("waiting");
+  }
+
+  function onWaitingUpdate(updated) {
+    setGame(updated);
+    const myId = profile?.id || user?.email;
+    if (updated.status === "complete") { setScreen("gameover"); return; }
+    if (updated.current_turn === myId) {
+      if (updated.status === "pick_level")         setScreen("level");
+      if (updated.status === "waiting_for_answer") setScreen("answer");
+    }
+  }
+
+  function onAnswered({ correct, pts, game: updated }) {
+    setGame(updated);
+    setLastResult({ correct, pts });
+    setScreen("result");
+  }
+
+  function onResultNext() {
+    if (!game) return setScreen("lobby");
+    if (game.status === "complete") return setScreen("gameover");
+    // Now it's the other player's turn — go to waiting
+    setScreen("waiting");
   }
 
   return (
     <>
-      {screen==="auth"     && <Auth onIn={onIn}/>}
-      {screen==="lobby"    && <Lobby user={user} profile={profile} onStart={startGame} onOut={onOut}/>}
-      {screen==="level"    && <SelectLevel user={user} onPick={onPick} onBack={()=>setScreen("lobby")}/>}
-      {screen==="answer"   && <Answer user={user} game={game} onDone={onDone}/>}
-      {screen==="gameover" && <GameOver myScore={game?.myScore||0} oppScore={game?.oppScore||0} onRematch={startGame} onHome={()=>window.location.href="/"}/>}
+      {screen==="auth"    && <Auth onIn={onIn}/>}
+      {screen==="lobby"   && <Lobby user={user} profile={profile} onChallenge={onChallenge} onResumeGame={onResumeGame} onOut={onOut}/>}
+      {screen==="level"   && <SelectLevel user={user} game={game} role={role} onPick={onLevelPicked}/>}
+      {screen==="waiting" && <Waiting user={user} game={game} role={role} onUpdate={onWaitingUpdate}/>}
+      {screen==="answer"  && <Answer user={user} game={game} role={role} onDone={onAnswered}/>}
+      {screen==="result"  && <RoundResult correct={lastResult?.correct} pts={lastResult?.pts} game={game} role={role} onNext={onResultNext}/>}
+      {screen==="gameover"&& <GameOver user={user} game={game} role={role} onHome={()=>setScreen("lobby")}/>}
     </>
   );
 }
