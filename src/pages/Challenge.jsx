@@ -333,6 +333,10 @@ function Auth({ onIn }) {
   }, []);
 
   async function loadAndEnter(u) {
+    // Always let the user in immediately with local data
+    const localProfile = { email: u.email, display_name: u.displayName || u.email.split("@")[0], total_score:0, games_played:0, games_won:0 };
+    onIn(u, localProfile);
+    // Sync with B44 in background — failure is silent
     try {
       let profiles = await B44.list("PlayerProfile", { email: u.email });
       let profile  = profiles[0];
@@ -342,10 +346,9 @@ function Auth({ onIn }) {
           total_score: 0, games_played: 0, games_won: 0,
         });
       }
-      onIn(u, profile);
+      // Profile loaded — update silently (lobby will reflect it on next render)
     } catch (e) {
-      // If B44 fails, still let them in with local profile
-      onIn(u, { email: u.email, display_name: u.displayName, total_score:0, games_played:0, games_won:0 });
+      console.warn("[B44] Profile sync failed (offline/auth):", e.message);
     }
   }
 
@@ -358,14 +361,24 @@ function Auth({ onIn }) {
     if (pass.length < 6) return setErr("Password must be at least 6 characters.");
     setErr(""); setBusy(true);
     try {
+      // Local account creation — this is the source of truth
       const user = LocalAuth.create(email.trim(), pass, name.trim());
-      const profile = await B44.create("PlayerProfile", {
+      const localProfile = {
         email: user.email, display_name: name.trim(),
         phone: phone.trim() || "", sms_enabled: !!phone.trim(),
         total_score: 0, games_played: 0, games_won: 0,
-      });
-      onIn(user, profile);
-    } catch (e2) { setErr(parseError(e2)); setBusy(false); }
+      };
+      // Let user in immediately
+      onIn(user, localProfile);
+      // Sync to B44 in background — 403 or failure won't block the user
+      B44.create("PlayerProfile", localProfile).catch(e =>
+        console.warn("[B44] Profile create failed (will retry later):", e.message)
+      );
+    } catch (e2) {
+      // Only show error if LOCAL auth failed (e.g. account already exists)
+      setErr(parseError(e2));
+      setBusy(false);
+    }
   }
 
   async function doSignIn(e) {
