@@ -1,10 +1,11 @@
 import { useState, useEffect, useRef } from "react";
-import { PlayerProfile } from "@/api/entities";
 
 // ══════════════════════════════════════════════════════════════
-// WhamBible — Challenge.jsx v7.0
-// Auth: base44.auth.* — official Base44 SDK auth methods only
-// No @/api/auth imports. No session polling. No loops.
+// WhamBible — Challenge.jsx v9.0  (Netlify-compatible)
+// ZERO @/api/* imports. ZERO Firebase. ZERO Base44 SDK.
+// Auth  → localStorage session (email/password stored locally)
+// Profile → localStorage (total_score, games_played, games_won)
+// This file is 100% self-contained — builds clean on Netlify.
 // ══════════════════════════════════════════════════════════════
 
 const LANDSCAPE_BG  = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/33b065c94_generated_image.png";
@@ -28,6 +29,8 @@ const C = {
 const TOTAL_ROUNDS = 10;
 const TIME_LIMIT   = 20;
 const LETTERS      = ["A","B","C","D"];
+const PROFILE_KEY  = "wb_player_profile";
+const SESSION_KEY  = "wb_session";
 
 const ALL_BOOKS = [
   "Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges","Ruth",
@@ -61,6 +64,7 @@ const VERSES = [
   { book:"John",        chapter:14, verse:6,  text:"Jesus answered, I am the way and the truth and the life. No one comes to the Father except through me." },
 ];
 
+// ── Utilities ──
 function shuffle(a) { return [...a].sort(() => Math.random() - 0.5); }
 function rndVerse() { return VERSES[Math.floor(Math.random() * VERSES.length)]; }
 
@@ -86,49 +90,86 @@ function rankBadge(score) {
 }
 
 function parseError(e) {
-  const msg = e?.message || e?.error_description || e?.detail || String(e || "");
-  if (/invalid.*(email|credential|password)|wrong password|incorrect/i.test(msg)) return "Incorrect email or password.";
-  if (/user.*not.*found|no.*user|not found/i.test(msg))   return "No account found. Try signing up.";
-  if (/email.*already|already.*use|already.*exist/i.test(msg)) return "An account with this email already exists. Sign in instead.";
-  if (/weak.*password|password.*short|too short/i.test(msg)) return "Password must be at least 6 characters.";
-  if (/network|fetch|connect|timeout/i.test(msg))        return "Network error. Check your connection and try again.";
-  if (/popup.*closed|cancelled|cancel/i.test(msg))       return "Sign-in was cancelled.";
-  if (/invalid.*email|email.*invalid/i.test(msg))        return "Please enter a valid email address.";
+  const msg = e?.message || String(e || "");
+  if (/password/i.test(msg))    return "Incorrect email or password.";
+  if (/not found|no user/i.test(msg)) return "No account found. Try creating one.";
+  if (/already exist/i.test(msg)) return "Account already exists. Sign in instead.";
+  if (/email/i.test(msg))       return "Please enter a valid email address.";
+  if (/network|fetch/i.test(msg)) return "Network error. Check your connection.";
   return msg || "Something went wrong. Please try again.";
 }
 
-async function getOrCreateProfile(user) {
-  try {
-    const rows = await PlayerProfile.filter({ email: user.email });
-    if (rows && rows.length > 0) return rows[0];
-    return await PlayerProfile.create({
-      email:        user.email,
-      display_name: user.full_name || user.email?.split("@")[0] || "Warrior",
-      total_score:  0,
-      games_played: 0,
-      games_won:    0,
-    });
-  } catch {
-    return {
-      email:        user.email,
-      display_name: user.full_name || user.email?.split("@")[0] || "Warrior",
-      total_score: 0, games_played: 0, games_won: 0,
-    };
-  }
-}
+// ── Local Auth (self-contained, no SDK) ──
+const LocalAuth = {
+  _key: "wb_accounts",
 
-async function saveStats(profile, delta) {
-  try {
-    if (profile?.id) {
-      return await PlayerProfile.update(profile.id, {
-        total_score:  (profile.total_score  || 0) + (delta.score || 0),
-        games_played: (profile.games_played || 0) + 1,
-        games_won:    (profile.games_won    || 0) + (delta.won ? 1 : 0),
-      });
+  _accounts() {
+    try { return JSON.parse(localStorage.getItem(this._key) || "{}"); } catch { return {}; }
+  },
+
+  _save(accounts) {
+    localStorage.setItem(this._key, JSON.stringify(accounts));
+  },
+
+  create(email, password, displayName) {
+    const accounts = this._accounts();
+    const key = email.toLowerCase().trim();
+    if (accounts[key]) throw new Error("Account already exists. Sign in instead.");
+    const user = { email: key, displayName: displayName || key.split("@")[0], createdAt: Date.now() };
+    accounts[key] = { ...user, password };
+    this._save(accounts);
+    localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+    return user;
+  },
+
+  signIn(email, password) {
+    const accounts = this._accounts();
+    const key = email.toLowerCase().trim();
+    const account = accounts[key];
+    if (!account) throw new Error("No account found for this email.");
+    if (account.password !== password) throw new Error("Incorrect password.");
+    const user = { email: account.email, displayName: account.displayName };
+    localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+    return user;
+  },
+
+  currentUser() {
+    try { return JSON.parse(localStorage.getItem(SESSION_KEY) || "null"); } catch { return null; }
+  },
+
+  signOut() {
+    localStorage.removeItem(SESSION_KEY);
+  },
+};
+
+// ── Local Profile (localStorage) ──
+const LocalProfile = {
+  get(email) {
+    try {
+      const all = JSON.parse(localStorage.getItem(PROFILE_KEY) || "{}");
+      return all[email] || { email, display_name: email.split("@")[0], total_score:0, games_played:0, games_won:0 };
+    } catch {
+      return { email, display_name: email.split("@")[0], total_score:0, games_played:0, games_won:0 };
     }
-  } catch {}
-  return profile;
-}
+  },
+  save(profile) {
+    try {
+      const all = JSON.parse(localStorage.getItem(PROFILE_KEY) || "{}");
+      all[profile.email] = profile;
+      localStorage.setItem(PROFILE_KEY, JSON.stringify(all));
+    } catch {}
+    return profile;
+  },
+  update(email, delta) {
+    const p = this.get(email);
+    return this.save({
+      ...p,
+      total_score:  (p.total_score  || 0) + (delta.score || 0),
+      games_played: (p.games_played || 0) + 1,
+      games_won:    (p.games_won    || 0) + (delta.won ? 1 : 0),
+    });
+  },
+};
 
 // ── Styles ──
 const S = `
@@ -173,7 +214,7 @@ html,body,#root{height:100%;margin:0;padding:0;overflow:hidden;}
 .c-score-lbl{font-size:9px;color:rgba(212,146,26,0.6);letter-spacing:2px;}
 .c-pips{display:flex;justify-content:center;gap:5px;margin-bottom:16px;flex-wrap:wrap;}
 .c-pip{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.15);}
-.c-pip.done{background:#1E7A8C;} .c-pip.now{background:#F5C842;}
+.c-pip.done{background:#1E7A8C;}.c-pip.now{background:#F5C842;}
 .c-tbar{height:4px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;margin-bottom:16px;}
 .c-tfill{height:100%;border-radius:2px;transition:width 1s linear,background .5s;}
 .c-vcard{background:rgba(26,58,92,0.38);border:1px solid rgba(245,200,66,0.13);border-radius:14px;padding:18px 16px;margin-bottom:16px;text-align:center;}
@@ -194,6 +235,7 @@ html,body,#root{height:100%;margin:0;padding:0;overflow:hidden;}
 .c-lv-pts{font-size:20px;font-weight:900;color:#F5C842;margin-left:auto;flex-shrink:0;}
 `;
 
+// ── Background layers ──
 function Bg({ char }) {
   return (
     <>
@@ -205,20 +247,21 @@ function Bg({ char }) {
 }
 
 function Hdr({ user, onOut }) {
-  const init = user ? (user.full_name || user.email || "W")[0].toUpperCase() : null;
+  const init = user ? (user.displayName || user.email || "W")[0].toUpperCase() : null;
   return (
     <div className="c-hdr">
       <div className="c-logo">⚔️ WHAM</div>
       {user && (
         <div className="c-pill" onClick={onOut}>
           <div className="c-av">{init}</div>
-          <div className="c-un">{user.full_name || user.email?.split("@")[0]}</div>
+          <div className="c-un">{user.displayName || user.email?.split("@")[0]}</div>
         </div>
       )}
     </div>
   );
 }
 
+// ── WHAM SLAM ──
 function Slam({ active, pts, onDone }) {
   const [ph, setPh] = useState(-1);
   useEffect(() => {
@@ -244,61 +287,51 @@ function Slam({ active, pts, onDone }) {
 }
 
 // ══════════════════════════════════════════════════════════════
-// AUTH — uses base44.auth.* directly (no @/api/auth imports)
+// AUTH — 100% local, no SDK, no Firebase
+// Accounts stored in localStorage. Session stored in localStorage.
 // ══════════════════════════════════════════════════════════════
 function Auth({ onIn }) {
-  const [mode, setMode] = useState("choice");
+  const [mode,  setMode]  = useState("choice");
   const [email, setEmail] = useState("");
   const [pass,  setPass]  = useState("");
   const [name,  setName]  = useState("");
   const [err,   setErr]   = useState("");
   const [busy,  setBusy]  = useState(false);
 
-  function reset() {
-    setMode("choice"); setEmail(""); setPass(""); setName(""); setErr(""); setBusy(false);
-  }
+  // Check for existing session on mount
+  useEffect(() => {
+    const existing = LocalAuth.currentUser();
+    if (existing) {
+      const profile = LocalProfile.get(existing.email);
+      onIn(existing, profile);
+    }
+  }, []);
 
-  async function doCreate(e) {
+  function reset() { setMode("choice"); setEmail(""); setPass(""); setName(""); setErr(""); setBusy(false); }
+
+  function doCreate(e) {
     e.preventDefault();
     if (!name.trim())    return setErr("Display name is required.");
     if (!email.trim())   return setErr("Email is required.");
     if (pass.length < 6) return setErr("Password must be at least 6 characters.");
     setErr(""); setBusy(true);
     try {
-      const user = await base44.auth.createUser({ email: email.trim(), password: pass, full_name: name.trim() });
-      const profile = await getOrCreateProfile(user);
+      const user = LocalAuth.create(email.trim(), pass, name.trim());
+      const profile = LocalProfile.get(user.email);
       onIn(user, profile);
-    } catch (e) {
-      setErr(parseError(e));
-      setBusy(false);
-    }
+    } catch (e) { setErr(parseError(e)); setBusy(false); }
   }
 
-  async function doSignIn(e) {
+  function doSignIn(e) {
     e.preventDefault();
     if (!email.trim()) return setErr("Email is required.");
     if (!pass.trim())  return setErr("Password is required.");
     setErr(""); setBusy(true);
     try {
-      const user = await base44.auth.loginViaEmailPassword(email.trim(), pass);
-      const profile = await getOrCreateProfile(user);
+      const user = LocalAuth.signIn(email.trim(), pass);
+      const profile = LocalProfile.get(user.email);
       onIn(user, profile);
-    } catch (e) {
-      setErr(parseError(e));
-      setBusy(false);
-    }
-  }
-
-  async function doGoogle() {
-    setErr(""); setBusy(true);
-    try {
-      const user = await base44.auth.loginWithProvider("google");
-      const profile = await getOrCreateProfile(user);
-      onIn(user, profile);
-    } catch (e) {
-      setErr(parseError(e));
-      setBusy(false);
-    }
+    } catch (e) { setErr(parseError(e)); setBusy(false); }
   }
 
   return (
@@ -350,13 +383,10 @@ function Auth({ onIn }) {
               <input className="c-inp" type="password" autoComplete="new-password" placeholder="6+ characters"
                 value={pass} onChange={e=>{setPass(e.target.value);setErr("");}} disabled={busy}/>
               {err ? <div className="c-err">⚠️ {err}</div> : <div className="c-err"/>}
-              {busy && <div className="c-spin"/>}
               <button className="c-btn-a" type="submit" disabled={busy}>
                 {busy ? "Creating…" : "🕊️ Create Account — Free"}
               </button>
             </form>
-            <div className="c-div"><div className="c-div-line"/><div className="c-div-txt">OR</div><div className="c-div-line"/></div>
-            <button className="c-btn-c" onClick={doGoogle} disabled={busy}>🌐 Continue with Google</button>
             <a className="c-back" onClick={reset}>← Back</a>
           </div>
         )}
@@ -377,13 +407,10 @@ function Auth({ onIn }) {
               <input className="c-inp" type="password" autoComplete="current-password" placeholder="••••••••"
                 value={pass} onChange={e=>{setPass(e.target.value);setErr("");}} disabled={busy}/>
               {err ? <div className="c-err">⚠️ {err}</div> : <div className="c-err"/>}
-              {busy && <div className="c-spin"/>}
               <button className="c-btn-a" type="submit" disabled={busy}>
                 {busy ? "Signing In…" : "🔐 Enter the Arena"}
               </button>
             </form>
-            <div className="c-div"><div className="c-div-line"/><div className="c-div-txt">OR</div><div className="c-div-line"/></div>
-            <button className="c-btn-c" onClick={doGoogle} disabled={busy}>🌐 Continue with Google</button>
             <a className="c-back" onClick={reset}>← Back</a>
           </div>
         )}
@@ -396,7 +423,7 @@ function Auth({ onIn }) {
 // ── LOBBY ──
 function Lobby({ user, profile, onStart, onOut }) {
   const rank = rankBadge(profile?.total_score || 0);
-  const name = profile?.display_name || user?.full_name || user?.email?.split("@")[0] || "Warrior";
+  const name = profile?.display_name || user?.displayName || user?.email?.split("@")[0] || "Warrior";
   return (
     <div className="c-screen">
       <Bg char={CHAR_KNIGHT}/>
@@ -445,10 +472,7 @@ function SelectLevel({ user, onPick, onBack }) {
               style={{borderColor:lv.featured?lv.color:"rgba(245,200,66,0.12)",background:lv.featured?"rgba(30,122,140,0.18)":"rgba(13,31,53,0.4)"}}
               onClick={()=>onPick(lv)}>
               <div className="c-lv-icon">{lv.icon}</div>
-              <div>
-                <div className="c-lv-name">{lv.name}</div>
-                <div className="c-lv-sub">{lv.sub}</div>
-              </div>
+              <div><div className="c-lv-name">{lv.name}</div><div className="c-lv-sub">{lv.sub}</div></div>
               <div className="c-lv-pts">{lv.pts}pt</div>
             </div>
           ))}
@@ -487,8 +511,7 @@ function Answer({ user, game, onDone }) {
 
   function submit(opt){
     if(doneRef.current)return;
-    doneRef.current=true;
-    clearInterval(tmr.current);
+    doneRef.current=true; clearInterval(tmr.current);
     setSel(opt); setLocked(true);
     if(opt?.isCorrect) setSlam(true);
     else onDone({correct:false,pts:0});
@@ -572,18 +595,19 @@ export default function Challenge() {
   const [game,    setGame]    = useState(null);
 
   useEffect(()=>{
-    if (!document.getElementById("wb-ch-s")) {
-      const el = document.createElement("style");
-      el.id = "wb-ch-s";
-      el.textContent = S;
-      document.head.appendChild(el);
+    const el = document.getElementById("wb-ch-s");
+    if (!el) {
+      const s = document.createElement("style");
+      s.id = "wb-ch-s";
+      s.textContent = S;
+      document.head.appendChild(s);
     }
   },[]);
 
   function onIn(u, p) { setUser(u); setProfile(p); setScreen("lobby"); }
 
-  async function onOut() {
-    try { await base44.auth.logout(); } catch {}
+  function onOut() {
+    LocalAuth.signOut();
     setUser(null); setProfile(null); setGame(null); setScreen("auth");
   }
 
@@ -602,7 +626,8 @@ export default function Challenge() {
       const score = (g.myScore||0) + (correct ? pts : 0);
       const round = (g.round||0) + 1;
       if (round >= TOTAL_ROUNDS) {
-        saveStats(profile, {score, won: score > (g.oppScore||0)}).then(p => setProfile(p));
+        const updated = LocalProfile.update(user.email, {score, won: score > (g.oppScore||0)});
+        setProfile(updated);
         setTimeout(() => setScreen("gameover"), 50);
         return {...g, myScore:score, round};
       }
