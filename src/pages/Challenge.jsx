@@ -8,7 +8,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 
 // ── Firebase config (injected via env at build; reads window.__ENV in preview) ──
 const FB_CONFIG = {
-  apiKey:            "AIzaSyAb5sxWjKHYkKHiou8CnXYrMweaS6P8rIE",
+  apiKey:            "%%FIREBASE_API_KEY_REMOVED%%",
   authDomain:        "wham-bible.firebaseapp.com",
   projectId:         "wham-bible",
   storageBucket:     "wham-bible.firebasestorage.app",
