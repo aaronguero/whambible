@@ -26,40 +26,34 @@ const WHAM_CHARS    = "https://media.base44.com/images/public/69df9a909b33058a5c
 const WHAM_TEXT_IMG = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/5e80bbcf2_generated_image.png";
 const WHAM_AUDIO    = "https://media.base44.com/videos/public/69c40c6701d9dfdb1df69d2b/5d143ab80_51a54c36d_wham-slam-voice1.webm";
 
-// ── Base44 API config ──
-const APP_ID    = "69df9a909b33058a5ce47831";
-const API_BASE  = `https://app.base44.com/api/apps/${APP_ID}/entities`;
-const API_HEADERS = { "Content-Type": "application/json" };
+// ── Base44 proxy helpers (all calls go through Netlify function — token stays server-side) ──
+const DB_URL = "/.netlify/functions/db";
 
-// ── Base44 REST helpers ──
 const B44 = {
+  async _call(payload) {
+    const r = await fetch(DB_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!r.ok) {
+      const err = await r.json().catch(() => ({ error: r.statusText }));
+      throw new Error(`B44 ${payload.action} ${payload.entity}: ${r.status} ${JSON.stringify(err)}`);
+    }
+    return r.json();
+  },
   async list(entity, query = {}) {
-    const params = Object.keys(query).length
-      ? "?" + new URLSearchParams({ json_query: JSON.stringify(query) })
-      : "";
-    const r = await fetch(`${API_BASE}/${entity}${params}`, { headers: API_HEADERS });
-    if (!r.ok) throw new Error(`B44 list ${entity}: ${r.status}`);
-    const d = await r.json();
+    const d = await this._call({ action: "list", entity, query: Object.keys(query).length ? query : undefined });
     return Array.isArray(d) ? d : (d.records || []);
   },
   async get(entity, id) {
-    const r = await fetch(`${API_BASE}/${entity}/${id}`, { headers: API_HEADERS });
-    if (!r.ok) throw new Error(`B44 get ${entity}/${id}: ${r.status}`);
-    return r.json();
+    return this._call({ action: "get", entity, id });
   },
   async create(entity, data) {
-    const r = await fetch(`${API_BASE}/${entity}`, {
-      method: "POST", headers: API_HEADERS, body: JSON.stringify(data),
-    });
-    if (!r.ok) throw new Error(`B44 create ${entity}: ${r.status}`);
-    return r.json();
+    return this._call({ action: "create", entity, data });
   },
   async update(entity, id, data) {
-    const r = await fetch(`${API_BASE}/${entity}/${id}`, {
-      method: "PUT", headers: API_HEADERS, body: JSON.stringify(data),
-    });
-    if (!r.ok) throw new Error(`B44 update ${entity}/${id}: ${r.status}`);
-    return r.json();
+    return this._call({ action: "update", entity, id, data });
   },
 };
 
