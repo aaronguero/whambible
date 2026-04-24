@@ -334,37 +334,83 @@ const MENU_CHARS = {
 // onClose: close handler
 // children: scroll panel content
 function MenuOverlay({ charKey, title, onClose, children }) {
-  // ── Draggable bottom-sheet state ──────────────────────────
-  // snapUp   = ~42% from top (content readable, scene visible above)
-  // snapDown = ~68% from top (scene fully revealed, handle peeking)
-  const SNAP_UP   = 0.38; // fraction of window height
-  const SNAP_DOWN = 0.65;
-  const [sheetTop, setSheetTop]   = useState(SNAP_UP);   // current position (fraction)
-  const [dragging, setDragging]   = useState(false);
-  const dragRef   = useRef(null);  // { startY, startFrac }
-  const sheetRef  = useRef(null);
+  // ── Constants ─────────────────────────────────────────────
+  const MARGIN      = 16;   // px gap on all sides when floating
+  const SNAP_UP     = 0.30; // top snap: 30% from top of screen
+  const SNAP_DOWN   = 0.60; // bottom snap: 60% from top (panel hovers mid-screen)
+  const LIMIT_TOP   = 0.18; // hard top limit (below title)
+  const LIMIT_BOT   = 0.72; // hard bottom limit
+  const MAX_H_FRAC  = 0.60; // panel never taller than 60% of screen height
+  const RUBBER      = 0.28; // resistance factor beyond limits (0=none, 1=full)
 
-  // Touch handlers
+  // ── State ─────────────────────────────────────────────────
+  const [snapPos,   setSnapPos]   = useState("down"); // "up" | "down"
+  const [rawTop,    setRawTop]    = useState(SNAP_DOWN);
+  const [dragging,  setDragging]  = useState(false);
+  const [bgScale,   setBgScale]   = useState(1.0);
+  const dragRef = useRef(null);
+
+  // Derived: displayed top (with rubber-band beyond limits)
+  const displayTop = (() => {
+    if (rawTop < LIMIT_TOP) {
+      const over = LIMIT_TOP - rawTop;
+      return LIMIT_TOP - over * RUBBER;
+    }
+    if (rawTop > LIMIT_BOT) {
+      const over = rawTop - LIMIT_BOT;
+      return LIMIT_BOT + over * RUBBER;
+    }
+    return rawTop;
+  })();
+
+  // Panel height = from displayTop to (screen - MARGIN), capped at MAX_H_FRAC
+  const winH      = window.innerHeight;
+  const topPx     = Math.round(displayTop * winH);
+  const maxHpx    = Math.round(MAX_H_FRAC * winH);
+  const panelH    = Math.min(winH - topPx - MARGIN, maxHpx);
+
+  // ── Helpers ───────────────────────────────────────────────
+  function applyRubberBg(frac) {
+    if (frac < LIMIT_TOP) {
+      const t = Math.min((LIMIT_TOP - frac) / 0.10, 1);
+      setBgScale(1 + t * 0.045);
+    } else if (frac > LIMIT_BOT) {
+      const t = Math.min((frac - LIMIT_BOT) / 0.10, 1);
+      setBgScale(1 + t * 0.045);
+    } else {
+      setBgScale(1.0);
+    }
+  }
+
+  function snapToPos(frac) {
+    const mid = (SNAP_UP + SNAP_DOWN) / 2;
+    const target = frac < mid ? SNAP_UP : SNAP_DOWN;
+    setRawTop(target);
+    setSnapPos(target === SNAP_UP ? "up" : "down");
+    setBgScale(1.0);
+  }
+
+  // ── Touch ─────────────────────────────────────────────────
   function onTouchStart(e) {
-    dragRef.current = { startY: e.touches[0].clientY, startFrac: sheetTop };
+    dragRef.current = { startY: e.touches[0].clientY, startFrac: rawTop };
     setDragging(true);
   }
   function onTouchMove(e) {
     if (!dragRef.current) return;
     const dy   = e.touches[0].clientY - dragRef.current.startY;
-    const frac = dragRef.current.startFrac + dy / window.innerHeight;
-    setSheetTop(Math.min(Math.max(frac, 0.12), 0.80));
+    const frac = dragRef.current.startFrac + dy / winH;
+    setRawTop(frac);
+    applyRubberBg(frac);
   }
   function onTouchEnd() {
     setDragging(false);
-    // Snap to nearest position
-    const mid = (SNAP_UP + SNAP_DOWN) / 2;
-    setSheetTop(sheetTop < mid ? SNAP_UP : SNAP_DOWN);
+    snapToPos(rawTop);
     dragRef.current = null;
   }
-  // Mouse handlers (desktop drag)
+
+  // ── Mouse ─────────────────────────────────────────────────
   function onMouseDown(e) {
-    dragRef.current = { startY: e.clientY, startFrac: sheetTop };
+    dragRef.current = { startY: e.clientY, startFrac: rawTop };
     setDragging(true);
     e.preventDefault();
   }
@@ -373,13 +419,13 @@ function MenuOverlay({ charKey, title, onClose, children }) {
     function onMouseMove(e) {
       if (!dragRef.current) return;
       const dy   = e.clientY - dragRef.current.startY;
-      const frac = dragRef.current.startFrac + dy / window.innerHeight;
-      setSheetTop(Math.min(Math.max(frac, 0.12), 0.80));
+      const frac = dragRef.current.startFrac + dy / winH;
+      setRawTop(frac);
+      applyRubberBg(frac);
     }
     function onMouseUp() {
       setDragging(false);
-      const mid = (SNAP_UP + SNAP_DOWN) / 2;
-      setSheetTop(prev => prev < mid ? SNAP_UP : SNAP_DOWN);
+      snapToPos(rawTop);
       dragRef.current = null;
     }
     window.addEventListener("mousemove", onMouseMove);
@@ -388,9 +434,20 @@ function MenuOverlay({ charKey, title, onClose, children }) {
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mouseup",   onMouseUp);
     };
-  }, [dragging]);
+  }, [dragging, rawTop]);
 
-  const sheetPx = Math.round(sheetTop * window.innerHeight);
+  // ── Expand / Collapse button ───────────────────────────────
+  function toggleSnap() {
+    const target = snapPos === "down" ? SNAP_UP : SNAP_DOWN;
+    setRawTop(target);
+    setSnapPos(snapPos === "down" ? "up" : "down");
+    setBgScale(1.0);
+  }
+
+  // ── Transition string ─────────────────────────────────────
+  const sheetTransition = dragging
+    ? "none"
+    : "top 0.36s cubic-bezier(.34,1.56,.64,1), height 0.36s cubic-bezier(.34,1.56,.64,1)";
 
   return (
     <div style={{
@@ -398,32 +455,40 @@ function MenuOverlay({ charKey, title, onClose, children }) {
       fontFamily:"'Cinzel',serif",
       overflow:"hidden",
     }}>
-      {/* ── Fixed scene layers (always visible behind sheet) ── */}
-      {/* Layer 1 — vivid landscape */}
+      {/* ── Scene layers — scale on rubber-band ── */}
       <div style={{
         position:"fixed",inset:0,zIndex:0,
-        backgroundImage:`url(${LANDSCAPE_VIVID})`,
-        backgroundSize:"cover",backgroundPosition:"center center",
-        backgroundRepeat:"no-repeat",
-      }}/>
-      {/* Layer 2 — character */}
+        transform:`scale(${bgScale})`,
+        transformOrigin:"center center",
+        transition: dragging ? "none" : "transform 0.36s cubic-bezier(.34,1.56,.64,1)",
+      }}>
+        {/* Layer 1 — vivid landscape */}
+        <div style={{
+          position:"absolute",inset:0,
+          backgroundImage:`url(${LANDSCAPE_VIVID})`,
+          backgroundSize:"cover",backgroundPosition:"center center",
+          backgroundRepeat:"no-repeat",
+        }}/>
+        {/* Layer 2 — character */}
+        <div style={{
+          position:"absolute",inset:0,
+          backgroundImage:`url(${MENU_CHARS[charKey]})`,
+          backgroundSize:"contain",
+          backgroundPosition:"center bottom",
+          backgroundRepeat:"no-repeat",
+          opacity:1.0,
+        }}/>
+      </div>
+
+      {/* Layer 3 — top vignette (not scaled) */}
       <div style={{
         position:"fixed",inset:0,zIndex:1,
-        backgroundImage:`url(${MENU_CHARS[charKey]})`,
-        backgroundSize:"contain",
-        backgroundPosition:"center bottom",
-        backgroundRepeat:"no-repeat",
-        opacity:1.0,
-      }}/>
-      {/* Layer 3 — very light top vignette */}
-      <div style={{
-        position:"fixed",inset:0,zIndex:2,
-        background:"linear-gradient(180deg,rgba(0,0,0,0.32) 0%,rgba(0,0,0,0.0) 30%)",
+        background:"linear-gradient(180deg,rgba(0,0,0,0.32) 0%,rgba(0,0,0,0.0) 28%)",
         pointerEvents:"none",
       }}/>
       {/* Layer 4 — gold rim */}
       <div style={{
-        position:"fixed",top:0,left:0,right:0,height:3,zIndex:3,
+        position:"fixed",top:0,left:0,right:0,height:3,zIndex:2,
         background:"linear-gradient(90deg,transparent,#F5C842,transparent)",
         pointerEvents:"none",
       }}/>
@@ -443,9 +508,9 @@ function MenuOverlay({ charKey, title, onClose, children }) {
         onMouseLeave={e=>e.currentTarget.style.background="rgba(212,146,26,0.22)"}
       >⚔️</button>
 
-      {/* ── Title (fixed, above sheet) ── */}
+      {/* ── Title ── */}
       <div style={{
-        position:"fixed",top:52,left:0,right:0,zIndex:5,
+        position:"fixed",top:52,left:0,right:0,zIndex:3,
         textAlign:"center",pointerEvents:"none",
       }}>
         <div style={{
@@ -459,21 +524,23 @@ function MenuOverlay({ charKey, title, onClose, children }) {
         }}/>
       </div>
 
-      {/* ── Draggable bottom sheet ── */}
-      <div
-        ref={sheetRef}
-        style={{
-          position:"fixed",
-          left:0,right:0,
-          top: sheetPx,
-          bottom:0,
-          zIndex:6,
-          transition: dragging ? "none" : "top 0.32s cubic-bezier(.4,0,.2,1)",
-          display:"flex",
-          flexDirection:"column",
-        }}
-      >
-        {/* Drag handle bar — touch target */}
+      {/* ── Floating draggable panel ── */}
+      <div style={{
+        position:"fixed",
+        left:MARGIN,
+        right:MARGIN,
+        top: topPx,
+        height: panelH,
+        zIndex:10,
+        borderRadius:18,
+        overflow:"hidden",
+        boxShadow:"0 8px 40px rgba(0,0,0,0.55), 0 0 0 1px rgba(245,200,66,0.18)",
+        display:"flex",
+        flexDirection:"column",
+        transition: sheetTransition,
+      }}>
+
+        {/* ── Handle bar + expand/collapse button ── */}
         <div
           onTouchStart={onTouchStart}
           onTouchMove={onTouchMove}
@@ -481,32 +548,53 @@ function MenuOverlay({ charKey, title, onClose, children }) {
           onMouseDown={onMouseDown}
           style={{
             flexShrink:0,
-            width:"100%",
-            paddingTop:10,paddingBottom:8,
             display:"flex",alignItems:"center",justifyContent:"center",
+            position:"relative",
+            paddingTop:10,paddingBottom:8,
+            background:"rgba(13,31,53,0.60)",
+            borderBottom:"1px solid rgba(245,200,66,0.15)",
             cursor:"grab",
-            background:"rgba(13,31,53,0.55)",
-            borderRadius:"18px 18px 0 0",
-            borderTop:"1px solid rgba(245,200,66,0.22)",
             userSelect:"none",
             touchAction:"none",
           }}
         >
+          {/* Gold pill handle */}
           <div style={{
             width:40,height:4,borderRadius:2,
-            background:"rgba(245,200,66,0.45)",
+            background:"rgba(245,200,66,0.50)",
           }}/>
+
+          {/* Expand / Collapse button — right side of handle bar */}
+          <button
+            onClick={e => { e.stopPropagation(); toggleSnap(); }}
+            onMouseDown={e => e.stopPropagation()}
+            onTouchStart={e => e.stopPropagation()}
+            style={{
+              position:"absolute",right:12,top:"50%",
+              transform:"translateY(-50%)",
+              background:"rgba(212,146,26,0.20)",
+              border:"1px solid rgba(245,200,66,0.35)",
+              borderRadius:8,
+              color:"#F5C842",
+              fontSize:16,
+              width:32,height:26,
+              display:"flex",alignItems:"center",justifyContent:"center",
+              cursor:"pointer",
+              transition:"background 0.15s, transform 0.3s",
+            }}
+            title={snapPos === "down" ? "Expand" : "Collapse"}
+          >
+            {snapPos === "down" ? "▲" : "▼"}
+          </button>
         </div>
 
-        {/* Scrollable content inside sheet */}
+        {/* ── Scrollable content ── */}
         <div style={{
           flex:1,
           overflowY:"auto",
           background:"rgba(13,31,53,0.50)",
-          backdropFilter:"blur(8px)",
-          WebkitBackdropFilter:"blur(8px)",
-          borderLeft:"1px solid rgba(245,200,66,0.12)",
-          borderRight:"1px solid rgba(245,200,66,0.12)",
+          backdropFilter:"blur(10px)",
+          WebkitBackdropFilter:"blur(10px)",
         }}>
           <div style={{
             maxWidth:440,margin:"0 auto",
