@@ -971,12 +971,28 @@ function GameOver({ user, game, role, onHome }) {
 // ROOT CONTROLLER
 // ══════════════════════════════════════════════════════════════
 export default function Challenge() {
-  const [user,    setUser]    = useState(null);
-  const [profile, setProfile] = useState(null);
-  const [screen,  setScreen]  = useState("auth");
+  // Check for existing session immediately — skip auth screen if already logged in
+  const _existingUser = LocalAuth.currentUser();
+  const _initProfile  = _existingUser
+    ? { email: _existingUser.email, display_name: _existingUser.displayName || _existingUser.email.split("@")[0], total_score:0, games_played:0, games_won:0 }
+    : null;
+
+  const [user,    setUser]    = useState(_existingUser);
+  const [profile, setProfile] = useState(_initProfile);
+  const [screen,  setScreen]  = useState(_existingUser ? "lobby" : "auth");
   const [game,    setGame]    = useState(null);
   const [role,    setRole]    = useState(null);   // "challenger" | "answerer"
   const [lastResult, setLastResult] = useState(null);
+
+  // Background B44 profile sync for returning users
+  useEffect(() => {
+    if (!_existingUser) return;
+    B44.list("PlayerProfile", { email: _existingUser.email })
+      .then(profiles => {
+        if (profiles[0]) setProfile(p => ({ ...p, ...profiles[0] }));
+      })
+      .catch(() => {}); // silent — local profile is fine
+  }, []);
 
   useEffect(() => {
     const el = document.getElementById("wb-ch-s");
