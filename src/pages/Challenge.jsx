@@ -277,6 +277,8 @@ html,body,#root{height:100%;margin:0;padding:0;overflow:hidden;}
 .c-err{color:#e74c3c;font-size:12px;text-align:center;margin:0 0 14px;letter-spacing:0.5px;line-height:1.6;min-height:18px;}
 .c-back{display:block;text-align:center;margin-top:14px;font-size:11px;color:rgba(244,240,232,0.3);letter-spacing:1.5px;cursor:pointer;padding:8px;}
 .c-back:hover{color:rgba(244,240,232,0.55);}
+.c-auth-center{position:absolute;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:80px 16px 40px;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+.c-auth-center .c-card{width:100%;max-width:420px;flex-shrink:0;}
 .c-spin{width:32px;height:32px;border:3px solid rgba(245,200,66,0.15);border-top-color:#F5C842;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .c-score-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
@@ -1732,7 +1734,7 @@ function Auth({ onIn }) {
     <div className="c-screen">
       <Bg char={CHAR_MP}/>
       <Hdr/>
-      <div className="c-scroll"><div className="c-pad">
+      <div className="c-auth-center">
 
         {mode === "choice" && (
           <div className="c-card">
@@ -1832,7 +1834,7 @@ function Auth({ onIn }) {
           </div>
         )}
 
-      </div></div>
+      </div>
     </div>
   );
 }
