@@ -280,6 +280,140 @@ function WhamSlam({ message = "+5", onDone }) {
   );
 }
 
+
+// ══════════════════════════════════════════════════════════════════
+// ── STREAK FLASH ──────────────────────────────────────────────────
+//
+// Fires after 3 consecutive correct answers. +5 fixed bonus.
+// Battle-style cinematic: sword-clash characters, gold sparks, +5 at contact.
+// Total runtime: 900ms. Then onDone fires.
+//
+// PHASE TIMELINE:
+//   Phase 0 │   0ms – 120ms │ White-gold flash
+//   Phase 1 │ 120ms – 400ms │ WHAM_CHARS slide in from both sides
+//   Phase 2 │ 400ms – 650ms │ "+5 STREAK" explodes at center contact point
+//   Phase 3 │ 650ms – 900ms │ Fade out → onDone
+// ══════════════════════════════════════════════════════════════════
+function StreakFlash({ onDone }) {
+  const [phase, setPhase] = useState(0);
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setPhase(1), 120);
+    const t2 = setTimeout(() => setPhase(2), 400);
+    const t3 = setTimeout(() => setPhase(3), 650);
+    const t4 = setTimeout(() => { onDone && onDone(); }, 900);
+    return () => { [t1,t2,t3,t4].forEach(clearTimeout); };
+  }, []);
+
+  const fading = phase === 3;
+
+  return (
+    <div style={{
+      position:"fixed", inset:0, zIndex:998, overflow:"hidden",
+      background: phase === 0 ? "rgba(245,200,66,0.92)" : "rgba(13,31,53,0.96)",
+      opacity: fading ? 0 : 1,
+      transition: fading ? "opacity 0.25s ease" : phase === 0 ? "none" : "background 0.2s ease",
+      display:"flex", alignItems:"center", justifyContent:"center",
+      pointerEvents:"none",
+    }}>
+
+      {/* Left character — slides in from left */}
+      <div style={{
+        position:"absolute", bottom:0, left: phase >= 1 ? "5%" : "-60%",
+        transition: phase === 1 ? "left 0.28s cubic-bezier(0.22,1,0.36,1)" : "none",
+        zIndex:2, pointerEvents:"none",
+        transform:"scaleX(-1)",
+        opacity: fading ? 0 : 1,
+      }}>
+        <img src={WHAM_CHARS} alt="" style={{
+          width:"55vw", maxWidth:320, minWidth:180,
+          objectFit:"contain", objectPosition:"bottom center",
+          display:"block",
+        }}/>
+      </div>
+
+      {/* Right character — slides in from right */}
+      <div style={{
+        position:"absolute", bottom:0, right: phase >= 1 ? "5%" : "-60%",
+        transition: phase === 1 ? "right 0.28s cubic-bezier(0.22,1,0.36,1)" : "none",
+        zIndex:2, pointerEvents:"none",
+        opacity: fading ? 0 : 1,
+      }}>
+        <img src={WHAM_CHARS} alt="" style={{
+          width:"55vw", maxWidth:320, minWidth:180,
+          objectFit:"contain", objectPosition:"bottom center",
+          display:"block",
+        }}/>
+      </div>
+
+      {/* Spark burst at center contact */}
+      {phase >= 2 && (
+        <div style={{
+          position:"absolute", top:"44%", left:"50%",
+          transform:"translate(-50%,-50%)",
+          zIndex:4, pointerEvents:"none",
+          animation:"streak-spark-burst 0.35s ease-out forwards",
+        }}>
+          {/* Spark rays */}
+          {[0,45,90,135,180,225,270,315].map(deg => (
+            <div key={deg} style={{
+              position:"absolute", top:"50%", left:"50%",
+              width: fading ? 0 : 40, height:2,
+              background:"linear-gradient(90deg,#F5C842,transparent)",
+              transformOrigin:"left center",
+              transform:`rotate(${deg}deg)`,
+              borderRadius:2,
+              opacity: fading ? 0 : 0.85,
+              transition:"width 0.2s ease, opacity 0.25s ease",
+            }}/>
+          ))}
+        </div>
+      )}
+
+      {/* "+5 STREAK" text — explodes at sword contact point */}
+      <div style={{
+        position:"absolute", top:"36%", left:"50%",
+        transform:`translate(-50%,-50%) scale(${phase < 2 ? 0 : fading ? 0.7 : 1.0})`,
+        zIndex:5, pointerEvents:"none",
+        opacity: phase < 2 ? 0 : fading ? 0 : 1,
+        transition: phase === 2
+          ? "transform 0.28s cubic-bezier(0.34,1.56,0.64,1), opacity 0.12s ease"
+          : "transform 0.2s ease, opacity 0.25s ease",
+        textAlign:"center",
+        whiteSpace:"nowrap",
+      }}>
+        <div style={{
+          fontFamily:"'Cinzel',serif",
+          fontSize:"clamp(42px,13vw,72px)",
+          fontWeight:900,
+          letterSpacing:4,
+          background:"linear-gradient(180deg,#FFFFFF 0%,#F5C842 40%,#D4921A 100%)",
+          WebkitBackgroundClip:"text", WebkitTextFillColor:"transparent",
+          textShadow:"none",
+          filter:"drop-shadow(0 0 18px rgba(245,200,66,0.9)) drop-shadow(0 0 36px rgba(245,200,66,0.5))",
+          lineHeight:1,
+        }}>+5</div>
+        <div style={{
+          fontFamily:"'Cinzel',serif",
+          fontSize:"clamp(11px,3.5vw,16px)",
+          fontWeight:800, letterSpacing:6,
+          color:"#F5C842",
+          textShadow:"0 0 12px rgba(245,200,66,0.8)",
+          marginTop:4,
+          textTransform:"uppercase",
+        }}>STREAK BONUS</div>
+      </div>
+
+      <style>{`
+        @keyframes streak-spark-burst {
+          from { transform: translate(-50%,-50%) scale(0.2); opacity:0; }
+          to   { transform: translate(-50%,-50%) scale(1);   opacity:1; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 // ── SCREEN: Level Select ──
 function LevelSelect({ onSelect }) {
   return (
@@ -341,6 +475,8 @@ function GamePlay({ level, onDone }) {
   const timerRef    = useRef(null);
   const hintRef     = useRef(null);
   const answeredRef = useRef(false);
+  const [streak,      setStreak]      = useState(0);
+  const [streakFlash, setStreakFlash] = useState(false);
 
   const verse         = queue.current[idx];
   const correctAnswer = `${verse.book} ${verse.ch}:${verse.vs}`;
@@ -371,8 +507,17 @@ function GamePlay({ level, onDone }) {
     if (correct) setScore(s => s + level.pts);
     setResults(r => [...r, { correct, ref: verse.ref }]);
     if (correct) {
-      setWhamSlam(true);
+      const newStreak = streak + 1;
+      setStreak(newStreak);
+      if (newStreak >= 3 && newStreak % 3 === 0) {
+        // Every 3rd consecutive correct — streak bonus +5, flash fires BEFORE wham slam
+        setScore(s => s + 5);
+        setStreakFlash(true);
+      } else {
+        setWhamSlam(true);
+      }
     } else {
+      setStreak(0);
       setWhamDrain(true);
       setTimeout(() => { setWhamDrain(false); advance(); }, 900);
     }
@@ -388,6 +533,12 @@ function GamePlay({ level, onDone }) {
     setTimeout(() => advance(), 100);
   }
 
+  function handleStreakFlashDone() {
+    setStreakFlash(false);
+    // After streak flash, fire WHAM SLAM for the correct answer
+    setWhamSlam(true);
+  }
+
   const timerPct   = (timeLeft / 20) * 100;
   const timerColor = timeLeft > 10 ? C.teal : timeLeft > 5 ? C.gold : C.red;
 
@@ -398,12 +549,21 @@ function GamePlay({ level, onDone }) {
       <div className="wb-bg-tone" />
       <div className="wb-bg-rim" />
 
+      {streakFlash && <StreakFlash onDone={handleStreakFlashDone} />}
       {whamSlam && <WhamSlam message="+5" onDone={handleWhamSlamDone} />}
 
       <div className="wb-content">
         <div style={{ width:"100%", display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 0 6px" }}>
           <div style={{ fontFamily:"'Cinzel',serif", fontSize:11, color:C.cobalt, letterSpacing:1, opacity:0.7 }}>{level.icon} {level.name}</div>
-          <div style={{ fontFamily:"'Cinzel',serif", fontSize:16, fontWeight:800, color:C.gold }}>{score} pts</div>
+          <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:2}}>
+            <div style={{ fontFamily:"'Cinzel',serif", fontSize:16, fontWeight:800, color:C.gold }}>{score} pts</div>
+            {streak >= 2 && (
+              <div style={{fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:2,color:"#F5C842",
+                animation:"wb-streak-pulse 0.6s ease infinite alternate"}}>
+                🔥 {streak} STREAK{streak >= 3 ? " +5!" : ""}
+              </div>
+            )}
+          </div>
           <div style={{ fontFamily:"'Cinzel',serif", fontSize:11, color:C.cobalt, opacity:0.7 }}>{idx+1} / {queue.current.length}</div>
         </div>
 
@@ -610,6 +770,10 @@ export default function SoloGame() {
           font-size:13px; font-family:'Cinzel',serif; letter-spacing:1px; text-transform:uppercase; cursor:pointer; transition:all 0.18s;
         }
         @keyframes wb-hint-in { from { opacity:0; transform:translateY(6px) } to { opacity:1; transform:none } }
+        @keyframes wb-streak-pulse {
+          from { opacity: 0.7; transform: scale(1.0); }
+          to   { opacity: 1.0; transform: scale(1.08); }
+        }
       `}</style>
 
       {screen === "level" && (

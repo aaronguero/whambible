@@ -13,7 +13,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 //   Player 1 = Challenger  (creates game, picks level each odd round)
 //   Player 2 = Answerer    (joins game, picks level each even round)
 //   Roles alternate who picks level each round.
-//   10 rounds total. Async — each player acts on their own device/time.
+//   5 rounds total. Async — each player acts on their own device/time.
 //   Both players poll every 4s to see game state updates.
 // ══════════════════════════════════════════════════════════════
 
@@ -125,7 +125,7 @@ const C = {
 };
 
 // ── Constants ──
-const TOTAL_ROUNDS = 10;
+const TOTAL_ROUNDS = 5;
 const TIME_LIMIT   = 20;
 const POLL_MS      = 4000;   // steady-state poll interval
 const POLL_FAST_MS = 2000;   // fast poll for first 10s after screen mounts
@@ -195,7 +195,7 @@ function buildOptions(v) {
 }
 
 function rankBadge(score) {
-  // Thresholds based on open difficulty — 10 rounds × 20pt max = 200pt/game
+  // Thresholds based on open difficulty — 5 rounds × 20pt max = 100pt/game
   if (score >= 1000) return { icon:"👑", label:"Champion", color:"#7B2D8B" };
   if (score >= 600)  return { icon:"🛡️", label:"Knight",   color:"#C05A2A" };
   if (score >= 300)  return { icon:"⚔️", label:"Warrior",  color:"#D4921A" };
@@ -1105,7 +1105,7 @@ const TUTORIAL_STEPS = [
   {
     icon:"⚔️",
     title:"The Challenge",
-    body:"Challenge any warrior to a 10-round Bible verse battle. Each round, one player picks the difficulty — the other must answer.",
+    body:"Challenge any warrior to a 5-round Bible verse battle. Each round, one player picks the difficulty — the other must answer.",
   },
   {
     icon:"📖",
@@ -1508,6 +1508,94 @@ function Slam({ active, pts, onDone }) {
       {ph>=1 && <img src={WHAM_CHARS} alt="" style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,opacity:ph<3?1:0,transition:"opacity .25s"}}/>}
       {ph>=2 && <img src={WHAM_TEXT_IMG} alt="" style={{position:"absolute",top:"18%",left:"50%",transform:`translateX(-50%) scale(${ph===2?1.08:1})`,width:"88%",maxWidth:400,opacity:ph<3?1:0,transition:"transform .3s cubic-bezier(.34,1.56,.64,1),opacity .4s"}}/>}
       <div style={{position:"absolute",bottom:32,left:0,right:0,textAlign:"center",fontFamily:"'Cinzel',serif",fontSize:20,fontWeight:900,color:C.goldLight,opacity:ph===2?1:0,transition:"opacity .3s .2s",letterSpacing:3}}>+{pts||5}</div>
+    </div>
+  );
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// STREAK FLASH — 3 consecutive correct answers → +5 bonus
+// Battle-style cinematic, 900ms total. Fires before WHAM SLAM.
+// ══════════════════════════════════════════════════════════════
+function StreakFlash({ onDone }) {
+  const [ph, setPh] = useState(0);
+  useEffect(() => {
+    const t1 = setTimeout(()=>setPh(1), 120);
+    const t2 = setTimeout(()=>setPh(2), 400);
+    const t3 = setTimeout(()=>setPh(3), 650);
+    const t4 = setTimeout(()=>{ onDone && onDone(); }, 900);
+    return ()=>{ [t1,t2,t3,t4].forEach(clearTimeout); };
+  }, []);
+  const fading = ph === 3;
+  return (
+    <div style={{
+      position:"fixed",inset:0,zIndex:9998,overflow:"hidden",
+      background: ph===0 ? "rgba(245,200,66,0.92)" : "rgba(13,31,53,0.96)",
+      opacity: fading ? 0 : 1,
+      transition: fading ? "opacity 0.25s ease" : ph===0 ? "none" : "background 0.18s ease",
+      pointerEvents:"none",
+    }}>
+      {/* Left character — flipped */}
+      <div style={{
+        position:"absolute",bottom:0,
+        left: ph>=1 ? "5%" : "-60%",
+        transition: ph===1 ? "left 0.28s cubic-bezier(0.22,1,0.36,1)" : "none",
+        transform:"scaleX(-1)",
+        opacity: fading ? 0 : 1,
+        zIndex:2,
+      }}>
+        <img src={WHAM_CHARS} alt="" style={{width:"55vw",maxWidth:300,minWidth:160,display:"block",objectFit:"contain",objectPosition:"bottom"}}/>
+      </div>
+      {/* Right character */}
+      <div style={{
+        position:"absolute",bottom:0,
+        right: ph>=1 ? "5%" : "-60%",
+        transition: ph===1 ? "right 0.28s cubic-bezier(0.22,1,0.36,1)" : "none",
+        opacity: fading ? 0 : 1,
+        zIndex:2,
+      }}>
+        <img src={WHAM_CHARS} alt="" style={{width:"55vw",maxWidth:300,minWidth:160,display:"block",objectFit:"contain",objectPosition:"bottom"}}/>
+      </div>
+      {/* Spark burst */}
+      {ph>=2 && (
+        <div style={{position:"absolute",top:"44%",left:"50%",transform:"translate(-50%,-50%)",zIndex:4}}>
+          {[0,45,90,135,180,225,270,315].map(deg=>(
+            <div key={deg} style={{
+              position:"absolute",top:"50%",left:"50%",width:40,height:2,
+              background:"linear-gradient(90deg,#F5C842,transparent)",
+              transformOrigin:"left center",transform:`rotate(${deg}deg)`,
+              borderRadius:2,opacity: fading ? 0 : 0.85,
+              transition:"opacity 0.2s",
+            }}/>
+          ))}
+        </div>
+      )}
+      {/* +5 STREAK text */}
+      <div style={{
+        position:"absolute",top:"36%",left:"50%",
+        transform:`translate(-50%,-50%) scale(${ph<2?0:fading?0.7:1.0})`,
+        opacity: ph<2 ? 0 : fading ? 0 : 1,
+        transition: ph===2
+          ? "transform 0.28s cubic-bezier(0.34,1.56,0.64,1),opacity 0.12s"
+          : "transform 0.2s ease,opacity 0.25s",
+        textAlign:"center",whiteSpace:"nowrap",zIndex:5,
+      }}>
+        <div style={{
+          fontFamily:"'Cinzel',serif",
+          fontSize:"clamp(42px,13vw,72px)",
+          fontWeight:900,letterSpacing:4,
+          background:"linear-gradient(180deg,#FFFFFF 0%,#F5C842 40%,#D4921A 100%)",
+          WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",
+          filter:"drop-shadow(0 0 18px rgba(245,200,66,0.9)) drop-shadow(0 0 36px rgba(245,200,66,0.5))",
+          lineHeight:1,
+        }}>+5</div>
+        <div style={{
+          fontFamily:"'Cinzel',serif",fontSize:"clamp(11px,3.5vw,16px)",
+          fontWeight:800,letterSpacing:6,color:"#F5C842",
+          textShadow:"0 0 12px rgba(245,200,66,0.8)",
+          marginTop:4,textTransform:"uppercase",
+        }}>STREAK BONUS</div>
+      </div>
     </div>
   );
 }
@@ -2520,9 +2608,13 @@ function Answer({ user, game, role, onDone }) {
   const [sel,      setSel]      = useState(null);
   const [tLeft,    setTLeft]    = useState(TIME_LIMIT);
   const [locked,   setLocked]   = useState(false);
-  const [slam,     setSlam]     = useState(false);
-  const [recovery, setRecovery] = useState(false); // show MPRecovery overlay
+  const [slam,        setSlam]        = useState(false);
+  const [recovery,    setRecovery]    = useState(false);
+  const [streakCount, setStreakCount] = useState(0);
+  const [streakFlash, setStreakFlash] = useState(false);
   const doneRef = useRef(false);
+  const streakRef = useRef(0);
+  const streakBonusPendingRef = useRef(false);
   const tmrRef  = useRef(null);
 
   const v    = game?.pending_verse   || VERSES[0];
@@ -2557,10 +2649,19 @@ function Answer({ user, game, role, onDone }) {
     setSel(opt); setLocked(true);
     const correct = !!opt?.isCorrect;
     if (correct) {
-      setSlam(true); // WHAM SLAM fires → commitResult called via onDone prop below
+      const newStreak = streakRef.current + 1;
+      streakRef.current = newStreak;
+      setStreakCount(newStreak);
+      if (newStreak >= 3 && newStreak % 3 === 0) {
+        // Streak bonus — +5 fixed, flash fires before WHAM SLAM
+        streakBonusPendingRef.current = true;
+        setStreakFlash(true);
+      } else {
+        setSlam(true);
+      }
     } else {
-      // Wrong answer — only Answerer gets recovery. Challenger never answers.
-      // (role guard: challenger never lands on Answer screen per turn logic)
+      streakRef.current = 0;
+      setStreakCount(0);
       setRecovery(true);
     }
   }
@@ -2569,6 +2670,11 @@ function Answer({ user, game, role, onDone }) {
   async function onRecoveryDone(recovered) {
     setRecovery(false);
     await commitResult(recovered, recovered ? MP_RECOVERY_PTS : 0);
+  }
+
+  function handleStreakFlashDone() {
+    setStreakFlash(false);
+    setSlam(true); // Fire WHAM SLAM after streak flash
   }
 
   async function commitResult(correct, earnedPts) {
@@ -2628,7 +2734,12 @@ function Answer({ user, game, role, onDone }) {
     <div className="c-screen">
       <Bg/>
       <Hdr user={user}/>
-      <Slam active={slam} pts={pts} onDone={()=>commitResult(true, pts)}/>
+      {streakFlash && <StreakFlash onDone={handleStreakFlashDone}/>}
+      <Slam active={slam} pts={pts} onDone={()=>{
+        const bonus = streakBonusPendingRef.current ? 5 : 0;
+        streakBonusPendingRef.current = false;
+        commitResult(true, pts + bonus);
+      }}/>
       {/* MPRecovery overlay — mounts over everything when wrong answer tapped */}
       {recovery && (
         <MPRecovery verse={v} lv={lv} onDone={onRecoveryDone}/>
@@ -2636,7 +2747,14 @@ function Answer({ user, game, role, onDone }) {
       <div className="c-scroll"><div className="c-pad">
         <div className="c-score-row">
           <div className="c-score-box"><div className="c-score-val">{myScore}</div><div className="c-score-lbl">You</div></div>
-          <div style={{fontSize:10,color:C.goldDim,letterSpacing:2,textAlign:"center"}}>Round {(game?.round||0)+1}/{TOTAL_ROUNDS}</div>
+          <div style={{textAlign:"center"}}>
+            <div style={{fontSize:10,color:C.goldDim,letterSpacing:2}}>Round {(game?.round||0)+1}/{TOTAL_ROUNDS}</div>
+            {streakCount >= 2 && (
+              <div style={{fontSize:9,letterSpacing:2,color:"#F5C842",fontFamily:"'Cinzel',serif",marginTop:2}}>
+                🔥 {streakCount} STREAK{streakCount>=3?" +5!":""}
+              </div>
+            )}
+          </div>
           <div className="c-score-box"><div className="c-score-val">{oppScore}</div><div className="c-score-lbl">{oppName}</div></div>
         </div>
         <div className="c-tbar"><div className="c-tfill" style={{width:`${pct}%`,background:tc}}/></div>
