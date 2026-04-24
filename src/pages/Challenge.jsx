@@ -23,8 +23,9 @@ const LANDSCAPE_VIVID = "https://media.base44.com/images/public/69df9a909b33058a
 const CHAR_MP       = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/b23c98cb8_generated_image.png";
 const CHAR_KNIGHT   = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/9b51fedfd_generated_image.png";
 const CHAR_VICTORY  = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/c5aa4771c_generated_image.png";
-const CHAR_WAITING  = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/68682726c_generated_image.png";
-const CHAR_GAMEOVER = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/027de5f28_generated_image.png";
+const CHAR_WAITING    = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/68682726c_generated_image.png";
+const CHAR_GAMEOVER   = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/027de5f28_generated_image.png";
+const CHAR_RECOVERY_MP = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/ba0922036_generated_image.png";
 const WHAM_CHARS    = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/85be9d10e_generated_image.png";
 const WHAM_TEXT_IMG = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/5e80bbcf2_generated_image.png";
 const WHAM_AUDIO    = "https://media.base44.com/videos/public/69c40c6701d9dfdb1df69d2b/5d143ab80_51a54c36d_wham-slam-voice1.webm";
@@ -148,6 +149,14 @@ const ALL_BOOKS = [
   "1 Thessalonians","2 Thessalonians","1 Timothy","2 Timothy","Titus","Philemon",
   "Hebrews","James","1 Peter","2 Peter","1 John","2 John","3 John","Jude","Revelation"
 ];
+
+// ── Wheel data for MPRecovery ──
+const MP_CHAPTERS = Array.from({ length: 150 }, (_, i) => i + 1);
+const MP_VERSES_N = Array.from({ length: 176 }, (_, i) => i + 1);
+const MP_ITEM_H   = 44;
+const MP_VISIBLE  = 5;
+const MP_CENTER   = 2;
+const MP_COPIES   = 5;
 
 const VERSES = [
   { book:"John",        chapter:3,  verse:16, text:"For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life." },
@@ -2063,14 +2072,408 @@ function Waiting({ user, profile, game, role, onUpdate, onOut }) {
 }
 
 // ══════════════════════════════════════════════════════════════
-// ANSWER SCREEN — opponent answers the verse
+// MP SCROLL WHEEL — ported from Recovery.jsx, scoped to MP
+// ══════════════════════════════════════════════════════════════
+function MPScrollWheel({ items, startIndex, label, flex, maxWidth, onChange }) {
+  const outerRef = useRef(null);
+  const innerRef = useRef(null);
+  const s = useRef({
+    offset:0, dragging:false, startY:0, startOffset:0,
+    lastY:0, lastT:0, velocity:0, rafId:null, currentIdx:startIndex,
+  });
+
+  const normalize = useCallback((o) => {
+    const len = items.length;
+    const min = len * MP_ITEM_H;
+    const max = len * MP_ITEM_H * 3;
+    while (o < min) o += len * MP_ITEM_H;
+    while (o > max) o -= len * MP_ITEM_H;
+    return o;
+  }, [items]);
+
+  const offsetToIdx = useCallback((o) => {
+    const len = items.length;
+    const row = Math.round((o + MP_CENTER * MP_ITEM_H) / MP_ITEM_H);
+    return ((row % len) + len) % len;
+  }, [items]);
+
+  const applyHL = useCallback((idx) => {
+    const inner = innerRef.current; if (!inner) return;
+    const len = items.length;
+    inner.querySelectorAll(".mpw-item").forEach((el, i) => {
+      const rel  = ((i % len) + len) % len;
+      const dist = Math.min(Math.abs(rel-idx), Math.abs(rel-idx+len), Math.abs(rel-idx-len));
+      el.className = "mpw-item" + (rel===idx?" msel":dist===1?" mnr1":dist===2?" mnr2":"");
+    });
+  }, [items]);
+
+  const setOff = useCallback((o, anim) => {
+    const inner = innerRef.current; if (!inner) return;
+    inner.style.transition = anim ? "transform 0.18s cubic-bezier(.22,.68,0,1.2)" : "none";
+    inner.style.transform  = `translateY(-${o}px)`;
+    s.current.offset = o;
+    const idx = offsetToIdx(o);
+    s.current.currentIdx = idx;
+    applyHL(idx);
+    onChange?.(idx);
+  }, [offsetToIdx, applyHL, onChange]);
+
+  const snap = useCallback((o) => {
+    const ctr = o + MP_CENTER * MP_ITEM_H;
+    const sn  = normalize(Math.round(ctr / MP_ITEM_H) * MP_ITEM_H - MP_CENTER * MP_ITEM_H);
+    setOff(sn, true);
+  }, [normalize, setOff]);
+
+  useEffect(() => {
+    const inner = innerRef.current; if (!inner) return;
+    inner.innerHTML = "";
+    Array(MP_COPIES).fill(items).flat().forEach(item => {
+      const el = document.createElement("div");
+      el.className   = "mpw-item";
+      el.textContent = String(item);
+      inner.appendChild(el);
+    });
+    const init = normalize((items.length * 2 + startIndex) * MP_ITEM_H - MP_CENTER * MP_ITEM_H);
+    setOff(init, false);
+  }, [items, startIndex]);
+
+  const onStart = useCallback((y) => {
+    cancelAnimationFrame(s.current.rafId);
+    Object.assign(s.current, {dragging:true,startY:y,lastY:y,lastT:performance.now(),velocity:0,startOffset:s.current.offset});
+    if (innerRef.current) innerRef.current.style.transition = "none";
+  }, []);
+
+  const onMove = useCallback((y) => {
+    if (!s.current.dragging) return;
+    const now = performance.now();
+    const dt  = now - s.current.lastT || 16;
+    s.current.velocity = (s.current.lastY - y) / dt;
+    s.current.lastY = y; s.current.lastT = now;
+    setOff(normalize(s.current.startOffset + (s.current.startY - y)), false);
+  }, [normalize, setOff]);
+
+  const onEnd = useCallback(() => {
+    if (!s.current.dragging) return;
+    s.current.dragging = false;
+    let vel = s.current.velocity * 1000;
+    let off = s.current.offset;
+    const coast = () => {
+      if (Math.abs(vel) < 0.5) { snap(off); return; }
+      vel *= 0.94; off += vel / 60;
+      setOff(normalize(off), false);
+      s.current.rafId = requestAnimationFrame(coast);
+    };
+    Math.abs(vel) > 80 ? coast() : snap(off);
+  }, [snap, normalize, setOff]);
+
+  useEffect(() => {
+    const outer = outerRef.current; if (!outer) return;
+    const tS  = (e) => onStart(e.touches[0].clientY);
+    const tM  = (e) => { e.preventDefault(); onMove(e.touches[0].clientY); };
+    const tE  = () => onEnd();
+    const mD  = (e) => { onStart(e.clientY); e.preventDefault(); };
+    const mM  = (e) => { if (s.current.dragging) onMove(e.clientY); };
+    const mL  = () => { if (s.current.dragging) onEnd(); };
+    const mU  = () => { if (s.current.dragging) onEnd(); };
+    outer.addEventListener("touchstart", tS, {passive:true});
+    outer.addEventListener("touchmove",  tM, {passive:false});
+    outer.addEventListener("touchend",   tE, {passive:true});
+    outer.addEventListener("mousedown",  mD);
+    outer.addEventListener("mousemove",  mM);
+    outer.addEventListener("mouseleave", mL);
+    document.addEventListener("mouseup", mU);
+    return () => {
+      outer.removeEventListener("touchstart",tS);
+      outer.removeEventListener("touchmove",tM);
+      outer.removeEventListener("touchend",tE);
+      outer.removeEventListener("mousedown",mD);
+      outer.removeEventListener("mousemove",mM);
+      outer.removeEventListener("mouseleave",mL);
+      document.removeEventListener("mouseup",mU);
+    };
+  }, [onStart, onMove, onEnd]);
+
+  return (
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:5,flex,maxWidth}}>
+      <div style={{
+        fontFamily:"'Cinzel',serif",fontSize:8,letterSpacing:3,
+        color:"rgba(201,162,39,0.45)",textTransform:"uppercase",
+      }}>{label}</div>
+      <div ref={outerRef} style={{
+        position:"relative",width:"100%",height:MP_ITEM_H*MP_VISIBLE,
+        borderRadius:14,overflow:"hidden",cursor:"grab",userSelect:"none",touchAction:"none",
+        background:"linear-gradient(180deg,rgba(10,5,0,0.97) 0%,rgba(28,16,2,0.98) 50%,rgba(10,5,0,0.97) 100%)",
+        border:"1.5px solid rgba(201,162,39,0.35)",
+        boxShadow:"inset 0 0 20px rgba(0,0,0,0.65), 0 2px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(201,162,39,0.12)",
+      }}>
+        {/* Scroll-texture top cap */}
+        <div style={{position:"absolute",top:0,left:0,right:0,height:6,zIndex:5,
+          background:"linear-gradient(180deg,rgba(201,162,39,0.18) 0%,transparent 100%)",
+          borderBottom:"1px solid rgba(201,162,39,0.12)"}}/>
+        {/* Scroll-texture bottom cap */}
+        <div style={{position:"absolute",bottom:0,left:0,right:0,height:6,zIndex:5,
+          background:"linear-gradient(0deg,rgba(201,162,39,0.18) 0%,transparent 100%)",
+          borderTop:"1px solid rgba(201,162,39,0.12)"}}/>
+        {/* Selection band */}
+        <div style={{
+          position:"absolute",top:MP_CENTER*MP_ITEM_H,height:MP_ITEM_H,left:0,right:0,zIndex:4,
+          background:"rgba(201,162,39,0.09)",
+          borderTop:"1.5px solid rgba(201,162,39,0.55)",
+          borderBottom:"1.5px solid rgba(201,162,39,0.55)",
+          boxShadow:"0 0 12px rgba(201,162,39,0.15) inset",
+          pointerEvents:"none",
+        }}/>
+        {/* Left rope detail */}
+        <div style={{position:"absolute",left:0,top:0,bottom:0,width:5,zIndex:5,
+          background:"linear-gradient(180deg,rgba(139,90,20,0.6) 0%,rgba(201,162,39,0.35) 50%,rgba(139,90,20,0.6) 100%)",
+          pointerEvents:"none"}}/>
+        {/* Right rope detail */}
+        <div style={{position:"absolute",right:0,top:0,bottom:0,width:5,zIndex:5,
+          background:"linear-gradient(180deg,rgba(139,90,20,0.6) 0%,rgba(201,162,39,0.35) 50%,rgba(139,90,20,0.6) 100%)",
+          pointerEvents:"none"}}/>
+        {/* Fade top */}
+        <div style={{position:"absolute",top:0,left:0,right:0,height:65,zIndex:3,
+          background:"linear-gradient(180deg,rgba(10,5,0,0.95) 0%,transparent 100%)",pointerEvents:"none"}}/>
+        {/* Fade bottom */}
+        <div style={{position:"absolute",bottom:0,left:0,right:0,height:65,zIndex:3,
+          background:"linear-gradient(0deg,rgba(10,5,0,0.95) 0%,transparent 100%)",pointerEvents:"none"}}/>
+        {/* Scrollable items */}
+        <div ref={innerRef} style={{
+          display:"flex",flexDirection:"column",willChange:"transform",
+          position:"absolute",left:5,right:5,top:0,
+        }}/>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// MP RECOVERY SCREEN — inline, 10s timer, 5pt fixed reward
+// Fires only on wrong answer by the Answerer
+// ══════════════════════════════════════════════════════════════
+const MP_RECOVERY_SEC = 10;
+const MP_RECOVERY_PTS = 5;
+
+function MPRecovery({ verse, lv, onDone }) {
+  const [tLeft,      setTLeft]      = useState(MP_RECOVERY_SEC);
+  const [submitted,  setSubmitted]  = useState(false);
+  const [slam,       setSlam]       = useState(false);
+  const [result,     setResult]     = useState(null); // "correct"|"wrong"
+  const doneRef  = useRef(false);
+  const timerRef = useRef(null);
+
+  const bookIdxRef    = useRef(0);
+  const chapterIdxRef = useRef(0);
+  const verseIdxRef   = useRef(0);
+
+  // Timer — counts down 10s
+  useEffect(() => {
+    let t = MP_RECOVERY_SEC;
+    timerRef.current = setInterval(() => {
+      t -= 0.1;
+      setTLeft(parseFloat(t.toFixed(1)));
+      if (t <= 0) { clearInterval(timerRef.current); handleSubmit(); }
+    }, 100);
+    return () => clearInterval(timerRef.current);
+  }, []);
+
+  function startIdx(arr, correct, offset) {
+    const idx = arr.findIndex ? arr.findIndex(v => String(v) === String(correct)) : -1;
+    const len = arr.length;
+    return ((idx - offset) % len + len) % len;
+  }
+
+  const bookStart    = startIdx(ALL_BOOKS,   verse.book,    8);
+  const chapterStart = startIdx(MP_CHAPTERS, verse.chapter, 4);
+  const verseStart   = startIdx(MP_VERSES_N, verse.verse,   4);
+
+  function handleSubmit() {
+    if (doneRef.current) return;
+    doneRef.current = true;
+    clearInterval(timerRef.current);
+    setSubmitted(true);
+
+    const selBook    = ALL_BOOKS[bookIdxRef.current];
+    const selChapter = MP_CHAPTERS[chapterIdxRef.current];
+    const selVerse   = MP_VERSES_N[verseIdxRef.current];
+    const correct    = selBook === verse.book && selChapter === verse.chapter && selVerse === verse.verse;
+
+    setResult(correct ? "correct" : "wrong");
+
+    if (correct) {
+      try { new Audio(WHAM_AUDIO).play().catch(()=>{}); } catch {}
+      setSlam(true);
+      setTimeout(() => { setSlam(false); onDone(true); }, 1750);
+    } else {
+      setTimeout(() => onDone(false), 1200);
+    }
+  }
+
+  const timerPct  = tLeft / MP_RECOVERY_SEC;
+  const circ      = 163.4;
+  const dashOff   = circ * (1 - timerPct);
+  const timerColor = tLeft <= 3 ? C.red : tLeft <= 6 ? C.gold : C.tealLight;
+
+  return (
+    <div style={{position:"fixed",inset:0,zIndex:500,overflowY:"auto",WebkitOverflowScrolling:"touch"}}>
+      {/* CSS for wheel items */}
+      <style>{`
+        .mpw-item{height:${MP_ITEM_H}px;display:flex;align-items:center;justify-content:center;
+          font-family:'Cinzel',serif;font-size:12px;color:rgba(201,162,39,0.22);
+          padding:0 4px;text-align:center;line-height:1.15;white-space:nowrap;
+          overflow:hidden;text-overflow:ellipsis;flex-shrink:0;pointer-events:none;
+          transition:color 0.12s,font-size 0.12s;}
+        .mpw-item.mnr2{color:rgba(201,162,39,0.30);font-size:11.5px;}
+        .mpw-item.mnr1{color:rgba(201,162,39,0.58);font-size:13px;}
+        .mpw-item.msel{color:#f0e4c0;font-size:15px;font-weight:700;
+          text-shadow:0 0 14px rgba(201,162,39,0.75);}
+      `}</style>
+
+      {/* ── 4-layer cinematic underlay ── */}
+      <div style={{position:"fixed",inset:0,zIndex:0,
+        backgroundImage:`url(${LANDSCAPE_BG})`,backgroundSize:"cover",backgroundPosition:"center top",
+        opacity:0.45}}/>
+      <div style={{position:"fixed",inset:0,zIndex:1,
+        backgroundImage:`url(${CHAR_RECOVERY_MP})`,backgroundSize:"contain",
+        backgroundPosition:"center 5%",backgroundRepeat:"no-repeat",opacity:0.88,
+        WebkitMaskImage:"linear-gradient(to bottom,rgba(0,0,0,0) 0%,rgba(0,0,0,0.7) 8%,rgba(0,0,0,1) 20%,rgba(0,0,0,1) 50%,rgba(0,0,0,0.2) 68%,rgba(0,0,0,0) 82%)",
+        maskImage:"linear-gradient(to bottom,rgba(0,0,0,0) 0%,rgba(0,0,0,0.7) 8%,rgba(0,0,0,1) 20%,rgba(0,0,0,1) 50%,rgba(0,0,0,0.2) 68%,rgba(0,0,0,0) 82%)",
+      }}/>
+      <div style={{position:"fixed",inset:0,zIndex:2,
+        background:"linear-gradient(to bottom,rgba(10,5,0,0.15) 0%,rgba(10,5,0,0.38) 45%,rgba(10,5,0,0.82) 70%,rgba(10,5,0,0.97) 85%,rgba(10,5,0,1) 100%)"}}/>
+      <div style={{position:"fixed",inset:0,zIndex:3,
+        background:"radial-gradient(ellipse at 50% -5%,rgba(212,146,26,0.2) 0%,transparent 55%)",pointerEvents:"none"}}/>
+
+      {/* WHAM SLAM overlay */}
+      <Slam active={slam} pts={MP_RECOVERY_PTS} onDone={()=>{}}/>
+
+      {/* ── Content panel ── */}
+      <div style={{position:"relative",zIndex:10,maxWidth:480,margin:"0 auto",padding:"0 16px 50px",
+        display:"flex",flexDirection:"column",alignItems:"center"}}>
+
+        {/* Hero spacer */}
+        <div style={{height:"36vh",minHeight:180}}/>
+
+        {/* Panel */}
+        <div style={{width:"100%",
+          background:"linear-gradient(180deg,rgba(10,5,0,0) 0%,rgba(10,5,0,0.85) 10%,rgba(10,5,0,0.97) 20%,rgba(10,5,0,0.97) 100%)",
+          borderRadius:"20px 20px 0 0",padding:"20px 18px 0",marginTop:"-28px",
+        }}>
+          {/* Scroll curl */}
+          <div style={{width:"70%",height:4,margin:"0 auto 14px",borderRadius:2,
+            background:"linear-gradient(90deg,transparent,rgba(212,146,26,0.7),rgba(58,189,212,0.5),rgba(212,146,26,0.7),transparent)"}}/>
+
+          {/* Badge */}
+          <div style={{
+            fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:2,
+            color:"rgba(212,146,26,0.85)",background:"rgba(212,146,26,0.1)",
+            border:"1px solid rgba(212,146,26,0.3)",borderRadius:20,padding:"5px 14px",
+            textTransform:"uppercase",marginBottom:12,textAlign:"center",display:"inline-block",
+            width:"100%",boxSizing:"border-box",
+          }}>
+            📜 Scroll Recovery · {lv?.icon} {lv?.name} · Recover +{MP_RECOVERY_PTS}
+          </div>
+
+          {/* Verse card */}
+          <div style={{
+            width:"100%",background:"rgba(201,162,39,0.06)",
+            border:"1px solid rgba(201,162,39,0.22)",borderRadius:12,padding:"14px 18px",marginBottom:14,
+          }}>
+            <div style={{fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:2,
+              color:"rgba(201,162,26,0.5)",textTransform:"uppercase",marginBottom:8}}>
+              THE VERSE YOU MISSED
+            </div>
+            <div style={{fontSize:13,lineHeight:1.7,color:"rgba(240,228,192,0.85)",fontStyle:"italic",margin:"0 0 8px"}}>
+              "{verse.text}"
+            </div>
+          </div>
+
+          {/* Instruction */}
+          <div style={{fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:1,
+            color:"rgba(201,162,39,0.45)",textAlign:"center",textTransform:"uppercase",
+            lineHeight:1.8,marginBottom:12}}>
+            Spin the scroll to the correct<br/>Book · Chapter · Verse
+          </div>
+
+          {/* Timer + wheels row */}
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14,width:"100%"}}>
+            {/* Timer ring */}
+            <div style={{position:"relative",width:60,height:60,flexShrink:0}}>
+              <svg width="60" height="60" style={{transform:"rotate(-90deg)"}}>
+                <circle cx="30" cy="30" r="26" fill="none" stroke="rgba(212,146,26,0.1)" strokeWidth="4"/>
+                <circle cx="30" cy="30" r="26" fill="none"
+                  stroke={timerColor} strokeWidth="4" strokeLinecap="round"
+                  strokeDasharray={circ} strokeDashoffset={dashOff}
+                  style={{transition:"stroke-dashoffset 0.1s linear,stroke 0.3s"}}/>
+              </svg>
+              <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",
+                fontFamily:"'Cinzel',serif",fontSize:18,fontWeight:700,color:timerColor,transition:"color 0.3s"}}>
+                {Math.ceil(tLeft)}
+              </div>
+            </div>
+
+            {/* Scroll wheels */}
+            <div style={{display:"flex",gap:7,flex:1,alignItems:"flex-start"}}>
+              <MPScrollWheel items={ALL_BOOKS}   startIndex={bookStart}    label="Book"    flex={2.4} maxWidth={175}
+                onChange={i => bookIdxRef.current = i}/>
+              <MPScrollWheel items={MP_CHAPTERS} startIndex={chapterStart} label="Chapter" flex={1}   maxWidth={80}
+                onChange={i => chapterIdxRef.current = i}/>
+              <MPScrollWheel items={MP_VERSES_N} startIndex={verseStart}   label="Verse"   flex={1}   maxWidth={80}
+                onChange={i => verseIdxRef.current = i}/>
+            </div>
+          </div>
+
+          {/* Result banner */}
+          {result && (
+            <div style={{
+              width:"100%",borderRadius:12,padding:"16px 20px",textAlign:"center",marginBottom:14,
+              fontFamily:"'Cinzel',serif",
+              background: result==="correct" ? "rgba(26,122,74,0.18)" : "rgba(192,58,43,0.14)",
+              border: `1.5px solid ${result==="correct" ? "rgba(26,122,74,0.5)" : "rgba(192,58,43,0.4)"}`,
+            }}>
+              <div style={{fontSize:28,marginBottom:6}}>{result==="correct"?"✅":"❌"}</div>
+              <div style={{fontSize:15,fontWeight:800,letterSpacing:2,marginBottom:4,
+                color:result==="correct"?"#4ade80":"#f87171"}}>
+                {result==="correct" ? `RECOVERED! +${MP_RECOVERY_PTS}` : "MISSED IT"}
+              </div>
+              <div style={{fontSize:11,letterSpacing:1,color:"rgba(240,228,192,0.55)"}}>
+                {result==="correct" ? "The Word was in you." : "Study and return stronger."}
+              </div>
+            </div>
+          )}
+
+          {/* Submit button — hidden after submit */}
+          {!submitted && (
+            <button
+              onClick={handleSubmit}
+              style={{
+                width:"100%",padding:15,border:"none",borderRadius:12,
+                fontFamily:"'Cinzel',serif",fontSize:15,fontWeight:800,
+                letterSpacing:2,textTransform:"uppercase",cursor:"pointer",
+                background:`linear-gradient(135deg,${C.gold},#a07720)`,
+                color:"#0f172a",boxShadow:"0 4px 20px rgba(212,146,26,0.4)",
+                marginBottom:14,
+              }}>
+              Lock In Answer ⚔️
+            </button>
+          )}
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// ANSWER SCREEN — Answerer only. Wrong answer triggers MPRecovery.
 // ══════════════════════════════════════════════════════════════
 function Answer({ user, game, role, onDone }) {
-  const [opts,   setOpts]   = useState([]);
-  const [sel,    setSel]    = useState(null);
-  const [tLeft,  setTLeft]  = useState(TIME_LIMIT);
-  const [locked, setLocked] = useState(false);
-  const [slam,   setSlam]   = useState(false);
+  const [opts,     setOpts]     = useState([]);
+  const [sel,      setSel]      = useState(null);
+  const [tLeft,    setTLeft]    = useState(TIME_LIMIT);
+  const [locked,   setLocked]   = useState(false);
+  const [slam,     setSlam]     = useState(false);
+  const [recovery, setRecovery] = useState(false); // show MPRecovery overlay
   const doneRef = useRef(false);
   const tmrRef  = useRef(null);
 
@@ -2082,14 +2485,13 @@ function Answer({ user, game, role, onDone }) {
   const oppName  = role === "challenger" ? game?.answerer_name       : game?.challenger_name;
 
   useEffect(() => {
-    // Use pre-built options from game session (same options challenger saw)
     if (game?.pending_options?.length === 4) {
       setOpts(game.pending_options);
     } else {
       setOpts(buildOptions(v));
     }
     doneRef.current = false;
-    setSel(null); setLocked(false); setTLeft(TIME_LIMIT); setSlam(false);
+    setSel(null); setLocked(false); setTLeft(TIME_LIMIT); setSlam(false); setRecovery(false);
   }, [game?.id]);
 
   useEffect(() => {
@@ -2106,8 +2508,19 @@ function Answer({ user, game, role, onDone }) {
     clearInterval(tmrRef.current);
     setSel(opt); setLocked(true);
     const correct = !!opt?.isCorrect;
-    if (correct) setSlam(true);
-    else await commitResult(correct, 0);
+    if (correct) {
+      setSlam(true); // WHAM SLAM fires → commitResult called via onDone prop below
+    } else {
+      // Wrong answer — only Answerer gets recovery. Challenger never answers.
+      // (role guard: challenger never lands on Answer screen per turn logic)
+      setRecovery(true);
+    }
+  }
+
+  // Called after MPRecovery resolves (correct recovery = 5pts, wrong = 0pts)
+  async function onRecoveryDone(recovered) {
+    setRecovery(false);
+    await commitResult(recovered, recovered ? MP_RECOVERY_PTS : 0);
   }
 
   async function commitResult(correct, earnedPts) {
@@ -2168,6 +2581,10 @@ function Answer({ user, game, role, onDone }) {
       <Bg/>
       <Hdr user={user}/>
       <Slam active={slam} pts={pts} onDone={()=>commitResult(true, pts)}/>
+      {/* MPRecovery overlay — mounts over everything when wrong answer tapped */}
+      {recovery && (
+        <MPRecovery verse={v} lv={lv} onDone={onRecoveryDone}/>
+      )}
       <div className="c-scroll"><div className="c-pad">
         <div className="c-score-row">
           <div className="c-score-box"><div className="c-score-val">{myScore}</div><div className="c-score-lbl">You</div></div>
