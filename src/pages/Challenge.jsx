@@ -127,7 +127,8 @@ const C = {
 // ── Constants ──
 const TOTAL_ROUNDS = 10;
 const TIME_LIMIT   = 20;
-const POLL_MS      = 4000;
+const POLL_MS      = 4000;   // steady-state poll interval
+const POLL_FAST_MS = 2000;   // fast poll for first 10s after screen mounts
 const LETTERS      = ["A","B","C","D"];
 const SESSION_KEY  = "wb_session_v2";
 
@@ -1962,15 +1963,52 @@ function Waiting({ user, profile, game, role, onUpdate, onOut }) {
   const oppScore = role === "challenger" ? g?.answerer_score||0   : g?.challenger_score||0;
 
   useEffect(() => {
-    const dotTimer = setInterval(() => setDots(d => d.length >= 3 ? "." : d + "."), 600);
-    pollRef.current = setInterval(async () => {
+    let mounted = true;
+
+    // ── Dots — skip tick when tab is hidden ──
+    const dotTimer = setInterval(() => {
+      if (!document.hidden) setDots(d => d.length >= 3 ? "." : d + ".");
+    }, 600);
+
+    // ── Shared poll function ──
+    async function doPoll() {
+      if (!mounted || document.hidden) return;
       try {
         const updated = await B44.get("GameSession", game.id);
+        if (!mounted) return;
         setG(updated);
         onUpdate(updated);
       } catch {}
-    }, POLL_MS);
-    return () => { clearInterval(dotTimer); clearInterval(pollRef.current); };
+    }
+
+    // ── Fast poll for first 10s after mount, then settle to steady ──
+    pollRef.current = setInterval(doPoll, POLL_FAST_MS);
+
+    const settleTimer = setTimeout(() => {
+      if (!mounted) return;
+      clearInterval(pollRef.current);
+      pollRef.current = setInterval(doPoll, POLL_MS);
+    }, 10000);
+
+    // ── Visibility: pause when tab hidden, immediate poll + resume on return ──
+    function onVisibilityChange() {
+      if (document.hidden) {
+        clearInterval(pollRef.current);
+      } else {
+        doPoll();                          // instant catch-up on return
+        clearInterval(pollRef.current);
+        pollRef.current = setInterval(doPoll, POLL_MS);
+      }
+    }
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      mounted = false;
+      clearInterval(dotTimer);
+      clearInterval(pollRef.current);
+      clearTimeout(settleTimer);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
   }, []);
 
   return (
