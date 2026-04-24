@@ -805,36 +805,44 @@ function SPRecovery({ verse, onDone }) {
 
 
 // ══════════════════════════════════════════════════════════════════
-// ── WHAM DRAIN v3 ────────────────────────────────────────────────
-// Revised spaghettification per Designer spec:
+// ── WHAM DRAIN v4 ────────────────────────────────────────────────
+// Designer spec: uniform X/Y scale, circular tangential stretch
+// along the spiral path, orbital velocity that ACCELERATES toward
+// center (slow outer → violent inner), pixel-pull vacuum effect,
+// final implosion once everything hits dead center.
 //
-// FRAME 1 (0ms)      — Stamp frozen on white void. Fully intact.
-// FRAME 2 (0–500ms)  — Full 360° spin while stretching outward
-//                      circularly — panel orbits the drain point,
-//                      scaleX/Y expand then begin thinning
-// FRAME 3 (500–1100ms)— The stretched loop fragments into 2° increments
-//                      across the full 360° arc, each shard scales
-//                      100%→0% as it spirals inward — 180 shards
-//                      raining into the center drain
-// FRAME 5 (1100–1650ms)— Singularity: all mass collapses to a single
-//                      bright point at dead center, then snaps to white
-// 1700ms             — onDone fires → SPRecovery slides in
+// PHYSICS:
+//   — scale(X,Y) always congruent — object shrinks as one piece
+//   — scaleX stretches TANGENTIALLY (along direction of travel)
+//   — scaleY compresses RADIALLY (gravity squeezing inward)
+//   — rotate() uses custom cubic-bezier: slow start → exponential
+//     acceleration as the spiral tightens
+//   — translate() pulls the whole mass toward center, accelerating
+//   — blur/brightness only spike at the very end — implosion frame
+//
+// TIMELINE (1700ms total):
+//   0ms        — Stamp frozen. Intact on white void.
+//   0–300ms    — Gravity detected. Gentle tilt, first orbital pull.
+//   300–700ms  — Orbit established. Circular stretch begins along
+//                path. Scale ~0.7, rotate ~120°, speed building.
+//   700–1150ms — Acceleration phase. Tighter spiral, scale ~0.3,
+//                rotate ~270°. Tangential stretch peaks here.
+//   1150–1500ms— Terminal velocity. Scale ~0.05, rotate ~450°.
+//                Everything blurring toward singularity.
+//   1500–1650ms— IMPLOSION. Scale 0, rotate 540°. Bright white
+//                flash-point expands then collapses in 150ms.
+//   1700ms     — onDone → SPRecovery slides in.
 // ══════════════════════════════════════════════════════════════════
 function WhamDrain({ panelRef, onDone }) {
-  const overlayRef  = useRef(null);
-  const shardRefs   = useRef([]);
-  const cloneRef    = useRef(null);
-  const singRef     = useRef(null);
+  const cloneRef  = useRef(null);
+  const singRef   = useRef(null);
 
   useEffect(() => {
-    // ── Stamp: deep-clone the panel at this exact frame ──
+    // ── Stamp the panel as a frozen clone ──
     const source = panelRef?.current;
-    let rect = { width: 360, height: 600 };
-    if (source) rect = source.getBoundingClientRect();
-
-    // Build clone for Frame 2 (spin phase)
     if (source && cloneRef.current) {
       const clone = source.cloneNode(true);
+      const rect  = source.getBoundingClientRect();
       clone.style.cssText = `
         position:absolute; top:0; left:0;
         width:${rect.width}px;
@@ -848,196 +856,195 @@ function WhamDrain({ panelRef, onDone }) {
       cloneRef.current.appendChild(clone);
     }
 
-    // ── Double-rAF: mount first, then animate ──
+    // ── Double-rAF: mount first, then trigger ──
     const raf = requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        // FRAME 2: spin the main clone 360° while stretching
-        if (cloneRef.current) {
-          cloneRef.current.style.transition = "none";
-          cloneRef.current.classList.add("wd-spin360");
-        }
-
-        // FRAME 3: after spin (500ms), explode into 2° shards
-        setTimeout(() => {
-          // Hide the spin clone
-          if (cloneRef.current) {
-            cloneRef.current.style.opacity = "0";
-            cloneRef.current.style.transition = "opacity 80ms";
-          }
-          // Activate each shard
-          shardRefs.current.forEach((el, i) => {
-            if (!el) return;
-            const delay = i * 1.5; // stagger each 2° shard by 1.5ms = ~270ms total spread
-            el.style.animationDelay = `${delay}ms`;
-            el.classList.add("wd-shard-fall");
-          });
-
-          // FRAME 5: singularity at 1100ms (600ms into shard phase)
-          setTimeout(() => {
-            if (singRef.current) singRef.current.classList.add("wd-sing-collapse");
-          }, 600);
-        }, 500);
+        if (cloneRef.current) cloneRef.current.classList.add("wd-vortex");
       });
     });
 
-    const t = setTimeout(() => onDone && onDone(), 1700);
-    return () => { clearTimeout(t); cancelAnimationFrame(raf); };
+    // ── Implosion fires at 1500ms (150ms before onDone) ──
+    const implosionT = setTimeout(() => {
+      if (singRef.current) singRef.current.classList.add("wd-implode");
+    }, 1500);
+
+    const doneT = setTimeout(() => onDone && onDone(), 1700);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(implosionT);
+      clearTimeout(doneT);
+    };
   }, []);
 
-  // Build 180 shard elements (one per 2° of the 360° arc)
-  const shards = Array.from({ length: 180 }, (_, i) => {
-    const angleDeg = i * 2;          // 0°, 2°, 4° ... 358°
-    const angleRad = (angleDeg * Math.PI) / 180;
-    // Each shard starts on a circle radius ~140px from center, angled outward
-    const r = 140;
-    const tx = Math.cos(angleRad) * r;
-    const ty = Math.sin(angleRad) * r;
-    return { angleDeg, tx, ty, i };
-  });
-
   return (
-    <div ref={overlayRef} style={{
+    <div style={{
       position:"fixed", inset:0, zIndex:9000,
       background:"#ffffff",
       display:"flex", alignItems:"center", justifyContent:"center",
       overflow:"hidden",
     }}>
-      {/* ── FRAME 2: the main clone for the 360° spin ── */}
+      {/* ── The frozen stamp — one intact object pulled into the vortex ── */}
       <div ref={cloneRef} className="wd-stamp" style={{
-        position:"absolute",
+        position:"relative",
         width:"100%", maxWidth:480,
         transformOrigin:"50% 50%",
         zIndex:2,
       }} />
 
-      {/* ── FRAME 3: 180 shard arcs, one per 2° ── */}
-      <div style={{
-        position:"absolute", inset:0,
-        display:"flex", alignItems:"center", justifyContent:"center",
-        pointerEvents:"none", zIndex:3,
-      }}>
-        {shards.map(({ angleDeg, tx, ty, i }) => (
-          <div
-            key={i}
-            ref={el => shardRefs.current[i] = el}
-            className="wd-shard"
-            style={{
-              // Each shard is a thin colored sliver, rotated to its angle
-              position:"absolute",
-              width: 3,
-              height: 28,
-              borderRadius: 2,
-              background: `hsl(${200 + (angleDeg * 0.3)}, 55%, ${30 + (i % 4) * 8}%)`,
-              transformOrigin: "50% 100%",  // pivot at bottom = toward center
-              // Start position: translated out on the circle
-              transform: `translate(${tx}px, ${ty}px) rotate(${angleDeg + 90}deg) scaleY(1)`,
-              opacity: 0,
-              // CSS var for the inward collapse translation
-              "--tx": `${tx}px`,
-              "--ty": `${ty}px`,
-              "--angle": `${angleDeg + 90}deg`,
-            }}
-          />
-        ))}
-      </div>
-
-      {/* ── FRAME 5: singularity point at dead center ── */}
-      <div ref={singRef} className="wd-singularity" style={{
+      {/* ── Implosion point at dead center ── */}
+      <div ref={singRef} className="wd-implode-ring" style={{
         position:"absolute",
         top:"50%", left:"50%",
         transform:"translate(-50%,-50%)",
-        zIndex:4,
+        zIndex:5, pointerEvents:"none",
       }} />
 
       <style>{`
-        /* ══ FRAME 2: 360° orbital spin + circular stretch ══ */
-        .wd-stamp { will-change: transform, opacity, filter; }
-
-        .wd-spin360 {
-          animation: wdSpin360 0.5s cubic-bezier(0.3, 0, 0.7, 1) forwards;
+        /* ══ BASE STAMP ══ */
+        .wd-stamp {
+          will-change: transform, opacity, filter;
         }
-        @keyframes wdSpin360 {
-          0%   {
-            transform: scale(1, 1) rotate(0deg);
+
+        /* ══ VORTEX DRAIN ══════════════════════════════════════════════
+           Circular stretch = scaleX elongates ALONG direction of travel
+           while scaleY compresses inward. Both start equal and diverge
+           as the spiral tightens. Rotation accelerates exponentially —
+           the custom timing function front-loads the slow outer orbit
+           and back-loads the violent terminal pull.
+           translate(-2%,-2%) nudges mass toward center continuously.
+        ══════════════════════════════════════════════════════════════ */
+        .wd-vortex {
+          animation: wdVortex 1.5s cubic-bezier(0.12, 0, 0.95, 1) forwards;
+        }
+
+        @keyframes wdVortex {
+
+          /* FRAME 0: Intact. Gravity just beginning to bite. */
+          0% {
+            transform:
+              translate(0%, 0%)
+              rotate(0deg)
+              scale(1, 1)
+              skewX(0deg);
             opacity: 1;
             filter: blur(0px) brightness(1);
           }
-          30%  {
-            transform: scale(1.12, 1.12) rotate(108deg);
+
+          /* FRAME 1 ~18% (270ms): First orbital tug.
+             Slight tilt, tangential stretch just starting.
+             scaleX > scaleY — stretching along the path. */
+          18% {
+            transform:
+              translate(-1%, -1%)
+              rotate(45deg)
+              scale(0.88, 0.82)
+              skewX(-4deg);
             opacity: 1;
-            filter: blur(1px) brightness(1.1);
+            filter: blur(0.3px) brightness(1.02);
           }
-          65%  {
-            transform: scale(1.18, 1.18) rotate(234deg);
-            opacity: 0.85;
-            filter: blur(2.5px) brightness(1.25);
+
+          /* FRAME 2 ~38% (570ms): Orbit established.
+             Circular stretch visible — object curves with path.
+             Velocity building. */
+          38% {
+            transform:
+              translate(-2%, -2%)
+              rotate(120deg)
+              scale(0.62, 0.54)
+              skewX(-10deg);
+            opacity: 0.95;
+            filter: blur(0.8px) brightness(1.08) contrast(1.1);
           }
+
+          /* FRAME 3 ~57% (855ms): Mid-spiral. Speed doubling.
+             scaleX tangential stretch peaks — wide along path.
+             scaleY radial compression — squeezed by gravity. */
+          57% {
+            transform:
+              translate(-3%, -2%)
+              rotate(228deg)
+              scale(0.36, 0.26)
+              skewX(-18deg);
+            opacity: 0.82;
+            filter: blur(2px) brightness(1.2) contrast(1.25);
+          }
+
+          /* FRAME 4 ~74% (1110ms): Acceleration phase.
+             Orbital path tightening rapidly. Almost gone. */
+          74% {
+            transform:
+              translate(-2%, -1%)
+              rotate(348deg)
+              scale(0.14, 0.09)
+              skewX(-26deg);
+            opacity: 0.55;
+            filter: blur(5px) brightness(1.6) contrast(1.8);
+          }
+
+          /* FRAME 5 ~88% (1320ms): Terminal velocity.
+             Pixels racing toward singularity. */
+          88% {
+            transform:
+              translate(-1%, 0%)
+              rotate(450deg)
+              scale(0.04, 0.025)
+              skewX(-30deg);
+            opacity: 0.25;
+            filter: blur(10px) brightness(2.5) contrast(3);
+          }
+
+          /* FRAME 6 100% (1500ms): Everything hits center. White out. */
           100% {
-            transform: scale(0.9, 0.9) rotate(360deg);
+            transform:
+              translate(0%, 0%)
+              rotate(540deg)
+              scale(0, 0)
+              skewX(0deg);
             opacity: 0;
-            filter: blur(5px) brightness(1.5);
+            filter: blur(18px) brightness(6) contrast(5);
           }
         }
 
-        /* ══ FRAME 3: shard fragments rain inward over 600ms ══
-           Each shard starts on the arc, scales 100→0 as it pulls
-           toward dead center. staggered by delay set in JS.       */
-        .wd-shard {
-          will-change: transform, opacity;
-        }
-        .wd-shard-fall {
-          animation: wdShardFall 0.55s ease-in forwards;
-        }
-        @keyframes wdShardFall {
-          0% {
-            opacity: 0.9;
-            transform: translate(var(--tx, 0px), var(--ty, 0px))
-                       rotate(var(--angle, 90deg))
-                       scaleY(1);
-          }
-          45% {
-            opacity: 0.65;
-            transform: translate(calc(var(--tx, 0px) * 0.45), calc(var(--ty, 0px) * 0.45))
-                       rotate(var(--angle, 90deg))
-                       scaleY(0.55);
-          }
-          100% {
-            opacity: 0;
-            transform: translate(0px, 0px)
-                       rotate(var(--angle, 90deg))
-                       scaleY(0);
-          }
-        }
-
-        /* ══ FRAME 5: singularity collapse ══ */
-        .wd-singularity {
+        /* ══ IMPLOSION RING ════════════════════════════════════════════
+           Fires at 1500ms. Expands fast from 0 → 80px, then
+           collapses violently back to 0 in 150ms. Final punctuation.
+        ══════════════════════════════════════════════════════════════ */
+        .wd-implode-ring {
           width: 0; height: 0;
           border-radius: 50%;
-          background: radial-gradient(circle,
-            rgba(255,255,255,1) 0%,
-            rgba(30,122,140,0.9) 30%,
-            rgba(26,58,92,0.7) 60%,
-            transparent 100%
-          );
           opacity: 0;
         }
-        .wd-sing-collapse {
-          animation: wdSingCollapse 0.6s ease-out forwards;
+        .wd-implode {
+          animation: wdImplode 0.2s cubic-bezier(0.2, 0, 0.4, 1) forwards;
         }
-        @keyframes wdSingCollapse {
-          0%   { width:0;    height:0;    opacity:0; }
-          20%  { width:60px; height:60px; opacity:1;
-                 box-shadow: 0 0 40px 20px rgba(30,122,140,0.6); }
-          50%  { width:24px; height:24px; opacity:1;
-                 box-shadow: 0 0 20px 10px rgba(26,58,92,0.8); }
-          80%  { width:6px;  height:6px;  opacity:0.8; }
-          100% { width:0;    height:0;    opacity:0; }
+        @keyframes wdImplode {
+          0%   {
+            width: 0; height: 0; opacity: 0;
+            box-shadow: none;
+            background: transparent;
+          }
+          35%  {
+            width: 80px; height: 80px; opacity: 1;
+            background: radial-gradient(circle, #ffffff 0%, rgba(30,122,140,0.9) 40%, rgba(26,58,92,0.6) 70%, transparent 100%);
+            box-shadow: 0 0 60px 30px rgba(255,255,255,0.9), 0 0 20px 8px rgba(30,122,140,0.8);
+            transform: translate(-50%, -50%);
+          }
+          70%  {
+            width: 20px; height: 20px; opacity: 0.8;
+            background: radial-gradient(circle, #ffffff 0%, rgba(30,122,140,1) 60%, transparent 100%);
+            box-shadow: 0 0 16px 8px rgba(30,122,140,0.6);
+            transform: translate(-50%, -50%);
+          }
+          100% {
+            width: 0; height: 0; opacity: 0;
+            box-shadow: none;
+            transform: translate(-50%, -50%);
+          }
         }
       `}</style>
     </div>
   );
 }
-
 // ── SCREEN: Level Select ──
 function LevelSelect({ onSelect }) {
   return (
