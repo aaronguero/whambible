@@ -334,21 +334,79 @@ const MENU_CHARS = {
 // onClose: close handler
 // children: scroll panel content
 function MenuOverlay({ charKey, title, onClose, children }) {
+  // ── Draggable bottom-sheet state ──────────────────────────
+  // snapUp   = ~42% from top (content readable, scene visible above)
+  // snapDown = ~68% from top (scene fully revealed, handle peeking)
+  const SNAP_UP   = 0.38; // fraction of window height
+  const SNAP_DOWN = 0.65;
+  const [sheetTop, setSheetTop]   = useState(SNAP_UP);   // current position (fraction)
+  const [dragging, setDragging]   = useState(false);
+  const dragRef   = useRef(null);  // { startY, startFrac }
+  const sheetRef  = useRef(null);
+
+  // Touch handlers
+  function onTouchStart(e) {
+    dragRef.current = { startY: e.touches[0].clientY, startFrac: sheetTop };
+    setDragging(true);
+  }
+  function onTouchMove(e) {
+    if (!dragRef.current) return;
+    const dy   = e.touches[0].clientY - dragRef.current.startY;
+    const frac = dragRef.current.startFrac + dy / window.innerHeight;
+    setSheetTop(Math.min(Math.max(frac, 0.12), 0.80));
+  }
+  function onTouchEnd() {
+    setDragging(false);
+    // Snap to nearest position
+    const mid = (SNAP_UP + SNAP_DOWN) / 2;
+    setSheetTop(sheetTop < mid ? SNAP_UP : SNAP_DOWN);
+    dragRef.current = null;
+  }
+  // Mouse handlers (desktop drag)
+  function onMouseDown(e) {
+    dragRef.current = { startY: e.clientY, startFrac: sheetTop };
+    setDragging(true);
+    e.preventDefault();
+  }
+  useEffect(() => {
+    if (!dragging) return;
+    function onMouseMove(e) {
+      if (!dragRef.current) return;
+      const dy   = e.clientY - dragRef.current.startY;
+      const frac = dragRef.current.startFrac + dy / window.innerHeight;
+      setSheetTop(Math.min(Math.max(frac, 0.12), 0.80));
+    }
+    function onMouseUp() {
+      setDragging(false);
+      const mid = (SNAP_UP + SNAP_DOWN) / 2;
+      setSheetTop(prev => prev < mid ? SNAP_UP : SNAP_DOWN);
+      dragRef.current = null;
+    }
+    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mouseup",   onMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("mouseup",   onMouseUp);
+    };
+  }, [dragging]);
+
+  const sheetPx = Math.round(sheetTop * window.innerHeight);
+
   return (
     <div style={{
       position:"fixed",inset:0,zIndex:1500,
       fontFamily:"'Cinzel',serif",
-      overflowY:"auto",
+      overflow:"hidden",
     }}>
-      {/* Cinematic underlay layers */}
-      {/* Layer 1 — vivid landscape, full 100% saturation */}
+      {/* ── Fixed scene layers (always visible behind sheet) ── */}
+      {/* Layer 1 — vivid landscape */}
       <div style={{
         position:"fixed",inset:0,zIndex:0,
         backgroundImage:`url(${LANDSCAPE_VIVID})`,
         backgroundSize:"cover",backgroundPosition:"center center",
         backgroundRepeat:"no-repeat",
       }}/>
-      {/* Layer 2 — character, crisp presence */}
+      {/* Layer 2 — character */}
       <div style={{
         position:"fixed",inset:0,zIndex:1,
         backgroundImage:`url(${MENU_CHARS[charKey]})`,
@@ -357,63 +415,105 @@ function MenuOverlay({ charKey, title, onClose, children }) {
         backgroundRepeat:"no-repeat",
         opacity:1.0,
       }}/>
-      {/* Layer 3 — very light dark vignette top only — lets landscape show fully */}
+      {/* Layer 3 — very light top vignette */}
       <div style={{
         position:"fixed",inset:0,zIndex:2,
-        background:"linear-gradient(180deg,rgba(0,0,0,0.38) 0%,rgba(0,0,0,0.08) 25%,rgba(0,0,0,0.0) 55%,rgba(0,0,0,0.0) 100%)",
+        background:"linear-gradient(180deg,rgba(0,0,0,0.32) 0%,rgba(0,0,0,0.0) 30%)",
+        pointerEvents:"none",
       }}/>
       {/* Layer 4 — gold rim */}
-      <div style={{position:"fixed",top:0,left:0,right:0,height:3,zIndex:3,
-        background:"linear-gradient(90deg,transparent,#F5C842,transparent)"
+      <div style={{
+        position:"fixed",top:0,left:0,right:0,height:3,zIndex:3,
+        background:"linear-gradient(90deg,transparent,#F5C842,transparent)",
+        pointerEvents:"none",
       }}/>
 
-      {/* Close button — crossed swords ⚔️ */}
+      {/* ── Close button ── */}
       <button onClick={onClose} style={{
         position:"fixed",top:14,right:14,zIndex:1600,
         width:44,height:44,borderRadius:"50%",
-        background:"rgba(212,146,26,0.18)",
-        border:"1.5px solid rgba(245,200,66,0.4)",
+        background:"rgba(212,146,26,0.22)",
+        border:"1.5px solid rgba(245,200,66,0.45)",
         color:"#F5C842",fontSize:20,cursor:"pointer",
         display:"flex",alignItems:"center",justifyContent:"center",
-        boxShadow:"0 2px 12px rgba(0,0,0,0.4)",
+        boxShadow:"0 2px 12px rgba(0,0,0,0.45)",
         transition:"background 0.15s",
       }}
-        onMouseEnter={e=>e.currentTarget.style.background="rgba(212,146,26,0.35)"}
-        onMouseLeave={e=>e.currentTarget.style.background="rgba(212,146,26,0.18)"}
+        onMouseEnter={e=>e.currentTarget.style.background="rgba(212,146,26,0.4)"}
+        onMouseLeave={e=>e.currentTarget.style.background="rgba(212,146,26,0.22)"}
       >⚔️</button>
 
-      {/* Screen title */}
+      {/* ── Title (fixed, above sheet) ── */}
       <div style={{
-        position:"relative",zIndex:4,
-        textAlign:"center",
-        paddingTop:56,paddingBottom:8,
+        position:"fixed",top:52,left:0,right:0,zIndex:5,
+        textAlign:"center",pointerEvents:"none",
       }}>
         <div style={{
           fontSize:22,fontWeight:900,color:"#F5C842",
           letterSpacing:4,textTransform:"uppercase",
-          textShadow:"0 2px 18px rgba(212,146,26,0.6)",
+          textShadow:"0 2px 18px rgba(0,0,0,0.7),0 0 24px rgba(212,146,26,0.5)",
         }}>{title}</div>
         <div style={{
-          width:60,height:2,margin:"10px auto 0",
+          width:60,height:2,margin:"8px auto 0",
           background:"linear-gradient(90deg,transparent,#F5C842,transparent)",
         }}/>
       </div>
 
-      {/* Scroll panel — 50% opacity see-through */}
-      <div style={{
-        position:"relative",zIndex:4,
-        maxWidth:440,margin:"18px auto 40px",
-        padding:"0 16px",
-      }}>
+      {/* ── Draggable bottom sheet ── */}
+      <div
+        ref={sheetRef}
+        style={{
+          position:"fixed",
+          left:0,right:0,
+          top: sheetPx,
+          bottom:0,
+          zIndex:6,
+          transition: dragging ? "none" : "top 0.32s cubic-bezier(.4,0,.2,1)",
+          display:"flex",
+          flexDirection:"column",
+        }}
+      >
+        {/* Drag handle bar — touch target */}
+        <div
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+          onMouseDown={onMouseDown}
+          style={{
+            flexShrink:0,
+            width:"100%",
+            paddingTop:10,paddingBottom:8,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            cursor:"grab",
+            background:"rgba(13,31,53,0.55)",
+            borderRadius:"18px 18px 0 0",
+            borderTop:"1px solid rgba(245,200,66,0.22)",
+            userSelect:"none",
+            touchAction:"none",
+          }}
+        >
+          <div style={{
+            width:40,height:4,borderRadius:2,
+            background:"rgba(245,200,66,0.45)",
+          }}/>
+        </div>
+
+        {/* Scrollable content inside sheet */}
         <div style={{
+          flex:1,
+          overflowY:"auto",
           background:"rgba(13,31,53,0.50)",
-          border:"1px solid rgba(245,200,66,0.18)",
-          borderRadius:16,
-          backdropFilter:"blur(6px)",
-          WebkitBackdropFilter:"blur(6px)",
-          overflow:"hidden",
+          backdropFilter:"blur(8px)",
+          WebkitBackdropFilter:"blur(8px)",
+          borderLeft:"1px solid rgba(245,200,66,0.12)",
+          borderRight:"1px solid rgba(245,200,66,0.12)",
         }}>
-          {children}
+          <div style={{
+            maxWidth:440,margin:"0 auto",
+            padding:"0 16px",
+          }}>
+            {children}
+          </div>
         </div>
       </div>
     </div>
