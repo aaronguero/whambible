@@ -1227,7 +1227,7 @@ function TutorialOverlay({ onClose }) {
 
 
 
-function Hdr({ user, profile, onOut }) {
+function Hdr({ user, profile, onOut, onSmsToggle }) {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(null); // "profile"|"leader"|"players"|"scores"|"verses"|"language"|"tutorial"
   const init = user ? (user.displayName || user.email || "W")[0].toUpperCase() : null;
@@ -1837,7 +1837,7 @@ function Auth({ onIn }) {
 // ══════════════════════════════════════════════════════════════
 // LOBBY — start new game OR see active games
 // ══════════════════════════════════════════════════════════════
-function Lobby({ user, profile, onChallenge, onResumeGame, onOut }) {
+function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle }) {
   const [tab,       setTab]       = useState("new");  // "new" | "active"
   const [players,   setPlayers]   = useState([]);
   const [games,     setGames]     = useState([]);
@@ -1907,7 +1907,7 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut }) {
   return (
     <div className="c-screen">
       <Bg char={CHAR_KNIGHT}/>
-      <Hdr user={user} profile={profile} onOut={onOut}/>
+      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
       <div className="c-scroll"><div className="c-pad">
 
         {/* Profile card */}
@@ -2001,7 +2001,7 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut }) {
 // ══════════════════════════════════════════════════════════════
 // SELECT LEVEL — turn-guarded: only the current_turn player can pick
 // ══════════════════════════════════════════════════════════════
-function SelectLevel({ user, profile, game, role, onPick }) {
+function SelectLevel({ user, profile, game, role, onPick, onOut, onSmsToggle }) {
   const [picking,   setPicking]   = useState(false);  // lock while committing
   const [guardFail, setGuardFail] = useState(false);  // stale-turn detection
   const pickedRef = useRef(false);                     // race-condition guard
@@ -2060,7 +2060,7 @@ function SelectLevel({ user, profile, game, role, onPick }) {
     return (
       <div className="c-screen">
         <Bg char={CHAR_KNIGHT}/>
-        <Hdr user={user} profile={profile}/>
+        <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
         <div style={{position:"absolute",inset:0,zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 24px"}}>
           <div className="c-card" style={{textAlign:"center",width:"100%",maxWidth:400}}>
             <div className="c-curl"/>
@@ -2077,7 +2077,7 @@ function SelectLevel({ user, profile, game, role, onPick }) {
   return (
     <div className="c-screen">
       <Bg char={CHAR_KNIGHT}/>
-      <Hdr user={user} profile={profile}/>
+      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
       <div className="c-scroll"><div className="c-pad">
         <div className="c-card">
           <div className="c-curl"/>
@@ -2117,7 +2117,7 @@ function SelectLevel({ user, profile, game, role, onPick }) {
 // ══════════════════════════════════════════════════════════════
 // WAITING SCREEN — cinematic underlay + scroll panel
 // ══════════════════════════════════════════════════════════════
-function Waiting({ user, profile, game, role, onUpdate, onOut }) {
+function Waiting({ user, profile, game, role, onUpdate, onOut, onSmsToggle }) {
   const [g, setG]       = useState(game);
   const [dots, setDots] = useState(".");
   const pollRef = useRef(null);
@@ -2183,7 +2183,7 @@ function Waiting({ user, profile, game, role, onUpdate, onOut }) {
       <div style={{position:"fixed",inset:0,zIndex:2,background:`linear-gradient(180deg,${C.cobaltDark}cc 0%,${C.cobaltDark}44 38%,rgba(232,213,160,0.72) 100%)`}}/>
       <div style={{position:"fixed",top:0,left:0,right:0,height:3,zIndex:3,background:`linear-gradient(90deg,transparent,${C.gold},transparent)`}}/>
 
-      <Hdr user={user} profile={profile} onOut={onOut}/>
+      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
 
       {/* ── Hero space — character breathes here ── */}
       <div style={{height:"44vh",minHeight:220}}/>
@@ -2669,7 +2669,7 @@ function MPRecovery({ verse, lv, onDone }) {
 // ══════════════════════════════════════════════════════════════
 // ANSWER SCREEN — Answerer only. Wrong answer triggers MPRecovery.
 // ══════════════════════════════════════════════════════════════
-function Answer({ user, game, role, onDone }) {
+function Answer({ user, game, role, onDone, onOut, onSmsToggle }) {
   const [opts,     setOpts]     = useState([]);
   const [sel,      setSel]      = useState(null);
   const [tLeft,    setTLeft]    = useState(TIME_LIMIT);
@@ -2799,7 +2799,7 @@ function Answer({ user, game, role, onDone }) {
   return (
     <div className="c-screen">
       <Bg/>
-      <Hdr user={user}/>
+      <Hdr user={user} onOut={onOut} onSmsToggle={onSmsToggle}/>
       {streakFlash && <StreakFlash onDone={handleStreakFlashDone}/>}
       <Slam active={slam} pts={pts} onDone={()=>{
         const bonus = streakBonusPendingRef.current ? 5 : 0;
@@ -2862,7 +2862,7 @@ function Answer({ user, game, role, onDone }) {
 // ══════════════════════════════════════════════════════════════
 const RESULT_LOCK_MS = 3000; // player must read for 3s before Continue unlocks
 
-function RoundResult({ user, profile, game, role, correct, pts, onNext, onOut }) {
+function RoundResult({ user, profile, game, role, correct, pts, onNext, onOut, onSmsToggle }) {
   const [revealed,  setRevealed]  = useState(false);
   const [readLock,  setReadLock]  = useState(true);   // locked until 3s elapsed
   const [countdown, setCountdown] = useState(3);      // visual 3→2→1
@@ -2901,7 +2901,7 @@ function RoundResult({ user, profile, game, role, correct, pts, onNext, onOut })
   return (
     <div className="c-screen">
       <Bg char={correct ? CHAR_MP : CHAR_KNIGHT}/>
-      <Hdr user={user} profile={profile} onOut={onOut}/>
+      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
       <div className="c-scroll"><div className="c-pad" style={{paddingTop:80}}>
 
         {/* Result badge */}
@@ -3028,7 +3028,7 @@ function RoundResult({ user, profile, game, role, correct, pts, onNext, onOut })
 // ══════════════════════════════════════════════════════════════
 // GAME OVER — cinematic underlay + full results scroll panel
 // ══════════════════════════════════════════════════════════════
-function GameOver({ user, profile, game, role, onHome, onOut }) {
+function GameOver({ user, profile, game, role, onHome, onOut, onSmsToggle }) {
   const [statsUpdated, setStatsUpdated] = useState(false);
 
   const myScore   = role === "challenger" ? game?.challenger_score||0 : game?.answerer_score||0;
@@ -3104,7 +3104,7 @@ function GameOver({ user, profile, game, role, onHome, onOut }) {
           : `linear-gradient(90deg,transparent,${C.tealLight},transparent)`,
       }}/>
 
-      <Hdr user={user} profile={profile} onOut={onOut}/>
+      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
 
       {/* ── Hero space ── */}
       <div style={{height:"42vh",minHeight:210}}/>
@@ -3387,12 +3387,12 @@ export default function Challenge() {
   return (
     <>
       {screen==="auth"    && <Auth onIn={onIn}/>}
-      {screen==="lobby"   && <Lobby user={user} profile={profile} onChallenge={onChallenge} onResumeGame={onResumeGame} onOut={onOut}/>}
-      {screen==="level"   && <SelectLevel user={user} profile={profile} game={game} role={role} onPick={onLevelPicked}/>}
-      {screen==="waiting" && <Waiting user={user} profile={profile} game={game} role={role} onUpdate={onWaitingUpdate} onOut={onOut}/>}
-      {screen==="answer"  && <Answer user={user} game={game} role={role} onDone={onAnswered}/>}
-      {screen==="result"  && <RoundResult user={user} profile={profile} game={game} role={role} correct={lastResult?.correct} pts={lastResult?.pts} onNext={onResultNext} onOut={onOut}/>}
-      {screen==="gameover"&& <GameOver user={user} profile={profile} game={game} role={role} onHome={()=>setScreen("lobby")} onOut={onOut}/>}
+      {screen==="lobby"   && <Lobby user={user} profile={profile} onChallenge={onChallenge} onResumeGame={onResumeGame} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
+      {screen==="level"   && <SelectLevel user={user} profile={profile} game={game} role={role} onPick={onLevelPicked} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
+      {screen==="waiting" && <Waiting user={user} profile={profile} game={game} role={role} onUpdate={onWaitingUpdate} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
+      {screen==="answer"  && <Answer user={user} game={game} role={role} onDone={onAnswered} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
+      {screen==="result"  && <RoundResult user={user} profile={profile} game={game} role={role} correct={lastResult?.correct} pts={lastResult?.pts} onNext={onResultNext} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
+      {screen==="gameover"&& <GameOver user={user} profile={profile} game={game} role={role} onHome={()=>setScreen("lobby")} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
     </>
   );
 }
