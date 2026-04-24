@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 
 // ── Asset URLs ──
 const LANDSCAPE_BG  = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/33b065c94_generated_image.png";
@@ -43,6 +43,20 @@ const LEVELS = [
   { pts:15, name:"Knight",   icon:"🛡️", color:"#C05A2A", hint:15 },
   { pts:20, name:"Champion", icon:"👑", color:"#7B2D8B", hint:17 },
 ];
+
+
+// ── Recovery asset ──
+const CHAR_RECOVERY = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/833513c9d_generated_image.png";
+
+// ── Wheel data ──
+const ALL_BOOKS = ["Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges","Ruth","1 Samuel","2 Samuel","1 Kings","2 Kings","1 Chronicles","2 Chronicles","Ezra","Nehemiah","Esther","Job","Psalms","Proverbs","Ecclesiastes","Song of Solomon","Isaiah","Jeremiah","Lamentations","Ezekiel","Daniel","Hosea","Joel","Amos","Obadiah","Jonah","Micah","Nahum","Habakkuk","Zephaniah","Haggai","Zechariah","Malachi","Matthew","Mark","Luke","John","Acts","Romans","1 Corinthians","2 Corinthians","Galatians","Ephesians","Philippians","Colossians","1 Thessalonians","2 Thessalonians","1 Timothy","2 Timothy","Titus","Philemon","Hebrews","James","1 Peter","2 Peter","1 John","2 John","3 John","Jude","Revelation"];
+const W_CHAPTERS = Array.from({ length: 150 }, (_, i) => i + 1);
+const W_VERSES   = Array.from({ length: 176 }, (_, i) => i + 1);
+const SP_RECOVERY_SEC = 7;
+const WHEEL_ITEM_H    = 42;
+const WHEEL_VISIBLE   = 5;
+const WHEEL_CENTER    = 2;
+const WHEEL_COPIES    = 5;
 
 const BOOKS = ["Genesis","Exodus","Leviticus","Numbers","Deuteronomy","Joshua","Judges","Ruth","1 Samuel","2 Samuel","1 Kings","2 Kings","1 Chronicles","2 Chronicles","Ezra","Nehemiah","Esther","Job","Psalms","Proverbs","Ecclesiastes","Song of Solomon","Isaiah","Jeremiah","Lamentations","Ezekiel","Daniel","Hosea","Joel","Amos","Obadiah","Jonah","Micah","Nahum","Habakkuk","Zephaniah","Haggai","Zechariah","Malachi","Matthew","Mark","Luke","John","Acts","Romans","1 Corinthians","2 Corinthians","Galatians","Ephesians","Philippians","Colossians","1 Thessalonians","2 Thessalonians","1 Timothy","2 Timothy","Titus","Philemon","Hebrews","James","1 Peter","2 Peter","1 John","2 John","3 John","Jude","Revelation"];
 
@@ -414,6 +428,381 @@ function StreakFlash({ onDone }) {
   );
 }
 
+
+// ══════════════════════════════════════════════════════════════════
+// ── SCROLL WHEEL ─────────────────────────────────────────────────
+// Momentum physics, center-snap, 5-item visible window.
+// ══════════════════════════════════════════════════════════════════
+function ScrollWheel({ items, startIndex, label, widthClass, onChange }) {
+  const outerRef = useRef(null);
+  const innerRef = useRef(null);
+  const s = useRef({
+    offset:0, dragging:false, startY:0, startOffset:0,
+    lastY:0, lastT:0, velocity:0, rafId:null, currentIdx:startIndex,
+  });
+
+  const normalize = useCallback((offset) => {
+    const len = items.length, minOff = len * WHEEL_ITEM_H, maxOff = len * WHEEL_ITEM_H * 3;
+    let o = offset;
+    while (o < minOff) o += len * WHEEL_ITEM_H;
+    while (o > maxOff) o -= len * WHEEL_ITEM_H;
+    return o;
+  }, [items]);
+
+  const offsetToIdx = useCallback((offset) => {
+    const len = items.length;
+    const row = Math.round((offset + WHEEL_CENTER * WHEEL_ITEM_H) / WHEEL_ITEM_H);
+    return ((row % len) + len) % len;
+  }, [items]);
+
+  const applyHighlight = useCallback((idx) => {
+    const inner = innerRef.current; if (!inner) return;
+    const len = items.length;
+    inner.querySelectorAll(".spw-item").forEach((el, i) => {
+      const rel  = ((i % len) + len) % len;
+      const dist = Math.min(Math.abs(rel-idx), Math.abs(rel-idx+len), Math.abs(rel-idx-len));
+      el.className = "spw-item" + (rel===idx?" selected":dist===1?" near1":dist===2?" near2":"");
+    });
+  }, [items]);
+
+  const setOff = useCallback((offset, animate) => {
+    const inner = innerRef.current; if (!inner) return;
+    inner.style.transition = animate ? "transform 0.18s cubic-bezier(.22,.68,0,1.2)" : "none";
+    inner.style.transform  = `translateY(-${offset}px)`;
+    s.current.offset = offset;
+    const idx = offsetToIdx(offset);
+    s.current.currentIdx = idx;
+    applyHighlight(idx);
+    onChange?.(idx);
+  }, [offsetToIdx, applyHighlight, onChange]);
+
+  const snap = useCallback((offset) => {
+    const ctr = offset + WHEEL_CENTER * WHEEL_ITEM_H;
+    const snappedC = Math.round(ctr / WHEEL_ITEM_H) * WHEEL_ITEM_H;
+    setOff(normalize(snappedC - WHEEL_CENTER * WHEEL_ITEM_H), true);
+  }, [normalize, setOff]);
+
+  useEffect(() => {
+    const inner = innerRef.current; if (!inner) return;
+    inner.innerHTML = "";
+    const all = Array(WHEEL_COPIES).fill(items).flat();
+    all.forEach(item => {
+      const el = document.createElement("div");
+      el.className = "spw-item";
+      el.textContent = String(item);
+      inner.appendChild(el);
+    });
+    const init = normalize((items.length * 2 + startIndex) * WHEEL_ITEM_H - WHEEL_CENTER * WHEEL_ITEM_H);
+    setOff(init, false);
+  }, [items, startIndex]);
+
+  const onStart = useCallback((y) => {
+    cancelAnimationFrame(s.current.rafId);
+    Object.assign(s.current, { dragging:true, startY:y, lastY:y, lastT:performance.now(), velocity:0, startOffset:s.current.offset });
+    if (innerRef.current) innerRef.current.style.transition = "none";
+  }, []);
+
+  const onMove = useCallback((y) => {
+    if (!s.current.dragging) return;
+    const now = performance.now(), dt = now - s.current.lastT || 16;
+    s.current.velocity = (s.current.lastY - y) / dt;
+    s.current.lastY = y; s.current.lastT = now;
+    setOff(normalize(s.current.startOffset + (s.current.startY - y)), false);
+  }, [normalize, setOff]);
+
+  const onEnd = useCallback(() => {
+    if (!s.current.dragging) return;
+    s.current.dragging = false;
+    let vel = s.current.velocity * 1000, offset = s.current.offset;
+    const coast = () => {
+      if (Math.abs(vel) < 0.5) { snap(offset); return; }
+      vel *= 0.94; offset += vel / 60;
+      setOff(normalize(offset), false);
+      s.current.rafId = requestAnimationFrame(coast);
+    };
+    Math.abs(vel) > 80 ? coast() : snap(offset);
+  }, [snap, normalize, setOff]);
+
+  useEffect(() => {
+    const outer = outerRef.current; if (!outer) return;
+    const tStart = e => onStart(e.touches[0].clientY);
+    const tMove  = e => { e.preventDefault(); onMove(e.touches[0].clientY); };
+    const tEnd   = () => onEnd();
+    const mDown  = e => { onStart(e.clientY); e.preventDefault(); };
+    const mMove  = e => { if (s.current.dragging) onMove(e.clientY); };
+    const mUp    = () => { if (s.current.dragging) onEnd(); };
+    const mLeave = () => { if (s.current.dragging) onEnd(); };
+    outer.addEventListener("touchstart", tStart, { passive:true });
+    outer.addEventListener("touchmove",  tMove,  { passive:false });
+    outer.addEventListener("touchend",   tEnd,   { passive:true });
+    outer.addEventListener("mousedown",  mDown);
+    outer.addEventListener("mousemove",  mMove);
+    outer.addEventListener("mouseleave", mLeave);
+    document.addEventListener("mouseup", mUp);
+    return () => {
+      outer.removeEventListener("touchstart", tStart);
+      outer.removeEventListener("touchmove",  tMove);
+      outer.removeEventListener("touchend",   tEnd);
+      outer.removeEventListener("mousedown",  mDown);
+      outer.removeEventListener("mousemove",  mMove);
+      outer.removeEventListener("mouseleave", mLeave);
+      document.removeEventListener("mouseup", mUp);
+    };
+  }, [onStart, onMove, onEnd]);
+
+  return (
+    <div className={`spw-wrap ${widthClass}`}>
+      <div className="spw-label">{label}</div>
+      <div ref={outerRef} className="spw-outer" style={{ height: WHEEL_ITEM_H * WHEEL_VISIBLE }}>
+        <div className="spw-band" style={{ top: WHEEL_CENTER * WHEEL_ITEM_H, height: WHEEL_ITEM_H }} />
+        <div className="spw-fade spw-fade-top" />
+        <div className="spw-fade spw-fade-bot" />
+        <div ref={innerRef} className="spw-inner" />
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ── SP RECOVERY OVERLAY ──────────────────────────────────────────
+// Fires inline over GamePlay when player answers wrong.
+// Props: verse { book, ch, vs, text }, onDone(recovered:bool)
+// 7s countdown — spin wheels to correct Book/Chapter/Verse, hit Submit.
+// Correct = +5 pts, WHAM SLAM fires. Wrong/timeout = 0 pts, round advances.
+// ══════════════════════════════════════════════════════════════════
+function SPRecovery({ verse, onDone }) {
+  const bookIdxRef    = useRef(spStartIdx(ALL_BOOKS, verse.book, 8));
+  const chapterIdxRef = useRef(spStartIdx(W_CHAPTERS, verse.ch, 4));
+  const verseIdxRef   = useRef(spStartIdx(W_VERSES,   verse.vs, 4));
+
+  const [timeLeft,   setTimeLeft]  = useState(SP_RECOVERY_SEC);
+  const [submitted,  setSubmitted] = useState(false);
+  const [result,     setResult]    = useState(null);
+  const [slamActive, setSlamActive] = useState(false);
+  const [showResult, setShowResult] = useState(false);
+  const timerRef = useRef(null);
+  const audioRef = useRef(null);
+  const circumference = 163.4;
+
+  useEffect(() => {
+    audioRef.current = new Audio(WHAM_AUDIO);
+    audioRef.current.preload = "auto";
+    audioRef.current.load();
+    return () => clearInterval(timerRef.current);
+  }, []);
+
+  useEffect(() => {
+    let t = SP_RECOVERY_SEC;
+    timerRef.current = setInterval(() => {
+      t -= 0.1;
+      setTimeLeft(parseFloat(t.toFixed(1)));
+      if (t <= 0) { clearInterval(timerRef.current); handleSubmit(); }
+    }, 100);
+    return () => clearInterval(timerRef.current);
+  }, []);
+
+  function spStartIdx(arr, correct, offset) {
+    const idx = arr.findIndex(v => String(v) === String(correct));
+    const len = arr.length;
+    return idx >= 0 ? ((idx - offset) % len + len) % len : 0;
+  }
+
+  function handleSubmit() {
+    if (submitted) return;
+    setSubmitted(true);
+    clearInterval(timerRef.current);
+    const selBook = ALL_BOOKS[bookIdxRef.current];
+    const selCh   = W_CHAPTERS[chapterIdxRef.current];
+    const selVs   = W_VERSES[verseIdxRef.current];
+    const correct = selBook === verse.book && selCh === verse.ch && selVs === verse.vs;
+    setResult(correct ? "correct" : "wrong");
+    if (correct) {
+      try { audioRef.current.currentTime=0; audioRef.current.play().catch(()=>{}); } catch {}
+      setSlamActive(true);
+      setTimeout(() => { setSlamActive(false); setShowResult(true); }, 1750);
+      setTimeout(() => onDone(true),  2600); // brief result shown, then advance
+    } else {
+      setShowResult(true);
+      setTimeout(() => onDone(false), 1400);
+    }
+  }
+
+  const timerPct  = timeLeft / SP_RECOVERY_SEC;
+  const dashOff   = circumference * (1 - timerPct);
+  const isRed     = timeLeft <= 3;
+  const timerClr  = isRed ? C.red : C.gold;
+
+  const bookStart    = spStartIdx(ALL_BOOKS, verse.book, 8);
+  const chapterStart = spStartIdx(W_CHAPTERS, verse.ch,   4);
+  const verseStart   = spStartIdx(W_VERSES,   verse.vs,   4);
+
+  return (
+    <div style={{
+      position:"fixed",inset:0,zIndex:900,overflowY:"auto",
+      background:"rgba(10,5,0,0.97)",
+      animation:"spRec-in 0.28s cubic-bezier(0.22,1,0.36,1)",
+    }}>
+      {/* WHAM SLAM mini overlay inside recovery */}
+      {slamActive && <WhamSlam message="+5" onDone={() => {}} />}
+
+      {/* Background layers */}
+      <div style={{
+        position:"fixed",inset:0,zIndex:0,pointerEvents:"none",
+        backgroundImage:`url('${LANDSCAPE_BG}')`,
+        backgroundSize:"cover",backgroundPosition:"center top",opacity:0.35,
+      }}/>
+      <div style={{
+        position:"fixed",inset:0,zIndex:1,pointerEvents:"none",
+        backgroundImage:`url('${CHAR_RECOVERY}')`,
+        backgroundSize:"70% auto",backgroundPosition:"center 4%",backgroundRepeat:"no-repeat",opacity:0.7,
+        WebkitMaskImage:"linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 10%, rgba(0,0,0,1) 22%, rgba(0,0,0,1) 50%, rgba(0,0,0,0.2) 68%, rgba(0,0,0,0) 82%)",
+        maskImage:"linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.8) 10%, rgba(0,0,0,1) 22%, rgba(0,0,0,1) 50%, rgba(0,0,0,0.2) 68%, rgba(0,0,0,0) 82%)",
+      }}/>
+      <div style={{
+        position:"fixed",inset:0,zIndex:2,pointerEvents:"none",
+        background:"linear-gradient(to bottom,rgba(10,5,0,0.1) 0%,rgba(10,5,0,0.6) 45%,rgba(10,5,0,0.95) 75%,rgba(10,5,0,1) 100%)",
+      }}/>
+
+      {/* Content */}
+      <div style={{
+        position:"relative",zIndex:4,maxWidth:480,margin:"0 auto",
+        padding:"0 16px 60px",display:"flex",flexDirection:"column",alignItems:"center",
+      }}>
+        <div style={{ height:290, width:"100%" }} />
+
+        {/* Panel */}
+        <div style={{
+          width:"100%",borderRadius:"20px 20px 0 0",padding:"22px 18px 0",
+          background:"linear-gradient(180deg,rgba(10,5,0,0) 0%,rgba(10,5,0,0.88) 8%,rgba(10,5,0,0.98) 18%,rgba(10,5,0,0.98) 100%)",
+        }}>
+          {/* Curl */}
+          <div style={{
+            width:"70%",height:4,margin:"0 auto 14px",borderRadius:2,
+            background:"linear-gradient(90deg,transparent,rgba(212,146,26,0.7),rgba(58,189,212,0.5),rgba(212,146,26,0.7),transparent)",
+          }}/>
+
+          {/* Badge */}
+          <div style={{
+            fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:2,
+            color:"rgba(212,146,26,0.85)",background:"rgba(212,146,26,0.1)",
+            border:"1px solid rgba(212,146,26,0.3)",borderRadius:20,padding:"5px 14px",
+            textTransform:"uppercase",marginBottom:12,textAlign:"center",display:"inline-block",
+            alignSelf:"center",
+          }}>📜 Scroll Recovery · Recover +5</div>
+
+          {/* Verse */}
+          <div style={{
+            width:"100%",background:"rgba(201,162,39,0.06)",
+            border:"1px solid rgba(201,162,39,0.22)",borderRadius:12,padding:"14px 18px",marginBottom:14,
+          }}>
+            <div style={{fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:2,color:"rgba(201,162,26,0.5)",textTransform:"uppercase",marginBottom:8}}>📖 The Verse You Missed</div>
+            <p style={{fontSize:13,lineHeight:1.7,color:"rgba(240,228,192,0.85)",fontStyle:"italic",margin:"0 0 8px"}}>"{verse.text}"</p>
+            <div style={{fontFamily:"'Cinzel',serif",fontSize:11,color:C.gold,textAlign:"right",letterSpacing:1}}>— {verse.book} {verse.ch}:{verse.vs}</div>
+          </div>
+
+          {!showResult ? (
+            <>
+              <p style={{
+                fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:1,
+                color:"rgba(201,162,39,0.45)",textAlign:"center",textTransform:"uppercase",
+                lineHeight:1.8,marginBottom:10,
+              }}>Spin to <strong>Book · Chapter · Verse</strong><br/>Submit before time runs out</p>
+
+              {/* Timer ring */}
+              <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:10,marginBottom:14}}>
+                <div style={{position:"relative",width:64,height:64,flexShrink:0}}>
+                  <svg viewBox="0 0 56 56" style={{width:64,height:64,transform:"rotate(-90deg)"}}>
+                    <circle cx="28" cy="28" r="26" fill="none" stroke="rgba(212,146,26,0.1)" strokeWidth="4"/>
+                    <circle cx="28" cy="28" r="26" fill="none" strokeWidth="4" strokeLinecap="round"
+                      strokeDasharray="163.4"
+                      style={{strokeDashoffset:dashOff,stroke:timerClr,transition:"stroke-dashoffset 0.1s linear,stroke 0.3s"}}/>
+                  </svg>
+                  <div style={{
+                    position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",
+                    fontFamily:"'Cinzel',serif",fontSize:20,fontWeight:700,color:timerClr,
+                  }}>{Math.ceil(timeLeft)}</div>
+                </div>
+              </div>
+
+              {/* Wheels */}
+              <div style={{display:"flex",gap:8,width:"100%",justifyContent:"center",alignItems:"flex-start",marginBottom:14}}>
+                <ScrollWheel items={ALL_BOOKS} startIndex={bookStart}    label="Book"    widthClass="spw-book"    onChange={idx => bookIdxRef.current=idx}/>
+                <ScrollWheel items={W_CHAPTERS} startIndex={chapterStart} label="Chapter" widthClass="spw-chapter" onChange={idx => chapterIdxRef.current=idx}/>
+                <ScrollWheel items={W_VERSES}   startIndex={verseStart}   label="Verse"   widthClass="spw-verse"   onChange={idx => verseIdxRef.current=idx}/>
+              </div>
+
+              <button onClick={handleSubmit} disabled={submitted} style={{
+                width:"100%",padding:"15px 24px",
+                background:"linear-gradient(135deg,#D4921A 0%,#b87614 50%,#D4921A 100%)",
+                border:"none",borderRadius:12,color:"#fff",
+                fontFamily:"'Cinzel',serif",fontSize:15,fontWeight:700,letterSpacing:3,
+                textTransform:"uppercase",cursor:submitted?"default":"pointer",
+                boxShadow:"0 4px 20px rgba(212,146,26,0.4)",marginBottom:20,
+              }}>⚔️ Submit Recovery</button>
+            </>
+          ) : (
+            <div style={{textAlign:"center",padding:"20px 0"}}>
+              <div style={{fontSize:36,marginBottom:12}}>{result==="correct"?"✅":"❌"}</div>
+              <div style={{
+                fontFamily:"'Cinzel',serif",fontSize:18,fontWeight:800,letterSpacing:2,
+                color:result==="correct"?C.teal:C.red,marginBottom:8,
+              }}>{result==="correct"?"RECOVERED! +5 pts":"MISSED IT"}</div>
+              <div style={{fontFamily:"'Cinzel',serif",fontSize:11,color:C.offWhite,opacity:0.7}}>
+                {result==="correct"
+                  ?`${verse.book} ${verse.ch}:${verse.vs} — locked in!`
+                  :`The answer was ${verse.book} ${verse.ch}:${verse.vs}`}
+              </div>
+            </div>
+          )}
+
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes spRec-in {
+          from { transform:translateY(100%); opacity:0.6; }
+          to   { transform:translateY(0);    opacity:1; }
+        }
+        .spw-wrap { display:flex; flex-direction:column; align-items:center; gap:5px; flex:1; }
+        .spw-book    { flex:2.4; max-width:175px; }
+        .spw-chapter { flex:1;   max-width:80px; }
+        .spw-verse   { flex:1;   max-width:80px; }
+        .spw-label {
+          font-family:'Cinzel',serif; font-size:8px; letter-spacing:3px;
+          color:rgba(201,162,39,0.35); text-transform:uppercase;
+        }
+        .spw-outer {
+          position:relative; width:100%; border-radius:12px; overflow:hidden;
+          background:linear-gradient(180deg,rgba(10,5,0,0.98) 0%,rgba(30,18,3,0.98) 50%,rgba(10,5,0,0.98) 100%);
+          border:1px solid rgba(201,162,39,0.3);
+          box-shadow:inset 0 0 24px rgba(0,0,0,0.6),0 4px 16px rgba(0,0,0,0.4);
+          cursor:grab; user-select:none; touch-action:none;
+        }
+        .spw-outer:active { cursor:grabbing; }
+        .spw-inner { display:flex; flex-direction:column; will-change:transform; position:absolute; left:0; right:0; top:0; }
+        .spw-item {
+          height:42px; display:flex; align-items:center; justify-content:center;
+          font-family:'Cinzel',serif; font-size:12px;
+          color:rgba(201,162,39,0.25); padding:0 5px; text-align:center;
+          white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-shrink:0;
+          pointer-events:none; transition:color 0.12s,font-size 0.12s;
+        }
+        .spw-item.near2   { color:rgba(201,162,39,0.28); font-size:11.5px; }
+        .spw-item.near1   { color:rgba(201,162,39,0.55); font-size:12.5px; }
+        .spw-item.selected { color:#f0e4c0; font-size:14px; font-weight:700; text-shadow:0 0 12px rgba(201,162,39,0.7); }
+        .spw-band {
+          position:absolute; left:0; right:0; z-index:4; pointer-events:none;
+          background:rgba(201,162,39,0.07);
+          border-top:1px solid rgba(201,162,39,0.45); border-bottom:1px solid rgba(201,162,39,0.45);
+        }
+        .spw-fade { position:absolute; left:0; right:0; z-index:3; pointer-events:none; height:65px; }
+        .spw-fade-top { top:0;    background:linear-gradient(180deg,rgba(10,5,0,0.96) 0%,transparent 100%); }
+        .spw-fade-bot { bottom:0; background:linear-gradient(0deg,  rgba(10,5,0,0.96) 0%,transparent 100%); }
+      `}</style>
+    </div>
+  );
+}
+
 // ── SCREEN: Level Select ──
 function LevelSelect({ onSelect }) {
   return (
@@ -471,12 +860,13 @@ function GamePlay({ level, onDone }) {
   const [results, setResults]   = useState([]);
   const [showHint, setShowHint] = useState(false);
   const [whamSlam, setWhamSlam] = useState(false);
-  const [whamDrain, setWhamDrain] = useState(false); // eslint-disable-line no-unused-vars
+  // whamDrain removed — replaced by SPRecovery overlay
   const timerRef    = useRef(null);
   const hintRef     = useRef(null);
   const answeredRef = useRef(false);
   const [streak,      setStreak]      = useState(0);
   const [streakFlash, setStreakFlash] = useState(false);
+  const [spRecovery,  setSpRecovery] = useState(false);
 
   const verse         = queue.current[idx];
   const correctAnswer = `${verse.book} ${verse.ch}:${verse.vs}`;
@@ -518,8 +908,7 @@ function GamePlay({ level, onDone }) {
       }
     } else {
       setStreak(0);
-      setWhamDrain(true);
-      setTimeout(() => { setWhamDrain(false); advance(); }, 900);
+      setSpRecovery(true); // Launch scroll recovery overlay
     }
   }
 
@@ -539,6 +928,18 @@ function GamePlay({ level, onDone }) {
     setWhamSlam(true);
   }
 
+  function handleRecoveryDone(recovered) {
+    setSpRecovery(false);
+    if (recovered) {
+      // Player nailed the recovery — award +5 and fire WHAM SLAM
+      setScore(s => s + 5);
+      setWhamSlam(true);
+    } else {
+      // Missed recovery — just advance
+      advance();
+    }
+  }
+
   const timerPct   = (timeLeft / 20) * 100;
   const timerColor = timeLeft > 10 ? C.teal : timeLeft > 5 ? C.gold : C.red;
 
@@ -549,6 +950,7 @@ function GamePlay({ level, onDone }) {
       <div className="wb-bg-tone" />
       <div className="wb-bg-rim" />
 
+      {spRecovery && <SPRecovery verse={verse} onDone={handleRecoveryDone} />}
       {streakFlash && <StreakFlash onDone={handleStreakFlashDone} />}
       {whamSlam && <WhamSlam message="+5" onDone={handleWhamSlamDone} />}
 
