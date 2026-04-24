@@ -19,6 +19,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 
 // ── Asset URLs ──
 const LANDSCAPE_BG  = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/33b065c94_generated_image.png";
+const LANDSCAPE_VIVID = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/9149f7f49_generated_image.png";
 const CHAR_MP       = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/b23c98cb8_generated_image.png";
 const CHAR_KNIGHT   = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/9b51fedfd_generated_image.png";
 const CHAR_VICTORY  = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/c5aa4771c_generated_image.png";
@@ -340,26 +341,26 @@ function MenuOverlay({ charKey, title, onClose, children }) {
       overflowY:"auto",
     }}>
       {/* Cinematic underlay layers */}
-      {/* Layer 1 — landscape */}
+      {/* Layer 1 — vivid landscape, full 100% saturation */}
       <div style={{
         position:"fixed",inset:0,zIndex:0,
-        backgroundImage:`url(${LANDSCAPE_BG})`,
-        backgroundSize:"cover",backgroundPosition:"center top",
+        backgroundImage:`url(${LANDSCAPE_VIVID})`,
+        backgroundSize:"cover",backgroundPosition:"center center",
         backgroundRepeat:"no-repeat",
       }}/>
-      {/* Layer 2 — character */}
+      {/* Layer 2 — character, crisp presence */}
       <div style={{
         position:"fixed",inset:0,zIndex:1,
         backgroundImage:`url(${MENU_CHARS[charKey]})`,
         backgroundSize:"contain",
         backgroundPosition:"center bottom",
         backgroundRepeat:"no-repeat",
-        opacity:0.28,
+        opacity:0.55,
       }}/>
-      {/* Layer 3 — cobalt gradient */}
+      {/* Layer 3 — very light dark vignette top only — lets landscape show fully */}
       <div style={{
         position:"fixed",inset:0,zIndex:2,
-        background:"linear-gradient(180deg,#0D1F35ee 0%,#1A3A5Cbb 40%,rgba(13,31,53,0.55) 100%)",
+        background:"linear-gradient(180deg,rgba(0,0,0,0.55) 0%,rgba(0,0,0,0.10) 35%,rgba(0,0,0,0.0) 65%,rgba(0,0,0,0.30) 100%)",
       }}/>
       {/* Layer 4 — gold rim */}
       <div style={{position:"fixed",top:0,left:0,right:0,height:3,zIndex:3,
