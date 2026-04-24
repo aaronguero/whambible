@@ -19,7 +19,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 
 // ── Asset URLs ──
 const LANDSCAPE_BG  = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/33b065c94_generated_image.png";
-const LANDSCAPE_VIVID = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/9149f7f49_generated_image.png";
+const LANDSCAPE_VIVID = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/b9bcd9d15_generated_image.png";
 const CHAR_MP       = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/b23c98cb8_generated_image.png";
 const CHAR_KNIGHT   = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/9b51fedfd_generated_image.png";
 const CHAR_VICTORY  = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/c5aa4771c_generated_image.png";
@@ -355,12 +355,12 @@ function MenuOverlay({ charKey, title, onClose, children }) {
         backgroundSize:"contain",
         backgroundPosition:"center bottom",
         backgroundRepeat:"no-repeat",
-        opacity:0.55,
+        opacity:1.0,
       }}/>
       {/* Layer 3 — very light dark vignette top only — lets landscape show fully */}
       <div style={{
         position:"fixed",inset:0,zIndex:2,
-        background:"linear-gradient(180deg,rgba(0,0,0,0.55) 0%,rgba(0,0,0,0.10) 35%,rgba(0,0,0,0.0) 65%,rgba(0,0,0,0.30) 100%)",
+        background:"linear-gradient(180deg,rgba(0,0,0,0.38) 0%,rgba(0,0,0,0.08) 25%,rgba(0,0,0,0.0) 55%,rgba(0,0,0,0.0) 100%)",
       }}/>
       {/* Layer 4 — gold rim */}
       <div style={{position:"fixed",top:0,left:0,right:0,height:3,zIndex:3,
