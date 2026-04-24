@@ -803,6 +803,150 @@ function SPRecovery({ verse, onDone }) {
   );
 }
 
+
+// ══════════════════════════════════════════════════════════════════
+// ── WHAM DRAIN ───────────────────────────────────────────────────
+// Black-hole gravitational pull effect. Fires on wrong answer.
+// Clones the game panel DOM node as a frozen visual stamp, renders
+// it on a white background, then spaghettifies it clockwise into a
+// dead-center singularity over 1700ms. White reveals underneath.
+//
+// PHASE TIMELINE:
+//   0ms       — Clone stamped, white bg set, drain begins building
+//   0–400ms   — Outer edges warp, content stretches toward center
+//   400–900ms — Full spaghettification: scale + rotate + translate
+//               collapsing clockwise inward, white bleeds through
+//   900–1400ms — Content reduced to thin singularity streak at center
+//   1400–1600ms— Final collapse flash-point, white dominates
+//   1700ms    — onDone fires → SPRecovery slides in
+// ══════════════════════════════════════════════════════════════════
+function WhamDrain({ panelRef, onDone }) {
+  const cloneRef    = useRef(null);
+  const overlayRef  = useRef(null);
+
+  useEffect(() => {
+    // ── Stamp: clone the panel at this exact frame ──
+    const source = panelRef?.current;
+    if (source && cloneRef.current) {
+      const clone = source.cloneNode(true);
+      // Lock its dimensions to match source exactly
+      const rect  = source.getBoundingClientRect();
+      clone.style.cssText = `
+        position:absolute; top:0; left:0;
+        width:${rect.width}px; height:${rect.height}px;
+        pointer-events:none; overflow:hidden;
+        border-radius: inherit;
+      `;
+      // Disable all transitions/animations on clone children
+      clone.querySelectorAll("*").forEach(el => {
+        el.style.transition  = "none";
+        el.style.animation   = "none";
+      });
+      cloneRef.current.appendChild(clone);
+    }
+
+    // ── Fire drain animation after first paint ──
+    const raf = requestAnimationFrame(() => {
+      if (cloneRef.current) cloneRef.current.classList.add("wd-draining");
+    });
+
+    // ── onDone at 1700ms ──
+    const t = setTimeout(() => onDone && onDone(), 1700);
+    return () => { clearTimeout(t); cancelAnimationFrame(raf); };
+  }, []);
+
+  return (
+    <div ref={overlayRef} style={{
+      position:"fixed", inset:0, zIndex:9000,
+      background:"#ffffff",
+      display:"flex", alignItems:"center", justifyContent:"center",
+      overflow:"hidden",
+    }}>
+      {/* Frozen stamp wrapper — this is what gets drained */}
+      <div ref={cloneRef} className="wd-stamp" style={{
+        position:"relative",
+        width:"100%", maxWidth:480,
+        transformOrigin:"50% 50%",
+      }} />
+
+      {/* Singularity ring — pulses at center at ~1400ms */}
+      <div className="wd-singularity" />
+
+      <style>{`
+        /* ── Stamp drain: clockwise spiral collapse into dead center ── */
+        .wd-stamp {
+          will-change: transform, opacity, filter;
+        }
+        .wd-draining {
+          animation: wdDrain 1.6s cubic-bezier(0.25, 0, 0.6, 1) forwards;
+        }
+        @keyframes wdDrain {
+          0% {
+            transform: scale(1) rotate(0deg) translate(0px, 0px);
+            opacity: 1;
+            filter: blur(0px) brightness(1);
+          }
+          15% {
+            transform: scale(0.96) rotate(12deg) translate(0px, 2px);
+            opacity: 1;
+            filter: blur(0px) brightness(1.05);
+          }
+          35% {
+            transform: scale(0.78) rotate(60deg) translate(0px, 0px);
+            opacity: 0.92;
+            filter: blur(1px) brightness(1.1) contrast(1.1);
+          }
+          55% {
+            transform: scale(0.45) rotate(150deg) translate(0px, 0px);
+            opacity: 0.75;
+            filter: blur(3px) brightness(1.3) contrast(1.4);
+          }
+          72% {
+            transform: scale(0.18) rotate(270deg) translate(0px, 0px);
+            opacity: 0.5;
+            filter: blur(6px) brightness(1.8) contrast(2);
+          }
+          86% {
+            transform: scale(0.06) rotate(400deg) translate(0px, 0px);
+            opacity: 0.25;
+            filter: blur(10px) brightness(2.5) contrast(3);
+          }
+          95% {
+            transform: scale(0.01) rotate(480deg) translate(0px, 0px);
+            opacity: 0.08;
+            filter: blur(14px) brightness(4) contrast(4);
+          }
+          100% {
+            transform: scale(0) rotate(540deg) translate(0px, 0px);
+            opacity: 0;
+            filter: blur(18px) brightness(6);
+          }
+        }
+
+        /* ── Singularity ring — appears at center ~1400ms, then collapses ── */
+        .wd-singularity {
+          position: absolute;
+          top: 50%; left: 50%;
+          width: 0; height: 0;
+          border-radius: 50%;
+          transform: translate(-50%, -50%);
+          background: radial-gradient(circle, rgba(26,58,92,0.9) 0%, rgba(30,122,140,0.5) 50%, transparent 100%);
+          animation: wdSingularity 1.7s ease-out forwards;
+          pointer-events: none;
+        }
+        @keyframes wdSingularity {
+          0%    { width:0;   height:0;   opacity:0; }
+          82%   { width:0;   height:0;   opacity:0; }
+          88%   { width:32px; height:32px; opacity:0.9; }
+          93%   { width:16px; height:16px; opacity:1; box-shadow: 0 0 24px 8px rgba(30,122,140,0.8); }
+          98%   { width:4px;  height:4px;  opacity:0.6; }
+          100%  { width:0;   height:0;   opacity:0; }
+        }
+      `}</style>
+    </div>
+  );
+}
+
 // ── SCREEN: Level Select ──
 function LevelSelect({ onSelect }) {
   return (
@@ -867,6 +1011,8 @@ function GamePlay({ level, onDone }) {
   const [streak,      setStreak]      = useState(0);
   const [streakFlash, setStreakFlash] = useState(false);
   const [spRecovery,  setSpRecovery] = useState(false);
+  const [whamDrain,   setWhamDrain]  = useState(false);
+  const panelRef = useRef(null);
 
   const verse         = queue.current[idx];
   const correctAnswer = `${verse.book} ${verse.ch}:${verse.vs}`;
@@ -908,7 +1054,7 @@ function GamePlay({ level, onDone }) {
       }
     } else {
       setStreak(0);
-      setSpRecovery(true); // Launch scroll recovery overlay
+      setWhamDrain(true); // Black-hole drain first, then recovery
     }
   }
 
@@ -926,6 +1072,11 @@ function GamePlay({ level, onDone }) {
     setStreakFlash(false);
     // After streak flash, fire WHAM SLAM for the correct answer
     setWhamSlam(true);
+  }
+
+  function handleDrainDone() {
+    setWhamDrain(false);
+    setSpRecovery(true);  // Drain complete → Recovery slides in
   }
 
   function handleRecoveryDone(recovered) {
@@ -950,6 +1101,7 @@ function GamePlay({ level, onDone }) {
       <div className="wb-bg-tone" />
       <div className="wb-bg-rim" />
 
+      {whamDrain   && <WhamDrain panelRef={panelRef} onDone={handleDrainDone} />}
       {spRecovery && <SPRecovery verse={verse} onDone={handleRecoveryDone} />}
       {streakFlash && <StreakFlash onDone={handleStreakFlashDone} />}
       {whamSlam && <WhamSlam message="+5" onDone={handleWhamSlamDone} />}
@@ -981,7 +1133,7 @@ function GamePlay({ level, onDone }) {
 
         <div className="wb-hero-space" style={{ height: 269 }} />
 
-        <div className="wb-scroll-panel">
+        <div className="wb-scroll-panel" ref={panelRef}>
           <div className="wb-scroll-curl" />
 
           <div style={{ width:"100%", height:5, background:"rgba(26,58,92,0.1)", borderRadius:3, marginBottom:14, overflow:"hidden" }}>
