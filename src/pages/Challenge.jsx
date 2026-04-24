@@ -1660,6 +1660,99 @@ function Auth({ onIn }) {
   const [err,        setErr]        = useState("");
   const [busy,       setBusy]       = useState(false);
 
+  // ── Drag / rubber-band state (same as MenuOverlay) ────────
+  const AUTH_SNAP_DOWN = 0.52;   // card rests at 52% from top
+  const AUTH_SNAP_UP   = 0.16;   // card snapped up: 16% from top
+  const AUTH_LIMIT_TOP = 0.08;
+  const AUTH_LIMIT_BOT = 0.72;
+  const AUTH_RUBBER    = 0.28;
+  const [authSnap,     setAuthSnap]     = useState("down");
+  const [authRawTop,   setAuthRawTop]   = useState(AUTH_SNAP_DOWN);
+  const [authDragging, setAuthDragging] = useState(false);
+  const [authBgScale,  setAuthBgScale]  = useState(1.0);
+  const authDragRef = useRef(null);
+  const authWinH = typeof window !== "undefined" ? window.innerHeight : 812;
+
+  // Derived display top with rubber-band
+  const authDisplayTop = (() => {
+    if (authRawTop < AUTH_LIMIT_TOP) {
+      return AUTH_LIMIT_TOP - (AUTH_LIMIT_TOP - authRawTop) * AUTH_RUBBER;
+    }
+    if (authRawTop > AUTH_LIMIT_BOT) {
+      return AUTH_LIMIT_BOT + (authRawTop - AUTH_LIMIT_BOT) * AUTH_RUBBER;
+    }
+    return authRawTop;
+  })();
+  const authTopPx  = Math.round(authDisplayTop * authWinH);
+  const authMaxH   = Math.round(0.78 * authWinH);
+  const authPanelH = Math.min(authWinH - authTopPx - 16, authMaxH);
+
+  function authApplyRubberBg(frac) {
+    if (frac < AUTH_LIMIT_TOP) {
+      const t = Math.min((AUTH_LIMIT_TOP - frac) / 0.10, 1);
+      setAuthBgScale(1 + t * 0.045);
+    } else if (frac > AUTH_LIMIT_BOT) {
+      const t = Math.min((frac - AUTH_LIMIT_BOT) / 0.10, 1);
+      setAuthBgScale(1 + t * 0.045);
+    } else {
+      setAuthBgScale(1.0);
+    }
+  }
+  function authSnapToPos(frac) {
+    const mid = (AUTH_SNAP_UP + AUTH_SNAP_DOWN) / 2;
+    const target = frac < mid ? AUTH_SNAP_UP : AUTH_SNAP_DOWN;
+    setAuthRawTop(target);
+    setAuthSnap(target === AUTH_SNAP_UP ? "up" : "down");
+    setAuthBgScale(1.0);
+  }
+  function onAuthTouchStart(e) {
+    authDragRef.current = { startY: e.touches[0].clientY, startFrac: authRawTop };
+    setAuthDragging(true);
+  }
+  function onAuthTouchMove(e) {
+    if (!authDragRef.current) return;
+    const dy   = e.touches[0].clientY - authDragRef.current.startY;
+    const frac = authDragRef.current.startFrac + dy / authWinH;
+    setAuthRawTop(frac);
+    authApplyRubberBg(frac);
+  }
+  function onAuthTouchEnd() {
+    setAuthDragging(false);
+    authSnapToPos(authRawTop);
+    authDragRef.current = null;
+  }
+  function onAuthMouseDown(e) {
+    authDragRef.current = { startY: e.clientY, startFrac: authRawTop };
+    setAuthDragging(true);
+    e.preventDefault();
+  }
+  useEffect(() => {
+    if (!authDragging) return;
+    function onMM(e) {
+      if (!authDragRef.current) return;
+      const dy   = e.clientY - authDragRef.current.startY;
+      const frac = authDragRef.current.startFrac + dy / authWinH;
+      setAuthRawTop(frac);
+      authApplyRubberBg(frac);
+    }
+    function onMU() {
+      setAuthDragging(false);
+      authSnapToPos(authRawTop);
+      authDragRef.current = null;
+    }
+    window.addEventListener("mousemove", onMM);
+    window.addEventListener("mouseup",   onMU);
+    return () => { window.removeEventListener("mousemove", onMM); window.removeEventListener("mouseup", onMU); };
+  }, [authDragging, authRawTop]);
+
+  function toggleAuthSnap() {
+    const target = authSnap === "down" ? AUTH_SNAP_UP : AUTH_SNAP_DOWN;
+    setAuthRawTop(target);
+    setAuthSnap(authSnap === "down" ? "up" : "down");
+    setAuthBgScale(1.0);
+  }
+  const authTransition = authDragging ? "none" : "top 0.36s cubic-bezier(.34,1.56,.64,1), height 0.36s cubic-bezier(.34,1.56,.64,1)";
+
   // NOTE: session check is handled at Challenge() root level — do NOT re-check here
   // This prevents the double-onIn loop on every mount
 
@@ -1732,108 +1825,177 @@ function Auth({ onIn }) {
 
   return (
     <div className="c-screen">
-      <Bg char={CHAR_MP}/>
+      {/* ── Scalable scene (rubber-band squeeze effect) ── */}
+      <div style={{
+        position:"fixed",inset:0,zIndex:0,
+        transform:`scale(${authBgScale})`,
+        transformOrigin:"center center",
+        transition: authDragging ? "none" : "transform 0.36s cubic-bezier(.34,1.56,.64,1)",
+      }}>
+        <Bg char={CHAR_MP}/>
+      </div>
+      {/* Gold rim */}
+      <div style={{position:"fixed",top:0,left:0,right:0,height:3,zIndex:2,background:"linear-gradient(90deg,transparent,#F5C842,transparent)",pointerEvents:"none"}}/>
+      {/* Vignette */}
+      <div style={{position:"fixed",inset:0,zIndex:1,background:"linear-gradient(180deg,rgba(0,0,0,0.32) 0%,rgba(0,0,0,0) 28%)",pointerEvents:"none"}}/>
       <Hdr/>
-      <div className="c-auth-center">
 
-        {mode === "choice" && (
-          <div className="c-card">
-            <div className="c-curl"/>
-            <div style={{textAlign:"center",marginBottom:20}}>
-              <div style={{fontSize:36,marginBottom:8}}>📖</div>
-              <h1 className="c-h1">Verse Challenge</h1>
-              <p className="c-sub">Know the Word · Win the Battle</p>
-            </div>
-            <button className="c-btn-a" onClick={()=>{ setMode("create"); setErr(""); }}>🕊️ Create Free Account</button>
-            <button className="c-btn-b" onClick={()=>{ setMode("signin"); setErr(""); }}>🔐 Sign In</button>
-            <div className="c-div"><div className="c-div-line"/><div className="c-div-txt">OR</div><div className="c-div-line"/></div>
-            <button className="c-btn-c" onClick={()=>window.location.href="/"}>⚔️ Play Solo as Guest</button>
+      {/* Screen title */}
+      <div style={{position:"fixed",top:52,left:0,right:0,zIndex:3,textAlign:"center",pointerEvents:"none"}}>
+        <div style={{fontSize:20,fontWeight:900,color:"#F5C842",letterSpacing:4,textTransform:"uppercase",textShadow:"0 2px 18px rgba(0,0,0,0.7),0 0 24px rgba(212,146,26,0.5)"}}>
+          Verse Challenge
+        </div>
+        <div style={{width:60,height:2,margin:"7px auto 0",background:"linear-gradient(90deg,transparent,#F5C842,transparent)"}}/>
+      </div>
+
+      {/* ── Floating draggable panel ── */}
+      <div style={{
+        position:"fixed",
+        left:16, right:16,
+        top: authTopPx,
+        height: authPanelH,
+        zIndex:10,
+        borderRadius:18,
+        overflow:"hidden",
+        boxShadow:"0 8px 40px rgba(0,0,0,0.55), 0 0 0 1px rgba(245,200,66,0.18)",
+        display:"flex",
+        flexDirection:"column",
+        transition: authTransition,
+      }}>
+
+        {/* ── Handle bar + chevron ── */}
+        <div
+          onTouchStart={onAuthTouchStart}
+          onTouchMove={onAuthTouchMove}
+          onTouchEnd={onAuthTouchEnd}
+          onMouseDown={onAuthMouseDown}
+          style={{
+            flexShrink:0,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            position:"relative",
+            paddingTop:10,paddingBottom:8,
+            background:"rgba(13,31,53,0.72)",
+            borderBottom:"1px solid rgba(245,200,66,0.18)",
+            cursor:"grab",
+            userSelect:"none",
+            touchAction:"none",
+          }}
+        >
+          {/* Gold pill handle */}
+          <div style={{width:40,height:4,borderRadius:2,background:"rgba(245,200,66,0.50)"}}/>
+          {/* Chevron expand/collapse */}
+          <button
+            onClick={e=>{ e.stopPropagation(); toggleAuthSnap(); }}
+            onMouseDown={e=>e.stopPropagation()}
+            onTouchStart={e=>e.stopPropagation()}
+            style={{
+              position:"absolute",right:12,top:"50%",
+              transform:"translateY(-50%)",
+              background:"rgba(212,146,26,0.20)",
+              border:"1px solid rgba(245,200,66,0.35)",
+              borderRadius:8,
+              color:"#F5C842",
+              fontSize:16,
+              width:32,height:26,
+              display:"flex",alignItems:"center",justifyContent:"center",
+              cursor:"pointer",
+              transition:"background 0.15s",
+            }}
+            title={authSnap==="down" ? "Expand" : "Collapse"}
+          >
+            {authSnap==="down" ? "▲" : "▼"}
+          </button>
+        </div>
+
+        {/* ── Scrollable content ── */}
+        <div style={{
+          flex:1,
+          overflowY:"auto",
+          background:"rgba(13,31,53,0.60)",
+          backdropFilter:"blur(12px)",
+          WebkitBackdropFilter:"blur(12px)",
+        }}>
+          <div style={{maxWidth:440,margin:"0 auto",padding:"20px 16px 32px"}}>
+
+        {mode === "choice" && (<>
+          <div style={{textAlign:"center",marginBottom:22}}>
+            <div style={{fontSize:36,marginBottom:8}}>📖</div>
+            <p className="c-sub" style={{margin:0}}>Know the Word · Win the Battle</p>
           </div>
-        )}
+          <button className="c-btn-a" onClick={()=>{ setMode("create"); setErr(""); }}>🕊️ Create Free Account</button>
+          <button className="c-btn-b" onClick={()=>{ setMode("signin"); setErr(""); }}>🔐 Sign In</button>
+          <div className="c-div"><div className="c-div-line"/><div className="c-div-txt">OR</div><div className="c-div-line"/></div>
+          <button className="c-btn-c" onClick={()=>window.location.href="/"}>⚔️ Play Solo as Guest</button>
+        </>)}
 
-        {mode === "create" && (
-          <div className="c-card">
-            <div className="c-curl"/>
-            <div style={{textAlign:"center",marginBottom:20}}>
-              <div style={{fontSize:32,marginBottom:6}}>🕊️</div>
-              <h1 className="c-h1">Create Account</h1>
-              <p className="c-sub">Free · SMS alerts optional</p>
-            </div>
-            <form onSubmit={doCreate} autoComplete="on">
-              <label className="c-lbl">Warrior Name</label>
-              <input className="c-inp" type="text" autoComplete="name" placeholder="Your display name"
-                value={name} onChange={e=>{setName(e.target.value);setErr("");}} disabled={busy}/>
-              <label className="c-lbl">Email</label>
-              <input className="c-inp" type="email" autoComplete="email" placeholder="you@example.com"
-                value={email} onChange={e=>{setEmail(e.target.value);setErr("");}} disabled={busy}/>
-              <label className="c-lbl">Password</label>
-              <input className="c-inp" type="password" autoComplete="new-password" placeholder="6+ characters"
-                value={pass} onChange={e=>{setPass(e.target.value);setErr("");}} disabled={busy}/>
-              <label className="c-lbl">Phone (optional · for challenge alerts)</label>
-              <input className="c-inp" type="tel" autoComplete="tel" placeholder="+1 555 000 0000"
-                value={phone} onChange={e=>{setPhone(e.target.value);setErr("");}} disabled={busy}/>
-              {phone.trim() && (
-                /* ── Task 3: TCPA/CTIA/10DLC compliant SMS opt-in ── */
-                <div style={{marginTop:6,marginBottom:4}}>
-                  {/* Checkbox 1 — SMS Consent (carrier required, unchecked by default) */}
-                  <label style={{
-                    display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",
-                    padding:"10px 12px",borderRadius:8,
-                    background: smsConsent ? "rgba(212,146,26,0.10)" : "rgba(212,146,26,0.04)",
-                    border:`1px solid ${smsConsent ? "rgba(212,146,26,0.4)" : "rgba(212,146,26,0.15)"}`,
-                    transition:"all 0.2s",
-                  }}>
-                    <input
-                      type="checkbox"
-                      checked={smsConsent}
-                      onChange={e => setSmsConsent(e.target.checked)}
-                      disabled={busy}
-                      style={{
-                        marginTop:2,flexShrink:0,
-                        accentColor:"#D4921A",
-                        width:16,height:16,cursor:"pointer",
-                      }}
-                    />
-                    <span style={{fontSize:10,color:"rgba(245,200,66,0.75)",lineHeight:1.7,letterSpacing:0.3}}>
-                      By checking this box, I agree to receive automated SMS game alert messages from{" "}
-                      <strong style={{color:"rgba(245,200,66,0.9)"}}>WhamBible</strong> at the number above.
-                      Message frequency varies. Msg &amp; data rates may apply.
-                      Reply <strong style={{color:"#F5C842"}}>STOP</strong> to unsubscribe.
-                      Reply <strong style={{color:"#F5C842"}}>HELP</strong> for support.
-                      Consent is not a condition of purchase or use.
-                    </span>
-                  </label>
-                </div>
-              )}
-              {err ? <div className="c-err">⚠️ {err}</div> : <div style={{height:18}}/>}
-              <button className="c-btn-a" type="submit" disabled={busy}>{busy?"Creating…":"🕊️ Create Account"}</button>
-            </form>
-            <a className="c-back" onClick={reset}>← Back</a>
+        {mode === "create" && (<>
+          <div style={{textAlign:"center",marginBottom:18}}>
+            <div style={{fontSize:32,marginBottom:6}}>🕊️</div>
+            <h1 className="c-h1">Create Account</h1>
+            <p className="c-sub">Free · SMS alerts optional</p>
           </div>
-        )}
+          <form onSubmit={doCreate} autoComplete="on">
+            <label className="c-lbl">Warrior Name</label>
+            <input className="c-inp" type="text" autoComplete="name" placeholder="Your display name"
+              value={name} onChange={e=>{setName(e.target.value);setErr("");}} disabled={busy}/>
+            <label className="c-lbl">Email</label>
+            <input className="c-inp" type="email" autoComplete="email" placeholder="you@example.com"
+              value={email} onChange={e=>{setEmail(e.target.value);setErr("");}} disabled={busy}/>
+            <label className="c-lbl">Password</label>
+            <input className="c-inp" type="password" autoComplete="new-password" placeholder="6+ characters"
+              value={pass} onChange={e=>{setPass(e.target.value);setErr("");}} disabled={busy}/>
+            <label className="c-lbl">Phone (optional · for challenge alerts)</label>
+            <input className="c-inp" type="tel" autoComplete="tel" placeholder="+1 555 000 0000"
+              value={phone} onChange={e=>{setPhone(e.target.value);setErr("");}} disabled={busy}/>
+            {phone.trim() && (
+              <div style={{marginTop:6,marginBottom:4}}>
+                <label style={{
+                  display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",
+                  padding:"10px 12px",borderRadius:8,
+                  background: smsConsent ? "rgba(212,146,26,0.10)" : "rgba(212,146,26,0.04)",
+                  border:`1px solid ${smsConsent ? "rgba(212,146,26,0.4)" : "rgba(212,146,26,0.15)"}`,
+                  transition:"all 0.2s",
+                }}>
+                  <input type="checkbox" checked={smsConsent} onChange={e=>setSmsConsent(e.target.checked)}
+                    disabled={busy} style={{marginTop:2,flexShrink:0,accentColor:"#D4921A",width:16,height:16,cursor:"pointer"}}/>
+                  <span style={{fontSize:10,color:"rgba(245,200,66,0.75)",lineHeight:1.7,letterSpacing:0.3}}>
+                    By checking this box, I agree to receive automated SMS game alert messages from{" "}
+                    <strong style={{color:"rgba(245,200,66,0.9)"}}>WhamBible</strong> at the number above.
+                    Message frequency varies. Msg &amp; data rates may apply.
+                    Reply <strong style={{color:"#F5C842"}}>STOP</strong> to unsubscribe.
+                    Reply <strong style={{color:"#F5C842"}}>HELP</strong> for support.
+                    Consent is not a condition of purchase or use.
+                  </span>
+                </label>
+              </div>
+            )}
+            {err ? <div className="c-err">⚠️ {err}</div> : <div style={{height:18}}/>}
+            <button className="c-btn-a" type="submit" disabled={busy}>{busy?"Creating…":"🕊️ Create Account"}</button>
+          </form>
+          <a className="c-back" onClick={reset}>← Back</a>
+        </>)}
 
-        {mode === "signin" && (
-          <div className="c-card">
-            <div className="c-curl"/>
-            <div style={{textAlign:"center",marginBottom:20}}>
-              <div style={{fontSize:32,marginBottom:6}}>🔐</div>
-              <h1 className="c-h1">Sign In</h1>
-              <p className="c-sub">Welcome back, warrior</p>
-            </div>
-            <form onSubmit={doSignIn} autoComplete="on">
-              <label className="c-lbl">Email</label>
-              <input className="c-inp" type="email" autoComplete="email" placeholder="you@example.com"
-                value={email} onChange={e=>{setEmail(e.target.value);setErr("");}} disabled={busy}/>
-              <label className="c-lbl">Password</label>
-              <input className="c-inp" type="password" autoComplete="current-password" placeholder="••••••••"
-                value={pass} onChange={e=>{setPass(e.target.value);setErr("");}} disabled={busy}/>
-              {err ? <div className="c-err">⚠️ {err}</div> : <div style={{height:18}}/>}
-              <button className="c-btn-a" type="submit" disabled={busy}>{busy?"Signing In…":"🔐 Enter the Arena"}</button>
-            </form>
-            <a className="c-back" onClick={reset}>← Back</a>
+        {mode === "signin" && (<>
+          <div style={{textAlign:"center",marginBottom:18}}>
+            <div style={{fontSize:32,marginBottom:6}}>🔐</div>
+            <h1 className="c-h1">Sign In</h1>
+            <p className="c-sub">Welcome back, warrior</p>
           </div>
-        )}
+          <form onSubmit={doSignIn} autoComplete="on">
+            <label className="c-lbl">Email</label>
+            <input className="c-inp" type="email" autoComplete="email" placeholder="you@example.com"
+              value={email} onChange={e=>{setEmail(e.target.value);setErr("");}} disabled={busy}/>
+            <label className="c-lbl">Password</label>
+            <input className="c-inp" type="password" autoComplete="current-password" placeholder="••••••••"
+              value={pass} onChange={e=>{setPass(e.target.value);setErr("");}} disabled={busy}/>
+            {err ? <div className="c-err">⚠️ {err}</div> : <div style={{height:18}}/>}
+            <button className="c-btn-a" type="submit" disabled={busy}>{busy?"Signing In…":"🔐 Enter the Arena"}</button>
+          </form>
+          <a className="c-back" onClick={reset}>← Back</a>
+        </>)}
 
+          </div>
+        </div>
       </div>
     </div>
   );
