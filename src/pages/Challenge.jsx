@@ -1822,12 +1822,37 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut }) {
 // ══════════════════════════════════════════════════════════════
 // SELECT LEVEL — challenger picks difficulty for this round
 // ══════════════════════════════════════════════════════════════
-function SelectLevel({ user, game, role, onPick }) {
-  const myName = user?.displayName || user?.email?.split("@")[0];
+// SELECT LEVEL — turn-guarded: only the current_turn player can pick
+// ══════════════════════════════════════════════════════════════
+function SelectLevel({ user, profile, game, role, onPick }) {
+  const [picking,   setPicking]   = useState(false);  // lock while committing
+  const [guardFail, setGuardFail] = useState(false);  // stale-turn detection
+  const pickedRef = useRef(false);                     // race-condition guard
+
+  const myId    = profile?.id || user?.email;
+  const myName  = profile?.display_name || user?.email?.split("@")[0];
   const oppName = role === "challenger" ? game?.answerer_name : game?.challenger_name;
+  const isMyTurn = game?.current_turn === myId;
+
+  // Guard: verify turn on mount — catches race where both players land here
+  useEffect(() => {
+    if (!isMyTurn) setGuardFail(true);
+  }, []);
 
   async function pick(lv) {
+    // Double-guard: block if already picking, or not our turn
+    if (pickedRef.current || picking || !isMyTurn) return;
+    pickedRef.current = true;
+    setPicking(true);
     try {
+      // Re-fetch session to confirm current_turn hasn't changed under us
+      const fresh = await B44.get("GameSession", game.id);
+      if (fresh.current_turn !== myId || fresh.status !== "pick_level") {
+        setGuardFail(true);
+        setPicking(false);
+        pickedRef.current = false;
+        return;
+      }
       const verse   = rndVerse();
       const options = buildOptions(verse);
       await B44.update("GameSession", game.id, {
@@ -1840,45 +1865,72 @@ function SelectLevel({ user, game, role, onPick }) {
         pending_options: options,
       });
       // Notify opponent
-      const oppProfile = await B44.list("PlayerProfile", {
-        id: role === "challenger" ? game.answerer_id : game.challenger_id
-      }).then(r => r[0]).catch(()=>null);
+      const oppId = role === "challenger" ? game.answerer_id : game.challenger_id;
+      const oppProfile = await B44.list("PlayerProfile", { id: oppId }).then(r=>r[0]).catch(()=>null);
       if (oppProfile?.phone && oppProfile?.sms_enabled) {
-        await sendSMS(
-          oppProfile.phone,
-          `📖 ${myName} sent you a ${lv.name} challenge! Answer the verse.`,
-          game.id
-        );
+        await sendSMS(oppProfile.phone, `📖 ${myName} sent you a ${lv.name} challenge! Answer the verse.`, game.id);
       }
       onPick(lv, verse, options);
     } catch (e) {
       alert("Error picking level: " + e.message);
+      pickedRef.current = false;
+      setPicking(false);
     }
+  }
+
+  // Not your turn — show waiting state instead of pick UI
+  if (guardFail || !isMyTurn) {
+    return (
+      <div className="c-screen">
+        <Bg char={CHAR_KNIGHT}/>
+        <Hdr user={user} profile={profile}/>
+        <div style={{position:"absolute",inset:0,zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 24px"}}>
+          <div className="c-card" style={{textAlign:"center",width:"100%",maxWidth:400}}>
+            <div className="c-curl"/>
+            <div style={{fontSize:36,marginBottom:12}}>⏳</div>
+            <h1 className="c-h1" style={{fontSize:17}}>Not Your Turn</h1>
+            <p className="c-sub">Waiting for {oppName} to pick a level.</p>
+            <button className="c-btn-c" style={{marginTop:20}} onClick={()=>window.location.href="/challenge"}>← Back to Lobby</button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
     <div className="c-screen">
       <Bg char={CHAR_KNIGHT}/>
-      <Hdr user={user}/>
+      <Hdr user={user} profile={profile}/>
       <div className="c-scroll"><div className="c-pad">
         <div className="c-card">
           <div className="c-curl"/>
           <div style={{textAlign:"center",marginBottom:20}}>
             <div style={{fontSize:28,marginBottom:6}}>📜</div>
-            <h1 className="c-h1">Choose Level</h1>
+            <h1 className="c-h1">Choose Your Challenge</h1>
             <p className="c-sub">vs {oppName} · Round {(game?.round||0)+1}/{TOTAL_ROUNDS}</p>
+            <p style={{fontSize:10,color:"rgba(245,200,66,0.45)",letterSpacing:1.5,margin:"6px 0 0"}}>ALL LEVELS OPEN · ANY RANK</p>
           </div>
           {LEVELS.map(lv=>(
             <div key={lv.pts} className="c-lv"
-              style={{borderColor:"rgba(245,200,66,0.18)",background:"rgba(13,31,53,0.40)"}}
-              onMouseEnter={e=>{e.currentTarget.style.borderColor=lv.color;e.currentTarget.style.background=`${lv.color}22`;}}
+              style={{
+                borderColor:"rgba(245,200,66,0.18)",
+                background:"rgba(13,31,53,0.40)",
+                opacity: picking ? 0.5 : 1,
+                pointerEvents: picking ? "none" : "auto",
+                transition:"all 0.18s",
+              }}
+              onMouseEnter={e=>{if(!picking){e.currentTarget.style.borderColor=lv.color;e.currentTarget.style.background=`${lv.color}22`;}}}
               onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(245,200,66,0.18)";e.currentTarget.style.background="rgba(13,31,53,0.40)";}}
               onClick={()=>pick(lv)}>
               <div className="c-lv-icon">{lv.icon}</div>
-              <div><div className="c-lv-name">{lv.name}</div><div className="c-lv-sub">{lv.sub}</div></div>
+              <div>
+                <div className="c-lv-name">{lv.name}</div>
+                <div className="c-lv-sub">{lv.sub}</div>
+              </div>
               <div className="c-lv-pts">{lv.pts}pt</div>
             </div>
           ))}
+          {picking && <div style={{textAlign:"center",fontSize:12,color:C.goldDim,letterSpacing:1.5,marginTop:12}}>Sending challenge…</div>}
         </div>
       </div></div>
     </div>
@@ -2085,29 +2137,102 @@ function Answer({ user, game, role, onDone }) {
 }
 
 // ══════════════════════════════════════════════════════════════
-// ROUND RESULT — brief screen between rounds
+// ROUND RESULT — verse reveal + scores between rounds
 // ══════════════════════════════════════════════════════════════
 function RoundResult({ correct, pts, game, role, onNext }) {
+  const [revealed, setRevealed] = useState(false);
+
   const myScore  = role === "challenger" ? game?.challenger_score||0 : game?.answerer_score||0;
   const oppScore = role === "challenger" ? game?.answerer_score||0   : game?.challenger_score||0;
   const oppName  = role === "challenger" ? game?.answerer_name       : game?.challenger_name;
 
+  // Verse data from the round just played
+  const verse    = game?.pending_verse;
+  const lv       = LEVELS.find(l => l.pts === (game?.pending_pts || pts)) || LEVELS[0];
+  const ref      = verse ? `${verse.book} ${verse.ch}:${verse.vs}` : null;
+
+  // Auto-reveal verse text after a short breath
+  useEffect(() => {
+    const t = setTimeout(() => setRevealed(true), 420);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
     <div className="c-screen">
-      <Bg/>
-      <div style={{position:"absolute",inset:0,zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}}>
-        <div className="c-card" style={{textAlign:"center",width:"100%",maxWidth:400}}>
+      <Bg char={correct ? CHAR_MP : CHAR_KNIGHT}/>
+      <div className="c-scroll"><div className="c-pad" style={{paddingTop:80}}>
+
+        {/* Result badge */}
+        <div className="c-card" style={{textAlign:"center",marginBottom:12}}>
           <div className="c-curl"/>
-          <div style={{fontSize:48,marginBottom:8}}>{correct?"✅":"❌"}</div>
-          <h1 className="c-h1" style={{fontSize:18}}>{correct?`+${pts} Points!`:"Miss"}</h1>
-          <p className="c-sub">{correct?"Correct! The Word is in you.":"Study and return stronger."}</p>
-          <div style={{display:"flex",justifyContent:"space-around",margin:"20px 0 24px",borderTop:"1px solid rgba(245,200,66,0.1)",paddingTop:16}}>
-            <div className="c-score-box"><div className="c-score-val">{myScore}</div><div className="c-score-lbl">You</div></div>
-            <div className="c-score-box"><div className="c-score-val">{oppScore}</div><div className="c-score-lbl">{oppName}</div></div>
+          <div style={{fontSize:52,marginBottom:8,filter:correct?"drop-shadow(0 0 18px #F5C84288)":"none",transition:"filter 0.4s"}}>
+            {correct ? "✅" : "❌"}
           </div>
-          <button className="c-btn-a" onClick={onNext}>Continue ▶</button>
+          <h1 className="c-h1" style={{fontSize:20,marginBottom:4}}>
+            {correct ? `+${pts} Points!` : "Miss"}
+          </h1>
+          <p className="c-sub" style={{marginBottom:0}}>
+            {correct ? "The Word is in you." : "Study and return stronger."}
+          </p>
         </div>
-      </div>
+
+        {/* Verse reveal — the learning moment */}
+        {verse && (
+          <div style={{
+            opacity: revealed ? 1 : 0,
+            transform: revealed ? "translateY(0)" : "translateY(12px)",
+            transition: "opacity 0.5s ease, transform 0.5s ease",
+          }}>
+            <div className="c-card" style={{marginBottom:12}}>
+              <div className="c-curl"/>
+              <div style={{fontSize:10,color:lv.color,letterSpacing:2,marginBottom:10,textAlign:"center"}}>
+                {lv.icon} {lv.name} · {pts} pts
+              </div>
+              {/* Verse text */}
+              <div style={{
+                fontSize:15,fontStyle:"italic",color:C.offWhite,lineHeight:1.65,
+                textAlign:"center",marginBottom:14,padding:"0 4px",
+              }}>
+                "{verse.text}"
+              </div>
+              {/* Reference — highlighted */}
+              <div style={{
+                textAlign:"center",padding:"10px 16px",
+                background:`${lv.color}22`,border:`1px solid ${lv.color}55`,
+                borderRadius:10,
+              }}>
+                <div style={{fontSize:11,color:C.goldDim,letterSpacing:1.5,marginBottom:3}}>FOUND IN</div>
+                <div style={{fontSize:17,fontFamily:"'Cinzel',serif",fontWeight:800,color:C.goldLight,letterSpacing:1}}>
+                  {ref}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Score board */}
+        <div className="c-card" style={{marginBottom:14}}>
+          <div className="c-curl"/>
+          <div style={{display:"flex",justifyContent:"space-around",padding:"4px 0"}}>
+            <div className="c-score-box">
+              <div className="c-score-val" style={{color:C.goldLight}}>{myScore}</div>
+              <div className="c-score-lbl">You</div>
+            </div>
+            <div style={{alignSelf:"center",fontSize:10,color:C.goldDim,letterSpacing:2}}>
+              R{(game?.round||0)}/{TOTAL_ROUNDS}
+            </div>
+            <div className="c-score-box">
+              <div className="c-score-val">{oppScore}</div>
+              <div className="c-score-lbl">{oppName}</div>
+            </div>
+          </div>
+        </div>
+
+        <button className="c-btn-a" onClick={onNext} style={{marginBottom:8}}>
+          {game?.status === "complete" ? "See Final Results ▶" : "Continue ▶"}
+        </button>
+        <div style={{height:20}}/>
+      </div></div>
     </div>
   );
 }
@@ -2283,7 +2408,7 @@ export default function Challenge() {
     <>
       {screen==="auth"    && <Auth onIn={onIn}/>}
       {screen==="lobby"   && <Lobby user={user} profile={profile} onChallenge={onChallenge} onResumeGame={onResumeGame} onOut={onOut}/>}
-      {screen==="level"   && <SelectLevel user={user} game={game} role={role} onPick={onLevelPicked}/>}
+      {screen==="level"   && <SelectLevel user={user} profile={profile} game={game} role={role} onPick={onLevelPicked}/>}
       {screen==="waiting" && <Waiting user={user} game={game} role={role} onUpdate={onWaitingUpdate}/>}
       {screen==="answer"  && <Answer user={user} game={game} role={role} onDone={onAnswered}/>}
       {screen==="result"  && <RoundResult correct={lastResult?.correct} pts={lastResult?.pts} game={game} role={role} onNext={onResultNext}/>}
