@@ -1340,7 +1340,7 @@ function Hdr({ user, profile, onOut, onSmsToggle }) {
         </div>
       </div>
       {/* Menu Overlays — all 7 tabs */}
-      {activeTab==="profile"  && <ProfileOverlay   user={user} profile={profile} rank={rank} onClose={()=>setActiveTab(null)} onSmsToggle={handleSmsToggle}/>}
+      {activeTab==="profile"  && <ProfileOverlay   user={user} profile={profile} rank={rank} onClose={()=>setActiveTab(null)} onSmsToggle={onSmsToggle}/>}
       {activeTab==="leader"   && <LeaderboardOverlay profile={profile} onClose={()=>setActiveTab(null)}/>}
       {activeTab==="players"  && <PlayerListOverlay  user={user} profile={profile} onClose={()=>setActiveTab(null)} onChallenge={()=>{}}/>}
       {activeTab==="scores"   && <MyScoresOverlay    user={user} profile={profile} onClose={()=>setActiveTab(null)}/>}
