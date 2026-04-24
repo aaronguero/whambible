@@ -26,11 +26,43 @@ const WHAM_CHARS    = "https://media.base44.com/images/public/69df9a909b33058a5c
 const WHAM_TEXT_IMG = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/5e80bbcf2_generated_image.png";
 const WHAM_AUDIO    = "https://media.base44.com/videos/public/69c40c6701d9dfdb1df69d2b/5d143ab80_51a54c36d_wham-slam-voice1.webm";
 
-// ── Base44 proxy helpers (all calls go through Netlify function — token stays server-side) ──
-const DB_URL = "/.netlify/functions/db";
+// ── Base44 proxy helpers ──
+// On preview (base44.app): call Base44 API directly (no proxy needed, token injected by platform)
+// On production (whambible.com): route through Netlify function (token stays server-side)
+const IS_PREVIEW = window.location.hostname.includes("base44.app");
+const DB_URL     = "/.netlify/functions/db";
+const B44_API    = "https://api.base44.com/api/apps/69df9a909b33058a5ce47831/entities";
 
 const B44 = {
   async _call(payload) {
+    if (IS_PREVIEW) {
+      // Direct Base44 API call — platform handles auth in preview
+      const entityMap = { list:"GET", get:"GET", create:"POST", update:"PUT" };
+      let url = `${B44_API}/${payload.entity}`;
+      let opts = { headers: { "Content-Type": "application/json" } };
+      if (payload.action === "list") {
+        if (payload.query && Object.keys(payload.query).length) {
+          url += "?" + new URLSearchParams(
+            Object.entries(payload.query).map(([k,v])=>["filter_"+k, v])
+          ).toString();
+        }
+        opts.method = "GET";
+      } else if (payload.action === "get") {
+        url += "/" + payload.id;
+        opts.method = "GET";
+      } else if (payload.action === "create") {
+        opts.method = "POST";
+        opts.body   = JSON.stringify(payload.data);
+      } else if (payload.action === "update") {
+        url += "/" + payload.id;
+        opts.method = "PUT";
+        opts.body   = JSON.stringify(payload.data);
+      }
+      const r = await fetch(url, opts);
+      if (!r.ok) throw new Error(`B44 ${payload.action} ${payload.entity}: ${r.status}`);
+      return r.json();
+    }
+    // Netlify proxy (production)
     const r = await fetch(DB_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -327,10 +359,8 @@ function Auth({ onIn }) {
   const [err,   setErr]   = useState("");
   const [busy,  setBusy]  = useState(false);
 
-  useEffect(() => {
-    const u = LocalAuth.currentUser();
-    if (u) loadAndEnter(u);
-  }, []);
+  // NOTE: session check is handled at Challenge() root level — do NOT re-check here
+  // This prevents the double-onIn loop on every mount
 
   async function loadAndEnter(u) {
     // Always let the user in immediately with local data
@@ -972,9 +1002,13 @@ function GameOver({ user, game, role, onHome }) {
 // ══════════════════════════════════════════════════════════════
 export default function Challenge() {
   // Check for existing session immediately — skip auth screen if already logged in
+  // Read from localStorage directly — this survives React re-mounts and page switches
   const _existingUser = LocalAuth.currentUser();
-  const _initProfile  = _existingUser
-    ? { email: _existingUser.email, display_name: _existingUser.displayName || _existingUser.email.split("@")[0], total_score:0, games_played:0, games_won:0 }
+  const _cachedProfile = (() => {
+    try { return JSON.parse(sessionStorage.getItem("wb_profile_cache") || "null"); } catch { return null; }
+  })();
+  const _initProfile = _existingUser
+    ? (_cachedProfile || { email: _existingUser.email, display_name: _existingUser.displayName || _existingUser.email.split("@")[0], total_score:0, games_played:0, games_won:0 })
     : null;
 
   const [user,    setUser]    = useState(_existingUser);
@@ -1033,11 +1067,14 @@ export default function Challenge() {
   }
 
   function onIn(u, p) {
+    // Cache profile so re-mounts don't lose it
+    try { sessionStorage.setItem("wb_profile_cache", JSON.stringify(p)); } catch {}
     setUser(u); setProfile(p); setScreen("lobby");
   }
 
   function onOut() {
     LocalAuth.signOut();
+    try { sessionStorage.removeItem("wb_profile_cache"); } catch {}
     setUser(null); setProfile(null); setGame(null); setRole(null); setScreen("auth");
   }
 
