@@ -315,6 +315,7 @@ function Bg({ char }) {
 
 function Hdr({ user, profile, onOut }) {
   const [open, setOpen] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
   const init = user ? (user.displayName || user.email || "W")[0].toUpperCase() : null;
   const rank = profile ? rankBadge(profile.total_score || 0) : null;
 
@@ -332,7 +333,7 @@ function Hdr({ user, profile, onOut }) {
     setOpen(false);
     // Placeholders — wire individually as each section is built
     if (action === "profile") {
-      alert(`👤 ${user?.displayName || user?.email}\n${rank?.icon} ${rank?.label} · ${profile?.total_score||0} pts\nGames: ${profile?.games_played||0}  Wins: ${profile?.games_won||0}`);
+      setShowProfile(true);
     }
     // All other items are future build sections
   }
@@ -428,7 +429,189 @@ function Hdr({ user, profile, onOut }) {
           </button>
         </div>
       </div>
+      {/* Profile Modal */}
+      {showProfile && (
+        <ProfileModal user={user} profile={profile} rank={rank} onClose={()=>setShowProfile(false)}/>
+      )}
     </>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// PROFILE MODAL — full-screen cinematic overlay
+// ══════════════════════════════════════════════════════════════
+function ProfileModal({ user, profile, rank, onClose }) {
+  const name       = profile?.display_name || user?.displayName || user?.email?.split("@")[0] || "Warrior";
+  const email      = user?.email || profile?.email || "";
+  const score      = profile?.total_score   || 0;
+  const played     = profile?.games_played  || 0;
+  const won        = profile?.games_won     || 0;
+  const lost       = Math.max(0, played - won);
+  const winPct     = played > 0 ? Math.round((won / played) * 100) : 0;
+  const init       = name[0].toUpperCase();
+  const r          = rank || { icon:"📜", label:"Scribe", color:"#64748b" };
+
+  // Next rank threshold + progress
+  const RANKS = [
+    { label:"Scribe",   min:0,   max:1,   color:"#64748b" },
+    { label:"Squire",   min:1,   max:100, color:"#1E7A8C" },
+    { label:"Warrior",  min:100, max:300, color:"#D4921A" },
+    { label:"Knight",   min:300, max:700, color:"#C05A2A" },
+    { label:"Champion", min:700, max:700, color:"#7B2D8B" },
+  ];
+  const currentRank = RANKS.find(rk => rk.label === r.label) || RANKS[0];
+  const nextRank    = RANKS[RANKS.indexOf(currentRank) + 1];
+  const progress    = nextRank
+    ? Math.min(100, Math.round(((score - currentRank.min) / (nextRank.min - currentRank.min)) * 100))
+    : 100;
+  const ptsToNext   = nextRank ? Math.max(0, nextRank.min - score) : 0;
+
+  const STAT_ROWS = [
+    { label:"Total Score",  value: score,   icon:"✨" },
+    { label:"Games Played", value: played,  icon:"🎮" },
+    { label:"Victories",    value: won,     icon:"🏆" },
+    { label:"Defeats",      value: lost,    icon:"💀" },
+    { label:"Win Rate",     value: winPct+"%", icon:"📊" },
+  ];
+
+  return (
+    <div style={{
+      position:"fixed",inset:0,zIndex:1200,
+      background:"linear-gradient(180deg,#0D1F35 0%,#1A3A5C 60%,#0D1F35 100%)",
+      overflowY:"auto",fontFamily:"'Cinzel',serif",
+    }}>
+      {/* Gold rim light */}
+      <div style={{position:"fixed",top:0,left:0,right:0,height:3,background:"linear-gradient(90deg,transparent,#F5C842,transparent)",zIndex:1}}/>
+
+      {/* Close button */}
+      <button onClick={onClose} style={{
+        position:"fixed",top:16,right:16,zIndex:1201,
+        width:40,height:40,borderRadius:"50%",
+        background:"rgba(245,200,66,0.12)",border:"1.5px solid rgba(245,200,66,0.3)",
+        color:"#F5C842",fontSize:18,cursor:"pointer",
+        display:"flex",alignItems:"center",justifyContent:"center",
+      }}>✕</button>
+
+      <div style={{maxWidth:420,margin:"0 auto",padding:"56px 20px 48px"}}>
+
+        {/* Avatar + name block */}
+        <div style={{textAlign:"center",marginBottom:32}}>
+          <div style={{
+            width:80,height:80,borderRadius:"50%",margin:"0 auto 16px",
+            background:"rgba(212,146,26,0.15)",
+            border:`3px solid ${r.color}`,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            fontSize:34,fontWeight:900,color:"#F5C842",
+            boxShadow:`0 0 24px ${r.color}55`,
+          }}>{init}</div>
+          <div style={{fontSize:22,fontWeight:900,color:"#F5C842",letterSpacing:2,marginBottom:6,textTransform:"uppercase"}}>
+            {name}
+          </div>
+          <div style={{fontSize:12,color:"rgba(245,200,66,0.5)",letterSpacing:2,marginBottom:4}}>
+            {email}
+          </div>
+          <div style={{
+            display:"inline-block",padding:"4px 14px",borderRadius:20,
+            background:`${r.color}22`,border:`1px solid ${r.color}66`,
+            color:r.color,fontSize:12,fontWeight:700,letterSpacing:2,
+          }}>
+            {r.icon} {r.label.toUpperCase()}
+          </div>
+        </div>
+
+        {/* Rank progress bar */}
+        {nextRank && (
+          <div style={{
+            background:"rgba(255,255,255,0.04)",border:"1px solid rgba(245,200,66,0.12)",
+            borderRadius:12,padding:"16px 18px",marginBottom:20,
+          }}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:8}}>
+              <span style={{fontSize:10,color:"rgba(245,200,66,0.5)",letterSpacing:2}}>RANK PROGRESS</span>
+              <span style={{fontSize:10,color:r.color,letterSpacing:1}}>{ptsToNext} pts to {nextRank.label}</span>
+            </div>
+            <div style={{height:6,borderRadius:3,background:"rgba(255,255,255,0.08)",overflow:"hidden"}}>
+              <div style={{
+                height:"100%",borderRadius:3,
+                background:`linear-gradient(90deg,${r.color},#F5C842)`,
+                width:`${progress}%`,transition:"width 0.8s ease",
+              }}/>
+            </div>
+            <div style={{display:"flex",justifyContent:"space-between",marginTop:6}}>
+              <span style={{fontSize:9,color:"rgba(245,200,66,0.3)"}}>{r.label}</span>
+              <span style={{fontSize:9,color:"rgba(245,200,66,0.3)"}}>{nextRank.label}</span>
+            </div>
+          </div>
+        )}
+        {!nextRank && (
+          <div style={{
+            textAlign:"center",padding:"12px",marginBottom:20,
+            background:"rgba(123,45,139,0.15)",border:"1px solid rgba(123,45,139,0.4)",
+            borderRadius:12,color:"#c084fc",fontSize:12,letterSpacing:2,
+          }}>
+            👑 MAX RANK — CHAMPION
+          </div>
+        )}
+
+        {/* Stats grid */}
+        <div style={{
+          background:"rgba(255,255,255,0.03)",border:"1px solid rgba(245,200,66,0.1)",
+          borderRadius:12,overflow:"hidden",marginBottom:20,
+        }}>
+          <div style={{padding:"12px 18px",borderBottom:"1px solid rgba(245,200,66,0.08)"}}>
+            <span style={{fontSize:10,color:"rgba(245,200,66,0.45)",letterSpacing:3}}>BATTLE RECORD</span>
+          </div>
+          {STAT_ROWS.map(({label,value,icon},i)=>(
+            <div key={label} style={{
+              display:"flex",alignItems:"center",justifyContent:"space-between",
+              padding:"13px 18px",
+              borderBottom: i < STAT_ROWS.length-1 ? "1px solid rgba(245,200,66,0.06)" : "none",
+            }}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                <span style={{fontSize:16}}>{icon}</span>
+                <span style={{fontSize:12,color:"rgba(245,200,66,0.65)",letterSpacing:1}}>{label}</span>
+              </div>
+              <span style={{fontSize:18,fontWeight:900,color:"#F5C842"}}>{value}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Account info */}
+        <div style={{
+          background:"rgba(255,255,255,0.03)",border:"1px solid rgba(245,200,66,0.1)",
+          borderRadius:12,overflow:"hidden",marginBottom:28,
+        }}>
+          <div style={{padding:"12px 18px",borderBottom:"1px solid rgba(245,200,66,0.08)"}}>
+            <span style={{fontSize:10,color:"rgba(245,200,66,0.45)",letterSpacing:3}}>ACCOUNT</span>
+          </div>
+          {[
+            { label:"Email",    value: email || "—" },
+            { label:"SMS",      value: profile?.sms_enabled ? "✅ Enabled" : "❌ Off" },
+            { label:"Phone",    value: profile?.phone || "Not set" },
+          ].map(({label,value},i)=>(
+            <div key={label} style={{
+              display:"flex",alignItems:"center",justifyContent:"space-between",
+              padding:"13px 18px",
+              borderBottom: i < 2 ? "1px solid rgba(245,200,66,0.06)" : "none",
+            }}>
+              <span style={{fontSize:12,color:"rgba(245,200,66,0.5)",letterSpacing:1}}>{label}</span>
+              <span style={{fontSize:12,color:"rgba(245,200,66,0.85)",fontFamily:"sans-serif",letterSpacing:0.5}}>{value}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Close CTA */}
+        <button onClick={onClose} style={{
+          width:"100%",padding:"14px 0",borderRadius:12,
+          background:"linear-gradient(135deg,rgba(212,146,26,0.2),rgba(245,200,66,0.08))",
+          border:"1.5px solid rgba(245,200,66,0.35)",
+          color:"#F5C842",fontFamily:"'Cinzel',serif",
+          fontSize:13,fontWeight:700,letterSpacing:2,cursor:"pointer",
+        }}>
+          BACK TO BATTLE
+        </button>
+
+      </div>
+    </div>
   );
 }
 
