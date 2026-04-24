@@ -297,6 +297,7 @@ export default function Recovery() {
   const [submitted,  setSubmitted]  = useState(false);
   const [result,     setResult]     = useState(null);   // "correct" | "wrong" | null
   const [whamActive, setWhamActive] = useState(false);
+  const [whamDrain,  setWhamDrain]  = useState(false);   // SP only — wrong answer vortex
   const [showDone,   setShowDone]   = useState(false);
 
   // ── Current wheel selections ──
@@ -304,7 +305,8 @@ export default function Recovery() {
   const chapterIdxRef = useRef(startIdx(CHAPTERS,  verse.chapter, 4));
   const verseIdxRef   = useRef(startIdx(VERSES_N,  verse.verse,  4));
 
-  const timerRef = useRef(null);
+  const timerRef  = useRef(null);
+  const panelRef  = useRef(null);   // WhamDrain clone target
   const audioRef = useRef(null);
 
   // ── Pre-warm audio ──
@@ -355,7 +357,8 @@ export default function Recovery() {
       setWhamActive(true);
       setTimeout(() => { setWhamActive(false); setShowDone(true); }, 1620);
     } else {
-      setTimeout(() => setShowDone(true), 1200);
+      // ── WHAM Drain: vortex fires immediately on wrong, onDone advances ──
+      setWhamDrain(true);
     }
   }
 
@@ -371,7 +374,7 @@ export default function Recovery() {
   const verseStart   = startIdx(VERSES_N,  verse.verse,   4);
 
   return (
-    <div style={{ minHeight: "100vh", background: C.ink, fontFamily: "'Georgia',serif", overflowX: "hidden", position: "relative" }}>
+    <div ref={panelRef} style={{ minHeight: "100vh", background: C.ink, fontFamily: "'Georgia',serif", overflowX: "hidden", position: "relative" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&display=swap');
 
@@ -575,6 +578,14 @@ export default function Recovery() {
       {/* WHAM SLAM */}
       <WhamSlam active={whamActive} ref_text={`${verse.book} ${verse.chapter}:${verse.verse}`} sub="Recovered!" />
 
+      {/* WHAM DRAIN — SP wrong answer vortex */}
+      {whamDrain && (
+        <WhamDrain
+          panelRef={panelRef}
+          onDone={() => { setWhamDrain(false); setShowDone(true); }}
+        />
+      )}
+
       {/* Background layers */}
       <div className="rec-bg-land" />
       <div className="rec-bg-char" />
@@ -668,3 +679,246 @@ export default function Recovery() {
     </div>
   );
 }
+// Build: 1776917765
+// ══════════════════════════════════════════════════════════════════
+// ── WHAM DRAIN v4 ────────────────────────────────────────────────
+// Designer spec: uniform X/Y scale, circular tangential stretch
+// along the spiral path, orbital velocity that ACCELERATES toward
+// center (slow outer → violent inner), pixel-pull vacuum effect,
+// final implosion once everything hits dead center.
+//
+// PHYSICS:
+//   — scale(X,Y) always congruent — object shrinks as one piece
+//   — scaleX stretches TANGENTIALLY (along direction of travel)
+//   — scaleY compresses RADIALLY (gravity squeezing inward)
+//   — rotate() uses custom cubic-bezier: slow start → exponential
+//     acceleration as the spiral tightens
+//   — translate() pulls the whole mass toward center, accelerating
+//   — blur/brightness only spike at the very end — implosion frame
+//
+// TIMELINE (1700ms total):
+//   0ms        — Stamp frozen. Intact on white void.
+//   0–300ms    — Gravity detected. Gentle tilt, first orbital pull.
+//   300–700ms  — Orbit established. Circular stretch begins along
+//                path. Scale ~0.7, rotate ~120°, speed building.
+//   700–1150ms — Acceleration phase. Tighter spiral, scale ~0.3,
+//                rotate ~270°. Tangential stretch peaks here.
+//   1150–1500ms— Terminal velocity. Scale ~0.05, rotate ~450°.
+//                Everything blurring toward singularity.
+//   1500–1650ms— IMPLOSION. Scale 0, rotate 540°. Bright white
+//                flash-point expands then collapses in 150ms.
+//   1700ms     — onDone → SPRecovery slides in.
+// ══════════════════════════════════════════════════════════════════
+function WhamDrain({ panelRef, onDone }) {
+  const cloneRef  = useRef(null);
+  const singRef   = useRef(null);
+
+  useEffect(() => {
+    // ── Stamp the panel as a frozen clone ──
+    const source = panelRef?.current;
+    if (source && cloneRef.current) {
+      const clone = source.cloneNode(true);
+      const rect  = source.getBoundingClientRect();
+      clone.style.cssText = `
+        position:absolute; top:0; left:0;
+        width:${rect.width}px;
+        pointer-events:none; overflow:visible;
+        border-radius:inherit;
+      `;
+      clone.querySelectorAll("*").forEach(el => {
+        el.style.transition = "none";
+        el.style.animation  = "none";
+      });
+      cloneRef.current.appendChild(clone);
+    }
+
+    // ── Double-rAF: mount first, then trigger ──
+    const raf = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (cloneRef.current) cloneRef.current.classList.add("wd-vortex");
+      });
+    });
+
+    // ── Implosion fires at 1500ms (150ms before onDone) ──
+    const implosionT = setTimeout(() => {
+      if (singRef.current) singRef.current.classList.add("wd-implode");
+    }, 1500);
+
+    const doneT = setTimeout(() => onDone && onDone(), 1700);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearTimeout(implosionT);
+      clearTimeout(doneT);
+    };
+  }, []);
+
+  return (
+    <div style={{
+      position:"fixed", inset:0, zIndex:9000,
+      background:"#ffffff",
+      display:"flex", alignItems:"center", justifyContent:"center",
+      overflow:"hidden",
+    }}>
+      {/* ── The frozen stamp — one intact object pulled into the vortex ── */}
+      <div ref={cloneRef} className="wd-stamp" style={{
+        position:"relative",
+        width:"100%", maxWidth:480,
+        transformOrigin:"50% 50%",
+        zIndex:2,
+      }} />
+
+      {/* ── Implosion point at dead center ── */}
+      <div ref={singRef} className="wd-implode-ring" style={{
+        position:"absolute",
+        top:"50%", left:"50%",
+        transform:"translate(-50%,-50%)",
+        zIndex:5, pointerEvents:"none",
+      }} />
+
+      <style>{`
+        /* ══ BASE STAMP ══ */
+        .wd-stamp {
+          will-change: transform, opacity, filter;
+        }
+
+        /* ══ VORTEX DRAIN ══════════════════════════════════════════════
+           Circular stretch = scaleX elongates ALONG direction of travel
+           while scaleY compresses inward. Both start equal and diverge
+           as the spiral tightens. Rotation accelerates exponentially —
+           the custom timing function front-loads the slow outer orbit
+           and back-loads the violent terminal pull.
+           translate(-2%,-2%) nudges mass toward center continuously.
+        ══════════════════════════════════════════════════════════════ */
+        .wd-vortex {
+          animation: wdVortex 1.5s cubic-bezier(0.12, 0, 0.95, 1) forwards;
+        }
+
+        @keyframes wdVortex {
+
+          /* FRAME 0: Intact. Gravity just beginning to bite. */
+          0% {
+            transform:
+              translate(0%, 0%)
+              rotate(0deg)
+              scale(1, 1)
+              skewX(0deg);
+            opacity: 1;
+            filter: blur(0px) brightness(1);
+          }
+
+          /* FRAME 1 ~18% (270ms): First orbital tug.
+             Slight tilt, tangential stretch just starting.
+             scaleX > scaleY — stretching along the path. */
+          18% {
+            transform:
+              translate(-1%, -1%)
+              rotate(45deg)
+              scale(0.88, 0.82)
+              skewX(-4deg);
+            opacity: 1;
+            filter: blur(0.3px) brightness(1.02);
+          }
+
+          /* FRAME 2 ~38% (570ms): Orbit established.
+             Circular stretch visible — object curves with path.
+             Velocity building. */
+          38% {
+            transform:
+              translate(-2%, -2%)
+              rotate(120deg)
+              scale(0.62, 0.54)
+              skewX(-10deg);
+            opacity: 0.95;
+            filter: blur(0.8px) brightness(1.08) contrast(1.1);
+          }
+
+          /* FRAME 3 ~57% (855ms): Mid-spiral. Speed doubling.
+             scaleX tangential stretch peaks — wide along path.
+             scaleY radial compression — squeezed by gravity. */
+          57% {
+            transform:
+              translate(-3%, -2%)
+              rotate(228deg)
+              scale(0.36, 0.26)
+              skewX(-18deg);
+            opacity: 0.82;
+            filter: blur(2px) brightness(1.2) contrast(1.25);
+          }
+
+          /* FRAME 4 ~74% (1110ms): Acceleration phase.
+             Orbital path tightening rapidly. Almost gone. */
+          74% {
+            transform:
+              translate(-2%, -1%)
+              rotate(348deg)
+              scale(0.14, 0.09)
+              skewX(-26deg);
+            opacity: 0.55;
+            filter: blur(5px) brightness(1.6) contrast(1.8);
+          }
+
+          /* FRAME 5 ~88% (1320ms): Terminal velocity.
+             Pixels racing toward singularity. */
+          88% {
+            transform:
+              translate(-1%, 0%)
+              rotate(450deg)
+              scale(0.04, 0.025)
+              skewX(-30deg);
+            opacity: 0.25;
+            filter: blur(10px) brightness(2.5) contrast(3);
+          }
+
+          /* FRAME 6 100% (1500ms): Everything hits center. White out. */
+          100% {
+            transform:
+              translate(0%, 0%)
+              rotate(540deg)
+              scale(0, 0)
+              skewX(0deg);
+            opacity: 0;
+            filter: blur(18px) brightness(6) contrast(5);
+          }
+        }
+
+        /* ══ IMPLOSION RING ════════════════════════════════════════════
+           Fires at 1500ms. Expands fast from 0 → 80px, then
+           collapses violently back to 0 in 150ms. Final punctuation.
+        ══════════════════════════════════════════════════════════════ */
+        .wd-implode-ring {
+          width: 0; height: 0;
+          border-radius: 50%;
+          opacity: 0;
+        }
+        .wd-implode {
+          animation: wdImplode 0.2s cubic-bezier(0.2, 0, 0.4, 1) forwards;
+        }
+        @keyframes wdImplode {
+          0%   {
+            width: 0; height: 0; opacity: 0;
+            box-shadow: none;
+            background: transparent;
+          }
+          35%  {
+            width: 80px; height: 80px; opacity: 1;
+            background: radial-gradient(circle, #ffffff 0%, rgba(30,122,140,0.9) 40%, rgba(26,58,92,0.6) 70%, transparent 100%);
+            box-shadow: 0 0 60px 30px rgba(255,255,255,0.9), 0 0 20px 8px rgba(30,122,140,0.8);
+            transform: translate(-50%, -50%);
+          }
+          70%  {
+            width: 20px; height: 20px; opacity: 0.8;
+            background: radial-gradient(circle, #ffffff 0%, rgba(30,122,140,1) 60%, transparent 100%);
+            box-shadow: 0 0 16px 8px rgba(30,122,140,0.6);
+            transform: translate(-50%, -50%);
+          }
+          100% {
+            width: 0; height: 0; opacity: 0;
+            box-shadow: none;
+            transform: translate(-50%, -50%);
+          }
+        }
+      `}</style>
+    </div>
+  );
+}
+
