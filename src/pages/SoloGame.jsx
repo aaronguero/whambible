@@ -293,20 +293,24 @@ function LevelSelect({ onSelect }) {
         <div className="wb-scroll-panel">
           <div className="wb-scroll-curl" />
           <p className="wb-tagline">⚔️ Choose Your Challenge ⚔️</p>
+          <p style={{ fontSize:11, color:"rgba(245,200,66,0.55)", letterSpacing:1.5, textAlign:"center", marginBottom:14, marginTop:-8 }}>ALL LEVELS OPEN · ANY RANK</p>
           <div style={{ width:"100%", display:"flex", flexDirection:"column", gap:10, marginBottom:20 }}>
             {LEVELS.map(lv => (
               <button key={lv.pts} onClick={() => onSelect(lv)}
                 style={{
-                  width:"100%", padding:"16px 20px", borderRadius:10, border:"none",
-                  background:`linear-gradient(135deg, ${lv.color}dd, ${lv.color}88)`,
+                  width:"100%", padding:"16px 20px", borderRadius:10,
+                  border:`1.5px solid ${lv.color}66`,
+                  background:`linear-gradient(135deg, ${lv.color}22, ${lv.color}11)`,
                   color:"#fff", cursor:"pointer", textAlign:"left",
                   fontFamily:"'Cinzel',serif", display:"flex", alignItems:"center", gap:14,
-                  boxShadow:`0 4px 18px ${lv.color}44`, transition:"all 0.18s",
-                }}>
+                  boxShadow:`0 2px 12px ${lv.color}22`, transition:"all 0.18s",
+                }}
+                onMouseEnter={e=>{e.currentTarget.style.background=`linear-gradient(135deg, ${lv.color}55, ${lv.color}33)`;e.currentTarget.style.boxShadow=`0 4px 20px ${lv.color}55`;}}
+                onMouseLeave={e=>{e.currentTarget.style.background=`linear-gradient(135deg, ${lv.color}22, ${lv.color}11)`;e.currentTarget.style.boxShadow=`0 2px 12px ${lv.color}22`;}}>
                 <span style={{ fontSize:28 }}>{lv.icon}</span>
                 <div>
                   <div style={{ fontSize:16, fontWeight:800, letterSpacing:2 }}>{lv.name}</div>
-                  <div style={{ fontSize:11, opacity:0.85, letterSpacing:1 }}>{lv.pts} pts per verse</div>
+                  <div style={{ fontSize:11, opacity:0.75, letterSpacing:1 }}>{lv.pts} pts per correct answer</div>
                 </div>
                 <div style={{ marginLeft:"auto", fontSize:22, fontWeight:800, color: C.goldLight }}>
                   {lv.pts}
@@ -479,7 +483,7 @@ function GamePlay({ level, onDone }) {
 function GameOver({ score, results, level, onReplay, onHome }) {
   const correct = results.filter(r => r.correct).length;
   const pct     = Math.round((correct / results.length) * 100);
-  const rank    = score >= 700 ? "Champion 👑" : score >= 300 ? "Knight 🛡️" : score >= 100 ? "Warrior ⚔️" : score >= 1 ? "Squire 🗡️" : "Scribe 📜";
+  const rank    = score >= 1000 ? "Champion 👑" : score >= 600 ? "Knight 🛡️" : score >= 300 ? "Warrior ⚔️" : score >= 100 ? "Squire 🗡️" : "Scribe 📜";
 
   return (
     <div className="wb-screen">

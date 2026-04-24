@@ -129,10 +129,10 @@ const LETTERS      = ["A","B","C","D"];
 const SESSION_KEY  = "wb_session_v2";
 
 const LEVELS = [
-  { pts:5,  name:"Squire",   icon:"🗡️", sub:"Easiest · Common verses",   color:"#1E7A8C", featured:false },
-  { pts:10, name:"Warrior",  icon:"⚔️", sub:"Moderate · Popular verses", color:"#D4921A", featured:true  },
-  { pts:15, name:"Knight",   icon:"🛡️", sub:"Hard · Deeper verses",      color:"#C05A2A", featured:false },
-  { pts:20, name:"Champion", icon:"👑", sub:"Hardest · Rare verses",      color:"#7B2D8B", featured:false },
+  { pts:5,  name:"Squire",   icon:"🗡️", sub:"Easiest · Common verses",   color:"#1E7A8C" },
+  { pts:10, name:"Warrior",  icon:"⚔️", sub:"Moderate · Popular verses", color:"#D4921A" },
+  { pts:15, name:"Knight",   icon:"🛡️", sub:"Hard · Deeper verses",      color:"#C05A2A" },
+  { pts:20, name:"Champion", icon:"👑", sub:"Hardest · Rare verses",      color:"#7B2D8B" },
 ];
 
 const ALL_BOOKS = [
@@ -183,11 +183,12 @@ function buildOptions(v) {
 }
 
 function rankBadge(score) {
-  if (score >= 700) return { icon:"👑", label:"Champion", color:"#7B2D8B" };
-  if (score >= 300) return { icon:"🛡️", label:"Knight",   color:"#C05A2A" };
-  if (score >= 100) return { icon:"⚔️", label:"Warrior",  color:"#D4921A" };
-  if (score >= 1)   return { icon:"🗡️", label:"Squire",   color:"#1E7A8C" };
-  return                   { icon:"📜", label:"Scribe",   color:"#64748b" };
+  // Thresholds based on open difficulty — 10 rounds × 20pt max = 200pt/game
+  if (score >= 1000) return { icon:"👑", label:"Champion", color:"#7B2D8B" };
+  if (score >= 600)  return { icon:"🛡️", label:"Knight",   color:"#C05A2A" };
+  if (score >= 300)  return { icon:"⚔️", label:"Warrior",  color:"#D4921A" };
+  if (score >= 100)  return { icon:"🗡️", label:"Squire",   color:"#1E7A8C" };
+  return                    { icon:"📜", label:"Scribe",   color:"#64748b" };
 }
 
 function parseError(e) {
@@ -626,11 +627,11 @@ function ProfileOverlay({ user, profile, rank, onClose }) {
   const init    = name[0].toUpperCase();
   const r       = rank || { icon:"📜", label:"Scribe", color:"#64748b" };
   const RANKS   = [
-    {label:"Scribe",  min:0,  max:1,   color:"#64748b"},
-    {label:"Squire",  min:1,  max:100, color:"#1E7A8C"},
-    {label:"Warrior", min:100,max:300, color:"#D4921A"},
-    {label:"Knight",  min:300,max:700, color:"#C05A2A"},
-    {label:"Champion",min:700,max:700, color:"#7B2D8B"},
+    {label:"Scribe",   min:0,    max:100,  color:"#64748b"},
+    {label:"Squire",   min:100,  max:300,  color:"#1E7A8C"},
+    {label:"Warrior",  min:300,  max:600,  color:"#D4921A"},
+    {label:"Knight",   min:600,  max:1000, color:"#C05A2A"},
+    {label:"Champion", min:1000, max:1000, color:"#7B2D8B"},
   ];
   const cur     = RANKS.find(rk=>rk.label===r.label)||RANKS[0];
   const nxt     = RANKS[RANKS.indexOf(cur)+1];
@@ -1116,7 +1117,7 @@ const TUTORIAL_STEPS = [
   {
     icon:"🏆",
     title:"Rank Up",
-    body:"Every correct answer earns points. Scribe → Squire → Warrior → Knight → Champion. Climb the leaderboard. Know the Word. Win the battle.",
+    body:"Every correct answer earns points. Pick any difficulty — any rank. Scribe (0) → Squire (100) → Warrior (300) → Knight (600) → Champion (1000+). Know the Word. Win the battle.",
   },
 ];
 
@@ -1311,11 +1312,11 @@ function ProfileModal({ user, profile, rank, onClose }) {
 
   // Next rank threshold + progress
   const RANKS = [
-    { label:"Scribe",   min:0,   max:1,   color:"#64748b" },
-    { label:"Squire",   min:1,   max:100, color:"#1E7A8C" },
-    { label:"Warrior",  min:100, max:300, color:"#D4921A" },
-    { label:"Knight",   min:300, max:700, color:"#C05A2A" },
-    { label:"Champion", min:700, max:700, color:"#7B2D8B" },
+    { label:"Scribe",   min:0,    max:100,  color:"#64748b" },
+    { label:"Squire",   min:100,  max:300,  color:"#1E7A8C" },
+    { label:"Warrior",  min:300,  max:600,  color:"#D4921A" },
+    { label:"Knight",   min:600,  max:1000, color:"#C05A2A" },
+    { label:"Champion", min:1000, max:1000, color:"#7B2D8B" },
   ];
   const currentRank = RANKS.find(rk => rk.label === r.label) || RANKS[0];
   const nextRank    = RANKS[RANKS.indexOf(currentRank) + 1];
@@ -1869,7 +1870,9 @@ function SelectLevel({ user, game, role, onPick }) {
           </div>
           {LEVELS.map(lv=>(
             <div key={lv.pts} className="c-lv"
-              style={{borderColor:lv.featured?lv.color:"rgba(245,200,66,0.12)",background:lv.featured?"rgba(30,122,140,0.18)":"rgba(13,31,53,0.4)"}}
+              style={{borderColor:"rgba(245,200,66,0.18)",background:"rgba(13,31,53,0.40)"}}
+              onMouseEnter={e=>{e.currentTarget.style.borderColor=lv.color;e.currentTarget.style.background=`${lv.color}22`;}}
+              onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(245,200,66,0.18)";e.currentTarget.style.background="rgba(13,31,53,0.40)";}}
               onClick={()=>pick(lv)}>
               <div className="c-lv-icon">{lv.icon}</div>
               <div><div className="c-lv-name">{lv.name}</div><div className="c-lv-sub">{lv.sub}</div></div>
