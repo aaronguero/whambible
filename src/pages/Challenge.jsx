@@ -462,21 +462,13 @@ function MenuOverlay({ charKey, title, onClose, children }) {
         transformOrigin:"center center",
         transition: dragging ? "none" : "transform 0.36s cubic-bezier(.34,1.56,.64,1)",
       }}>
-        {/* Layer 1 — vivid landscape */}
-        <div style={{
-          position:"absolute",inset:0,
-          backgroundImage:`url(${LANDSCAPE_VIVID})`,
-          backgroundSize:"cover",backgroundPosition:"center center",
-          backgroundRepeat:"no-repeat",
-        }}/>
-        {/* Layer 2 — character */}
+        {/* Character at full cover scale — landscape stored in src/constants/assets.js */}
         <div style={{
           position:"absolute",inset:0,
           backgroundImage:`url(${MENU_CHARS[charKey]})`,
-          backgroundSize:"contain",
-          backgroundPosition:"center bottom",
+          backgroundSize:"cover",
+          backgroundPosition:"center center",
           backgroundRepeat:"no-repeat",
-          opacity:1.0,
         }}/>
       </div>
 
