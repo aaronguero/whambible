@@ -805,43 +805,42 @@ function SPRecovery({ verse, onDone }) {
 
 
 // ══════════════════════════════════════════════════════════════════
-// ── WHAM DRAIN ───────────────────────────────────────────────────
-// True spaghettification — no black hole graphic, just gravitational
-// physics tearing the screen apart. The game panel is cloned as a
-// frozen stamp the instant a wrong answer is tapped. That clone is
-// then subjected to 5-phase gravitational distortion over 1700ms:
+// ── WHAM DRAIN v3 ────────────────────────────────────────────────
+// Revised spaghettification per Designer spec:
 //
-// PHASE TIMELINE (mirrors the 5-frame ship sequence):
-//   0ms        — Stamp frozen on white void. Still intact.
-//   0–250ms    — Gravity builds: panel tilts, scaleY begins to stretch
-//                elongating the content along the pull axis (frame 1→2)
-//   250–600ms  — Full spaghetti: scaleY peaks (tall thin streak),
-//                skewX bends the streak clockwise, rotate wraps it
-//                inward — structural integrity gone (frame 2→3)
-//   600–1000ms — Streak curves tightly around center, wrapping like
-//                a ribbon — now just a thin smeared arc (frame 3→4)
-//   1000–1400ms— Ribbon collapses to hairline streaks converging
-//                on dead center, directional blur along pull axis (frame 4→5)
-//   1400–1650ms— Final singularity: collapses to a point, white total
-//   1700ms     — onDone fires → SPRecovery slides in
+// FRAME 1 (0ms)      — Stamp frozen on white void. Fully intact.
+// FRAME 2 (0–500ms)  — Full 360° spin while stretching outward
+//                      circularly — panel orbits the drain point,
+//                      scaleX/Y expand then begin thinning
+// FRAME 3 (500–1100ms)— The stretched loop fragments into 2° increments
+//                      across the full 360° arc, each shard scales
+//                      100%→0% as it spirals inward — 180 shards
+//                      raining into the center drain
+// FRAME 5 (1100–1650ms)— Singularity: all mass collapses to a single
+//                      bright point at dead center, then snaps to white
+// 1700ms             — onDone fires → SPRecovery slides in
 // ══════════════════════════════════════════════════════════════════
 function WhamDrain({ panelRef, onDone }) {
-  const cloneRef   = useRef(null);
-  const overlayRef = useRef(null);
+  const overlayRef  = useRef(null);
+  const shardRefs   = useRef([]);
+  const cloneRef    = useRef(null);
+  const singRef     = useRef(null);
 
   useEffect(() => {
     // ── Stamp: deep-clone the panel at this exact frame ──
     const source = panelRef?.current;
+    let rect = { width: 360, height: 600 };
+    if (source) rect = source.getBoundingClientRect();
+
+    // Build clone for Frame 2 (spin phase)
     if (source && cloneRef.current) {
       const clone = source.cloneNode(true);
-      const rect  = source.getBoundingClientRect();
       clone.style.cssText = `
         position:absolute; top:0; left:0;
         width:${rect.width}px;
         pointer-events:none; overflow:visible;
         border-radius:inherit;
       `;
-      // Freeze — kill all child transitions/animations
       clone.querySelectorAll("*").forEach(el => {
         el.style.transition = "none";
         el.style.animation  = "none";
@@ -849,16 +848,52 @@ function WhamDrain({ panelRef, onDone }) {
       cloneRef.current.appendChild(clone);
     }
 
-    // ── Trigger animation on next paint so clone is mounted first ──
+    // ── Double-rAF: mount first, then animate ──
     const raf = requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        if (cloneRef.current) cloneRef.current.classList.add("wd-spagh");
+        // FRAME 2: spin the main clone 360° while stretching
+        if (cloneRef.current) {
+          cloneRef.current.style.transition = "none";
+          cloneRef.current.classList.add("wd-spin360");
+        }
+
+        // FRAME 3: after spin (500ms), explode into 2° shards
+        setTimeout(() => {
+          // Hide the spin clone
+          if (cloneRef.current) {
+            cloneRef.current.style.opacity = "0";
+            cloneRef.current.style.transition = "opacity 80ms";
+          }
+          // Activate each shard
+          shardRefs.current.forEach((el, i) => {
+            if (!el) return;
+            const delay = i * 1.5; // stagger each 2° shard by 1.5ms = ~270ms total spread
+            el.style.animationDelay = `${delay}ms`;
+            el.classList.add("wd-shard-fall");
+          });
+
+          // FRAME 5: singularity at 1100ms (600ms into shard phase)
+          setTimeout(() => {
+            if (singRef.current) singRef.current.classList.add("wd-sing-collapse");
+          }, 600);
+        }, 500);
       });
     });
 
     const t = setTimeout(() => onDone && onDone(), 1700);
     return () => { clearTimeout(t); cancelAnimationFrame(raf); };
   }, []);
+
+  // Build 180 shard elements (one per 2° of the 360° arc)
+  const shards = Array.from({ length: 180 }, (_, i) => {
+    const angleDeg = i * 2;          // 0°, 2°, 4° ... 358°
+    const angleRad = (angleDeg * Math.PI) / 180;
+    // Each shard starts on a circle radius ~140px from center, angled outward
+    const r = 140;
+    const tx = Math.cos(angleRad) * r;
+    const ty = Math.sin(angleRad) * r;
+    return { angleDeg, tx, ty, i };
+  });
 
   return (
     <div ref={overlayRef} style={{
@@ -867,123 +902,136 @@ function WhamDrain({ panelRef, onDone }) {
       display:"flex", alignItems:"center", justifyContent:"center",
       overflow:"hidden",
     }}>
-      {/* The frozen stamp — this IS the spaceship */}
+      {/* ── FRAME 2: the main clone for the 360° spin ── */}
       <div ref={cloneRef} className="wd-stamp" style={{
-        position:"relative",
+        position:"absolute",
         width:"100%", maxWidth:480,
         transformOrigin:"50% 50%",
+        zIndex:2,
+      }} />
+
+      {/* ── FRAME 3: 180 shard arcs, one per 2° ── */}
+      <div style={{
+        position:"absolute", inset:0,
+        display:"flex", alignItems:"center", justifyContent:"center",
+        pointerEvents:"none", zIndex:3,
+      }}>
+        {shards.map(({ angleDeg, tx, ty, i }) => (
+          <div
+            key={i}
+            ref={el => shardRefs.current[i] = el}
+            className="wd-shard"
+            style={{
+              // Each shard is a thin colored sliver, rotated to its angle
+              position:"absolute",
+              width: 3,
+              height: 28,
+              borderRadius: 2,
+              background: `hsl(${200 + (angleDeg * 0.3)}, 55%, ${30 + (i % 4) * 8}%)`,
+              transformOrigin: "50% 100%",  // pivot at bottom = toward center
+              // Start position: translated out on the circle
+              transform: `translate(${tx}px, ${ty}px) rotate(${angleDeg + 90}deg) scaleY(1)`,
+              opacity: 0,
+              // CSS var for the inward collapse translation
+              "--tx": `${tx}px`,
+              "--ty": `${ty}px`,
+              "--angle": `${angleDeg + 90}deg`,
+            }}
+          />
+        ))}
+      </div>
+
+      {/* ── FRAME 5: singularity point at dead center ── */}
+      <div ref={singRef} className="wd-singularity" style={{
+        position:"absolute",
+        top:"50%", left:"50%",
+        transform:"translate(-50%,-50%)",
+        zIndex:4,
       }} />
 
       <style>{`
-        /* ── Base stamp ── */
-        .wd-stamp {
-          will-change: transform, opacity, filter;
+        /* ══ FRAME 2: 360° orbital spin + circular stretch ══ */
+        .wd-stamp { will-change: transform, opacity, filter; }
+
+        .wd-spin360 {
+          animation: wdSpin360 0.5s cubic-bezier(0.3, 0, 0.7, 1) forwards;
         }
-
-        /* ══ SPAGHETTIFICATION KEYFRAMES ══
-           Mirrors the 5-frame ship sequence exactly:
-           Frame 1: intact
-           Frame 2: tilting, trailing edges bend
-           Frame 3: fully elongated, structure lost
-           Frame 4: wrapped ribbon around drain center
-           Frame 5: hairline streaks → gone
-        ══════════════════════════════════ */
-        .wd-spagh {
-          animation: wdSpagh 1.65s cubic-bezier(0.4, 0, 0.8, 0.6) forwards;
-        }
-
-        @keyframes wdSpagh {
-
-          /* ── Frame 1: Intact. Gravity just starting to bite ── */
-          0% {
-            transform:
-              perspective(600px)
-              scale(1, 1)
-              rotate(0deg)
-              skewX(0deg)
-              skewY(0deg)
-              translate(0px, 0px);
+        @keyframes wdSpin360 {
+          0%   {
+            transform: scale(1, 1) rotate(0deg);
             opacity: 1;
-            filter: blur(0px) brightness(1) contrast(1);
+            filter: blur(0px) brightness(1);
           }
-
-          /* ── Frame 2 (15%=248ms): Tilt begins, trailing edge stretches ── */
-          15% {
-            transform:
-              perspective(600px)
-              scale(0.95, 1.18)
-              rotate(14deg)
-              skewX(-6deg)
-              skewY(4deg)
-              translate(2px, -4px);
+          30%  {
+            transform: scale(1.12, 1.12) rotate(108deg);
             opacity: 1;
-            filter: blur(0.5px) brightness(1.05) contrast(1.1);
+            filter: blur(1px) brightness(1.1);
           }
-
-          /* ── Frame 3 (36%=594ms): Full spaghetti — elongated streak bending ── */
-          36% {
-            transform:
-              perspective(600px)
-              scale(0.55, 2.1)
-              rotate(55deg)
-              skewX(-22deg)
-              skewY(14deg)
-              translate(6px, -8px);
-            opacity: 0.9;
-            filter: blur(1.5px) brightness(1.2) contrast(1.4);
+          65%  {
+            transform: scale(1.18, 1.18) rotate(234deg);
+            opacity: 0.85;
+            filter: blur(2.5px) brightness(1.25);
           }
-
-          /* ── Frame 4 (58%=957ms): Ribbon wrapping clockwise around center ── */
-          58% {
-            transform:
-              perspective(600px)
-              scale(0.22, 3.4)
-              rotate(140deg)
-              skewX(-38deg)
-              skewY(22deg)
-              translate(4px, -4px);
-            opacity: 0.7;
-            filter: blur(4px) brightness(1.5) contrast(1.8);
-          }
-
-          /* ── Frame 5 (76%=1254ms): Hairline arc — almost gone ── */
-          76% {
-            transform:
-              perspective(600px)
-              scale(0.06, 4.2)
-              rotate(240deg)
-              skewX(-52deg)
-              skewY(30deg)
-              translate(2px, 0px);
-            opacity: 0.38;
-            filter: blur(8px) brightness(2.2) contrast(2.5);
-          }
-
-          /* ── Singularity approach (88%=1452ms) ── */
-          88% {
-            transform:
-              perspective(600px)
-              scale(0.02, 1.8)
-              rotate(330deg)
-              skewX(-60deg)
-              skewY(35deg)
-              translate(0px, 0px);
-            opacity: 0.15;
-            filter: blur(14px) brightness(3.5) contrast(4);
-          }
-
-          /* ── Collapse to point (100%=1650ms) ── */
           100% {
-            transform:
-              perspective(600px)
-              scale(0, 0)
-              rotate(400deg)
-              skewX(0deg)
-              skewY(0deg)
-              translate(0px, 0px);
+            transform: scale(0.9, 0.9) rotate(360deg);
             opacity: 0;
-            filter: blur(20px) brightness(6) contrast(5);
+            filter: blur(5px) brightness(1.5);
           }
+        }
+
+        /* ══ FRAME 3: shard fragments rain inward over 600ms ══
+           Each shard starts on the arc, scales 100→0 as it pulls
+           toward dead center. staggered by delay set in JS.       */
+        .wd-shard {
+          will-change: transform, opacity;
+        }
+        .wd-shard-fall {
+          animation: wdShardFall 0.55s ease-in forwards;
+        }
+        @keyframes wdShardFall {
+          0% {
+            opacity: 0.9;
+            transform: translate(var(--tx, 0px), var(--ty, 0px))
+                       rotate(var(--angle, 90deg))
+                       scaleY(1);
+          }
+          45% {
+            opacity: 0.65;
+            transform: translate(calc(var(--tx, 0px) * 0.45), calc(var(--ty, 0px) * 0.45))
+                       rotate(var(--angle, 90deg))
+                       scaleY(0.55);
+          }
+          100% {
+            opacity: 0;
+            transform: translate(0px, 0px)
+                       rotate(var(--angle, 90deg))
+                       scaleY(0);
+          }
+        }
+
+        /* ══ FRAME 5: singularity collapse ══ */
+        .wd-singularity {
+          width: 0; height: 0;
+          border-radius: 50%;
+          background: radial-gradient(circle,
+            rgba(255,255,255,1) 0%,
+            rgba(30,122,140,0.9) 30%,
+            rgba(26,58,92,0.7) 60%,
+            transparent 100%
+          );
+          opacity: 0;
+        }
+        .wd-sing-collapse {
+          animation: wdSingCollapse 0.6s ease-out forwards;
+        }
+        @keyframes wdSingCollapse {
+          0%   { width:0;    height:0;    opacity:0; }
+          20%  { width:60px; height:60px; opacity:1;
+                 box-shadow: 0 0 40px 20px rgba(30,122,140,0.6); }
+          50%  { width:24px; height:24px; opacity:1;
+                 box-shadow: 0 0 20px 10px rgba(26,58,92,0.8); }
+          80%  { width:6px;  height:6px;  opacity:0.8; }
+          100% { width:0;    height:0;    opacity:0; }
         }
       `}</style>
     </div>
