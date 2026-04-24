@@ -23,6 +23,8 @@ const LANDSCAPE_VIVID = "https://media.base44.com/images/public/69df9a909b33058a
 const CHAR_MP       = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/b23c98cb8_generated_image.png";
 const CHAR_KNIGHT   = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/9b51fedfd_generated_image.png";
 const CHAR_VICTORY  = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/c5aa4771c_generated_image.png";
+const CHAR_WAITING  = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/68682726c_generated_image.png";
+const CHAR_GAMEOVER = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/027de5f28_generated_image.png";
 const WHAM_CHARS    = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/85be9d10e_generated_image.png";
 const WHAM_TEXT_IMG = "https://media.base44.com/images/public/69df9a909b33058a5ce47831/5e80bbcf2_generated_image.png";
 const WHAM_AUDIO    = "https://media.base44.com/videos/public/69c40c6701d9dfdb1df69d2b/5d143ab80_51a54c36d_wham-slam-voice1.webm";
@@ -1939,20 +1941,19 @@ function SelectLevel({ user, profile, game, role, onPick }) {
 }
 
 // ══════════════════════════════════════════════════════════════
-// WAITING SCREEN — polling until opponent acts
+// WAITING SCREEN — cinematic underlay + scroll panel
 // ══════════════════════════════════════════════════════════════
-function Waiting({ user, game, role, onUpdate }) {
+function Waiting({ user, profile, game, role, onUpdate, onOut }) {
   const [g, setG]       = useState(game);
   const [dots, setDots] = useState(".");
   const pollRef = useRef(null);
 
-  const oppName = role === "challenger" ? g?.answerer_name : g?.challenger_name;
+  const oppName  = role === "challenger" ? g?.answerer_name  : g?.challenger_name;
+  const myScore  = role === "challenger" ? g?.challenger_score||0 : g?.answerer_score||0;
+  const oppScore = role === "challenger" ? g?.answerer_score||0   : g?.challenger_score||0;
 
   useEffect(() => {
-    // Animate dots
     const dotTimer = setInterval(() => setDots(d => d.length >= 3 ? "." : d + "."), 600);
-
-    // Poll game state
     pollRef.current = setInterval(async () => {
       try {
         const updated = await B44.get("GameSession", game.id);
@@ -1960,31 +1961,101 @@ function Waiting({ user, game, role, onUpdate }) {
         onUpdate(updated);
       } catch {}
     }, POLL_MS);
-
     return () => { clearInterval(dotTimer); clearInterval(pollRef.current); };
   }, []);
 
-  const myScore  = role === "challenger" ? g?.challenger_score||0 : g?.answerer_score||0;
-  const oppScore = role === "challenger" ? g?.answerer_score||0   : g?.challenger_score||0;
-
   return (
     <div className="c-screen">
-      <Bg/>
-      <Hdr user={user}/>
-      <div style={{position:"absolute",inset:0,zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}}>
-        <div className="c-card" style={{textAlign:"center",width:"100%",maxWidth:400}}>
-          <div className="c-curl"/>
-          <div className="c-wait">
-            <div className="c-wait-icon">⏳</div>
-            <h1 className="c-h1" style={{fontSize:18}}>Waiting{dots}</h1>
-            <p className="c-sub">Waiting for {oppName} to answer</p>
+      {/* ── 4-layer cinematic underlay ── */}
+      <div style={{position:"fixed",inset:0,zIndex:0,backgroundImage:`url(${LANDSCAPE_VIVID})`,backgroundSize:"cover",backgroundPosition:"center top",opacity:0.55}}/>
+      <div style={{position:"fixed",inset:0,zIndex:1,backgroundImage:`url(${CHAR_WAITING})`,backgroundSize:"contain",backgroundPosition:"center 18%",backgroundRepeat:"no-repeat",opacity:0.28}}/>
+      <div style={{position:"fixed",inset:0,zIndex:2,background:`linear-gradient(180deg,${C.cobaltDark}cc 0%,${C.cobaltDark}44 38%,rgba(232,213,160,0.72) 100%)`}}/>
+      <div style={{position:"fixed",top:0,left:0,right:0,height:3,zIndex:3,background:`linear-gradient(90deg,transparent,${C.gold},transparent)`}}/>
+
+      <Hdr user={user} profile={profile} onOut={onOut}/>
+
+      {/* ── Hero space — character breathes here ── */}
+      <div style={{height:"44vh",minHeight:220}}/>
+
+      {/* ── Scroll panel ── */}
+      <div style={{
+        position:"relative",zIndex:10,
+        margin:"0 0 0 0",
+        borderRadius:"22px 22px 0 0",
+        background:"rgba(13,31,53,0.94)",
+        borderTop:`2px solid rgba(245,200,66,0.22)`,
+        boxShadow:"0 -8px 40px rgba(0,0,0,0.55)",
+        minHeight:"56vh",
+        overflowY:"auto",
+        WebkitOverflowScrolling:"touch",
+      }}>
+        {/* Scroll curl */}
+        <div style={{width:40,height:4,borderRadius:4,background:"rgba(245,200,66,0.25)",margin:"12px auto 20px"}}/>
+
+        <div style={{padding:"0 20px 40px"}}>
+
+          {/* Status header */}
+          <div style={{textAlign:"center",marginBottom:22}}>
+            <div style={{fontSize:36,marginBottom:10,animation:"pulse 2s ease-in-out infinite"}}>⏳</div>
+            <h1 className="c-h1" style={{fontSize:20,marginBottom:6}}>Awaiting{dots}</h1>
+            <p className="c-sub" style={{marginBottom:0}}>
+              {oppName} is answering your challenge
+            </p>
           </div>
-          <div style={{display:"flex",justifyContent:"space-around",borderTop:"1px solid rgba(245,200,66,0.1)",paddingTop:16,marginBottom:20}}>
-            <div className="c-score-box"><div className="c-score-val">{myScore}</div><div className="c-score-lbl">You</div></div>
-            <div style={{fontSize:10,color:C.goldDim,alignSelf:"center",letterSpacing:2}}>R{(g?.round||0)+1}/{TOTAL_ROUNDS}</div>
-            <div className="c-score-box"><div className="c-score-val">{oppScore}</div><div className="c-score-lbl">{oppName}</div></div>
+
+          {/* Round progress pips */}
+          <div className="c-pips" style={{justifyContent:"center",marginBottom:20}}>
+            {Array.from({length:TOTAL_ROUNDS}).map((_,i) => {
+              const p = g?.progress?.[i];
+              let cls = "c-pip";
+              if (p)              cls += p.correct ? " win" : " loss";
+              else if (i === (g?.round||0)) cls += " now";
+              return <div key={i} className={cls}/>;
+            })}
           </div>
-          <button className="c-btn-c" onClick={()=>window.location.href="/challenge"}>← Back to Lobby</button>
+
+          {/* Score board */}
+          <div style={{
+            display:"flex",justifyContent:"space-around",
+            background:"rgba(245,200,66,0.05)",
+            border:"1px solid rgba(245,200,66,0.12)",
+            borderRadius:14,padding:"16px 20px",marginBottom:20,
+          }}>
+            <div className="c-score-box">
+              <div className="c-score-val" style={{color:C.goldLight}}>{myScore}</div>
+              <div className="c-score-lbl">You</div>
+            </div>
+            <div style={{alignSelf:"center",textAlign:"center"}}>
+              <div style={{fontSize:10,color:C.goldDim,letterSpacing:2}}>ROUND</div>
+              <div style={{fontSize:18,fontFamily:"'Cinzel',serif",fontWeight:800,color:C.gold}}>{(g?.round||0)+1}<span style={{fontSize:11,color:C.goldDim}}>/{TOTAL_ROUNDS}</span></div>
+            </div>
+            <div className="c-score-box">
+              <div className="c-score-val">{oppScore}</div>
+              <div className="c-score-lbl">{oppName}</div>
+            </div>
+          </div>
+
+          {/* Verse hint — show what was challenged */}
+          {g?.pending_verse && (
+            <div style={{
+              background:"rgba(30,122,140,0.10)",
+              border:"1px solid rgba(30,122,140,0.22)",
+              borderRadius:12,padding:"14px 16px",marginBottom:20,
+            }}>
+              <div style={{fontSize:10,color:C.tealLight,letterSpacing:2,marginBottom:8,textAlign:"center"}}>
+                VERSE CHALLENGED
+              </div>
+              <div style={{fontSize:13,fontStyle:"italic",color:"rgba(244,240,232,0.8)",lineHeight:1.6,textAlign:"center"}}>
+                "{g.pending_verse.text}"
+              </div>
+            </div>
+          )}
+
+          {/* Nav */}
+          <button className="c-btn-c" onClick={()=>window.location.href="/challenge"} style={{marginBottom:0}}>
+            ← Back to Arena
+          </button>
+
         </div>
       </div>
     </div>
@@ -2306,14 +2377,29 @@ function RoundResult({ user, profile, game, role, correct, pts, onNext, onOut })
 }
 
 // ══════════════════════════════════════════════════════════════
-// GAME OVER
+// GAME OVER — cinematic underlay + full results scroll panel
 // ══════════════════════════════════════════════════════════════
-function GameOver({ user, game, role, onHome }) {
-  const myScore  = role === "challenger" ? game?.challenger_score||0 : game?.answerer_score||0;
-  const oppScore = role === "challenger" ? game?.answerer_score||0   : game?.challenger_score||0;
-  const won      = myScore >= oppScore;
+function GameOver({ user, profile, game, role, onHome, onOut }) {
+  const [statsUpdated, setStatsUpdated] = useState(false);
 
-  // Update profile stats
+  const myScore   = role === "challenger" ? game?.challenger_score||0 : game?.answerer_score||0;
+  const oppScore  = role === "challenger" ? game?.answerer_score||0   : game?.challenger_score||0;
+  const oppName   = role === "challenger" ? game?.answerer_name       : game?.challenger_name;
+  const myName    = role === "challenger" ? game?.challenger_name     : game?.answerer_name;
+  const won       = myScore > oppScore;
+  const tied      = myScore === oppScore;
+
+  // Compute rank delta
+  const oldScore    = (profile?.total_score || 0);
+  const newScore    = oldScore + myScore;
+  const oldRank     = rankBadge(oldScore);
+  const newRank     = rankBadge(newScore);
+  const rankChanged = oldRank.label !== newRank.label;
+
+  // Round-by-round breakdown from progress array
+  const progress = game?.progress || [];
+
+  // Update profile stats once on mount
   useEffect(() => {
     async function updateStats() {
       try {
@@ -2325,26 +2411,178 @@ function GameOver({ user, game, role, onHome }) {
             games_played: (p.games_played || 0) + 1,
             games_won:    (p.games_won    || 0) + (won ? 1 : 0),
           });
+          setStatsUpdated(true);
         }
-      } catch {}
+      } catch (e) {
+        console.error("GameOver stats update:", e);
+        setStatsUpdated(true); // don't block UI on error
+      }
     }
     updateStats();
   }, []);
 
+  const headline = tied  ? "⚔️ Draw — Equally Matched!"
+                 : won   ? "🏆 Victory!"
+                         : "📜 Battle Over";
+  const subline  = tied  ? "Honor in equal knowledge of the Word."
+                 : won   ? "You conquered the Word!"
+                         : "Keep studying, warrior. The Word awaits.";
+
   return (
     <div className="c-screen">
-      <Bg char={won ? CHAR_VICTORY : CHAR_KNIGHT}/>
-      <div style={{position:"absolute",inset:0,zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 16px"}}>
-        <div className="c-card" style={{textAlign:"center",width:"100%",maxWidth:400}}>
-          <div className="c-curl"/>
-          <div style={{fontSize:48,marginBottom:8}}>{won?"🏆":"⚔️"}</div>
-          <h1 className="c-h1">{won?"Victory!":"Battle Over"}</h1>
-          <p className="c-sub">{won?"You conquered the Word!":"Keep studying, warrior."}</p>
-          <div style={{display:"flex",justifyContent:"space-around",margin:"20px 0 24px"}}>
-            <div className="c-score-box"><div className="c-score-val" style={{color:won?C.goldLight:C.offWhite}}>{myScore}</div><div className="c-score-lbl">Your Score</div></div>
-            <div className="c-score-box"><div className="c-score-val">{oppScore}</div><div className="c-score-lbl">Opponent</div></div>
+      {/* ── 4-layer cinematic underlay ── */}
+      <div style={{position:"fixed",inset:0,zIndex:0,
+        backgroundImage:`url(${LANDSCAPE_VIVID})`,
+        backgroundSize:"cover",backgroundPosition:"center top",
+        opacity: won ? 0.65 : 0.42,
+        filter: won ? "none" : "grayscale(35%)",
+      }}/>
+      <div style={{position:"fixed",inset:0,zIndex:1,
+        backgroundImage:`url(${CHAR_GAMEOVER})`,
+        backgroundSize:"contain",backgroundPosition:"center 14%",
+        backgroundRepeat:"no-repeat",
+        opacity: won ? 0.32 : 0.20,
+      }}/>
+      <div style={{position:"fixed",inset:0,zIndex:2,
+        background: won
+          ? `linear-gradient(180deg,${C.cobaltDark}bb 0%,${C.cobaltDark}33 35%,rgba(232,213,160,0.78) 100%)`
+          : `linear-gradient(180deg,${C.cobaltDark}dd 0%,${C.cobaltDark}55 38%,rgba(200,190,175,0.80) 100%)`,
+      }}/>
+      {/* Victory rim-light — gold for win, teal for loss/draw */}
+      <div style={{position:"fixed",top:0,left:0,right:0,height:3,zIndex:3,
+        background: won
+          ? `linear-gradient(90deg,transparent,${C.goldLight},transparent)`
+          : `linear-gradient(90deg,transparent,${C.tealLight},transparent)`,
+      }}/>
+
+      <Hdr user={user} profile={profile} onOut={onOut}/>
+
+      {/* ── Hero space ── */}
+      <div style={{height:"42vh",minHeight:210}}/>
+
+      {/* ── Scroll panel ── */}
+      <div style={{
+        position:"relative",zIndex:10,
+        borderRadius:"22px 22px 0 0",
+        background:"rgba(13,31,53,0.95)",
+        borderTop:`2px solid ${won ? "rgba(245,200,66,0.32)" : "rgba(58,189,212,0.22)"}`,
+        boxShadow:"0 -8px 40px rgba(0,0,0,0.6)",
+        minHeight:"58vh",
+        overflowY:"auto",
+        WebkitOverflowScrolling:"touch",
+      }}>
+        {/* Scroll curl */}
+        <div style={{width:40,height:4,borderRadius:4,background:"rgba(245,200,66,0.25)",margin:"12px auto 20px"}}/>
+
+        <div style={{padding:"0 20px 48px"}}>
+
+          {/* Headline */}
+          <div style={{textAlign:"center",marginBottom:20}}>
+            <h1 className="c-h1" style={{
+              fontSize:24,marginBottom:6,
+              color: won ? C.goldLight : C.offWhite,
+            }}>
+              {headline}
+            </h1>
+            <p className="c-sub" style={{marginBottom:0}}>{subline}</p>
           </div>
-          <button className="c-btn-a" onClick={onHome}>⚔️ Back to Arena</button>
+
+          {/* Final score card */}
+          <div style={{
+            display:"flex",justifyContent:"space-around",alignItems:"center",
+            background: won ? "rgba(245,200,66,0.07)" : "rgba(30,122,140,0.07)",
+            border:`1px solid ${won ? "rgba(245,200,66,0.2)" : "rgba(58,189,212,0.15)"}`,
+            borderRadius:14,padding:"18px 20px",marginBottom:16,
+          }}>
+            <div className="c-score-box">
+              <div className="c-score-val" style={{fontSize:34,color:won?C.goldLight:C.offWhite}}>{myScore}</div>
+              <div className="c-score-lbl" style={{color:"rgba(244,240,232,0.7)"}}>You</div>
+              <div style={{fontSize:10,color:"rgba(245,200,66,0.5)",letterSpacing:1,marginTop:4}}>{myName}</div>
+            </div>
+            <div style={{textAlign:"center"}}>
+              <div style={{fontSize:11,color:C.goldDim,letterSpacing:2,marginBottom:4}}>FINAL</div>
+              <div style={{fontSize:28,lineHeight:1}}>{won?"🏆":tied?"🤝":"📜"}</div>
+            </div>
+            <div className="c-score-box">
+              <div className="c-score-val" style={{fontSize:34}}>{oppScore}</div>
+              <div className="c-score-lbl" style={{color:"rgba(244,240,232,0.7)"}}>Opp</div>
+              <div style={{fontSize:10,color:"rgba(245,200,66,0.5)",letterSpacing:1,marginTop:4}}>{oppName}</div>
+            </div>
+          </div>
+
+          {/* Rank update */}
+          <div style={{
+            background:"rgba(245,200,66,0.05)",
+            border:`1px solid rgba(245,200,66,0.12)`,
+            borderRadius:12,padding:"14px 16px",marginBottom:16,
+            textAlign:"center",
+          }}>
+            <div style={{fontSize:10,color:C.goldDim,letterSpacing:2,marginBottom:10}}>YOUR RANK</div>
+            {rankChanged ? (
+              <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:12}}>
+                <div>
+                  <div style={{fontSize:13,color:oldRank.color,fontFamily:"'Cinzel',serif",fontWeight:700}}>{oldRank.icon} {oldRank.label}</div>
+                  <div style={{fontSize:9,color:C.goldDim,letterSpacing:1,marginTop:2}}>BEFORE</div>
+                </div>
+                <div style={{fontSize:20,color:C.goldLight}}>→</div>
+                <div>
+                  <div style={{
+                    fontSize:15,color:newRank.color,fontFamily:"'Cinzel',serif",fontWeight:800,
+                    textShadow:`0 0 12px ${newRank.color}88`,
+                  }}>{newRank.icon} {newRank.label}</div>
+                  <div style={{fontSize:9,color:C.goldDim,letterSpacing:1,marginTop:2}}>RANKED UP 🔥</div>
+                </div>
+              </div>
+            ) : (
+              <div>
+                <div style={{fontSize:16,color:newRank.color,fontFamily:"'Cinzel',serif",fontWeight:800}}>{newRank.icon} {newRank.label}</div>
+                <div style={{fontSize:10,color:C.goldDim,letterSpacing:1,marginTop:4}}>+{myScore} pts this game · {newScore} total</div>
+              </div>
+            )}
+          </div>
+
+          {/* Round-by-round breakdown */}
+          {progress.length > 0 && (
+            <div style={{
+              background:"rgba(13,31,53,0.6)",
+              border:"1px solid rgba(245,200,66,0.08)",
+              borderRadius:12,padding:"14px 16px",marginBottom:20,
+            }}>
+              <div style={{fontSize:10,color:C.goldDim,letterSpacing:2,marginBottom:12,textAlign:"center"}}>ROUND BREAKDOWN</div>
+              <div style={{display:"flex",flexDirection:"column",gap:8}}>
+                {progress.map((p, i) => (
+                  <div key={i} style={{
+                    display:"flex",alignItems:"center",gap:12,
+                    padding:"8px 10px",borderRadius:8,
+                    background: p.correct ? "rgba(30,122,140,0.12)" : "rgba(192,90,42,0.10)",
+                    border:`1px solid ${p.correct ? "rgba(30,122,140,0.2)" : "rgba(192,90,42,0.15)"}`,
+                  }}>
+                    <div style={{fontSize:14,width:24,textAlign:"center"}}>{p.correct?"✅":"❌"}</div>
+                    <div style={{flex:1,fontSize:11,color:"rgba(244,240,232,0.7)",letterSpacing:0.5}}>Round {i+1}</div>
+                    <div style={{fontSize:13,fontFamily:"'Cinzel',serif",fontWeight:700,color:p.correct?C.tealLight:"rgba(244,240,232,0.35)"}}>
+                      {p.correct ? `+${p.pts}` : "0"}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Stats updating indicator */}
+          {!statsUpdated && (
+            <div style={{textAlign:"center",fontSize:10,color:C.goldDim,letterSpacing:1.5,marginBottom:16}}>
+              Saving results…
+            </div>
+          )}
+
+          {/* CTA buttons */}
+          <button className="c-btn-a" onClick={onHome} style={{marginBottom:10}}>
+            ⚔️ Back to Arena
+          </button>
+          <button className="c-btn-c" onClick={()=>window.location.href="/"} style={{marginBottom:4}}>
+            🗡️ Play Solo
+          </button>
+
         </div>
       </div>
     </div>
@@ -2477,10 +2715,10 @@ export default function Challenge() {
       {screen==="auth"    && <Auth onIn={onIn}/>}
       {screen==="lobby"   && <Lobby user={user} profile={profile} onChallenge={onChallenge} onResumeGame={onResumeGame} onOut={onOut}/>}
       {screen==="level"   && <SelectLevel user={user} profile={profile} game={game} role={role} onPick={onLevelPicked}/>}
-      {screen==="waiting" && <Waiting user={user} game={game} role={role} onUpdate={onWaitingUpdate}/>}
+      {screen==="waiting" && <Waiting user={user} profile={profile} game={game} role={role} onUpdate={onWaitingUpdate} onOut={onOut}/>}
       {screen==="answer"  && <Answer user={user} game={game} role={role} onDone={onAnswered}/>}
       {screen==="result"  && <RoundResult user={user} profile={profile} game={game} role={role} correct={lastResult?.correct} pts={lastResult?.pts} onNext={onResultNext} onOut={onOut}/>}
-      {screen==="gameover"&& <GameOver user={user} game={game} role={role} onHome={()=>setScreen("lobby")}/>}
+      {screen==="gameover"&& <GameOver user={user} profile={profile} game={game} role={role} onHome={()=>setScreen("lobby")} onOut={onOut}/>}
     </>
   );
 }
