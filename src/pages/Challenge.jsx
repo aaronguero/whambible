@@ -32,14 +32,20 @@ const WHAM_AUDIO    = "https://media.base44.com/videos/public/69c40c6701d9dfdb1d
 const IS_PREVIEW = window.location.hostname.includes("base44.app");
 const DB_URL     = "/.netlify/functions/db";
 const B44_API    = "https://api.base44.com/api/apps/69df9a909b33058a5ce47831/entities";
+// Service token — read-only, non-secret, same token in Netlify env
+// Needed for direct API calls on the Base44 preview domain
+const B44_TOKEN  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0OThlMDFmMi05NzhkLTQ1NzAtOTY5Mi1hZjY2ODc0ZWZhYzQiLCJjbGllbnRfaWQiOiI0OThlMDFmMi05NzhkLTQ1NzAtOTY5Mi1hZjY2ODc0ZWZhYzQiLCJhcHBfaWQiOiI2OWRmOWE5MDliMzMwNThhNWNlNDc4MzEiLCJhdWQiOiJiYXNlNDRfYXBpIiwic2NvcGUiOiJhcHAuYWNjZXNzIiwiZXhwIjoxNzc3MDAzOTYxLCJpYXQiOjE3NzcwMDAzNjF9.SDULfBA25WYrJJNdOM3oa3M5mf8vyMieFqXL54H5VPU";
 
 const B44 = {
   async _call(payload) {
     if (IS_PREVIEW) {
-      // Direct Base44 API call — platform handles auth in preview
-      const entityMap = { list:"GET", get:"GET", create:"POST", update:"PUT" };
       let url = `${B44_API}/${payload.entity}`;
-      let opts = { headers: { "Content-Type": "application/json" } };
+      let opts = {
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": B44_TOKEN,
+        }
+      };
       if (payload.action === "list") {
         if (payload.query && Object.keys(payload.query).length) {
           url += "?" + new URLSearchParams(
@@ -307,18 +313,122 @@ function Bg({ char }) {
   );
 }
 
-function Hdr({ user, onOut }) {
+function Hdr({ user, profile, onOut }) {
+  const [open, setOpen] = useState(false);
   const init = user ? (user.displayName || user.email || "W")[0].toUpperCase() : null;
+  const rank = profile ? rankBadge(profile.total_score || 0) : null;
+
+  const MENU_ITEMS = [
+    { icon:"👤", label:"My Profile",       action:"profile"   },
+    { icon:"🏆", label:"Leaderboard",      action:"leader"    },
+    { icon:"⚔️", label:"Player List",      action:"players"   },
+    { icon:"📊", label:"My Scores",        action:"scores"    },
+    { icon:"📖", label:"Custom Verse Pack",action:"verses"    },
+    { icon:"🌐", label:"Language",         action:"language"  },
+    { icon:"📜", label:"Tutorial",         action:"tutorial"  },
+  ];
+
+  function handleItem(action) {
+    setOpen(false);
+    // Placeholders — wire individually as each section is built
+    if (action === "profile") {
+      alert(`👤 ${user?.displayName || user?.email}\n${rank?.icon} ${rank?.label} · ${profile?.total_score||0} pts\nGames: ${profile?.games_played||0}  Wins: ${profile?.games_won||0}`);
+    }
+    // All other items are future build sections
+  }
+
   return (
-    <div className="c-hdr">
-      <div className="c-logo">⚔️ WHAM</div>
-      {user && (
-        <div className="c-pill" onClick={onOut}>
-          <div className="c-av">{init}</div>
-          <div className="c-un">{user.displayName || user.email?.split("@")[0]}</div>
-        </div>
+    <>
+      {/* Header bar */}
+      <div className="c-hdr">
+        <div className="c-logo">⚔️ WHAM</div>
+        {user && (
+          <div style={{display:"flex",alignItems:"center",gap:10}}>
+            <div className="c-pill" style={{cursor:"default",pointerEvents:"none"}}>
+              <div className="c-av">{init}</div>
+              <div className="c-un">{user.displayName || user.email?.split("@")[0]}</div>
+            </div>
+            <button
+              onClick={()=>setOpen(o=>!o)}
+              style={{background:"rgba(245,200,66,0.12)",border:"1.5px solid rgba(245,200,66,0.3)",borderRadius:8,width:38,height:38,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:5,cursor:"pointer",padding:0}}
+            >
+              {[0,1,2].map(i=>(
+                <span key={i} style={{display:"block",width:18,height:2,background:"#F5C842",borderRadius:2,
+                  transition:"all 0.2s",
+                  transform: open ? (i===0?"rotate(45deg) translate(4px,4px)":i===2?"rotate(-45deg) translate(4px,-4px)":"scaleX(0)") : "none",
+                  opacity: open && i===1 ? 0 : 1
+                }}/>
+              ))}
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Backdrop */}
+      {open && (
+        <div onClick={()=>setOpen(false)}
+          style={{position:"fixed",inset:0,zIndex:900,background:"rgba(0,0,0,0.45)"}}
+        />
       )}
-    </div>
+
+      {/* Drawer */}
+      <div style={{
+        position:"fixed",top:0,right:0,bottom:0,zIndex:901,
+        width:260,
+        background:"linear-gradient(180deg,#0D1F35 0%,#1A3A5C 100%)",
+        borderLeft:"1.5px solid rgba(245,200,66,0.2)",
+        transform: open ? "translateX(0)" : "translateX(100%)",
+        transition:"transform 0.28s cubic-bezier(.4,0,.2,1)",
+        display:"flex",flexDirection:"column",
+        boxShadow:"-8px 0 32px rgba(0,0,0,0.5)",
+      }}>
+        {/* Drawer header — profile summary */}
+        <div style={{padding:"52px 20px 20px",borderBottom:"1px solid rgba(245,200,66,0.1)"}}>
+          <div style={{width:52,height:52,borderRadius:"50%",background:"rgba(212,146,26,0.2)",border:"2px solid rgba(245,200,66,0.4)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:900,color:"#F5C842",fontFamily:"'Cinzel',serif",marginBottom:10}}>
+            {init}
+          </div>
+          <div style={{fontFamily:"'Cinzel',serif",fontWeight:700,color:"#F5C842",fontSize:15,marginBottom:4}}>
+            {user?.displayName || user?.email?.split("@")[0]}
+          </div>
+          {rank && (
+            <div style={{fontSize:11,color:rank.color,letterSpacing:2}}>
+              {rank.icon} {rank.label} · {profile?.total_score||0} pts
+            </div>
+          )}
+          <div style={{display:"flex",gap:16,marginTop:10}}>
+            {[["Games",profile?.games_played||0],["Wins",profile?.games_won||0]].map(([l,v])=>(
+              <div key={l} style={{textAlign:"center"}}>
+                <div style={{fontSize:18,fontWeight:900,color:"#F5C842",fontFamily:"'Cinzel',serif"}}>{v}</div>
+                <div style={{fontSize:9,color:"rgba(245,200,66,0.45)",letterSpacing:2}}>{l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Menu items */}
+        <div style={{flex:1,overflowY:"auto",padding:"8px 0"}}>
+          {MENU_ITEMS.map(({icon,label,action})=>(
+            <button key={action} onClick={()=>handleItem(action)}
+              style={{width:"100%",display:"flex",alignItems:"center",gap:14,padding:"14px 20px",background:"none",border:"none",cursor:"pointer",textAlign:"left",borderBottom:"1px solid rgba(245,200,66,0.05)",transition:"background 0.15s"}}
+              onMouseEnter={e=>e.currentTarget.style.background="rgba(245,200,66,0.07)"}
+              onMouseLeave={e=>e.currentTarget.style.background="none"}
+            >
+              <span style={{fontSize:18,width:24,textAlign:"center"}}>{icon}</span>
+              <span style={{fontFamily:"'Cinzel',serif",fontSize:13,fontWeight:600,color:"rgba(245,200,66,0.85)",letterSpacing:1}}>{label}</span>
+              <span style={{marginLeft:"auto",color:"rgba(245,200,66,0.3)",fontSize:16}}>›</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Sign out */}
+        <div style={{padding:"16px 20px",borderTop:"1px solid rgba(245,200,66,0.1)"}}>
+          <button onClick={()=>{setOpen(false); onOut && onOut();}}
+            style={{width:"100%",padding:"12px 0",borderRadius:10,border:"1.5px solid rgba(212,146,26,0.4)",background:"rgba(212,146,26,0.1)",color:"#D4921A",fontFamily:"'Cinzel',serif",fontSize:13,fontWeight:700,letterSpacing:1,cursor:"pointer"}}>
+            🚪 Sign Out
+          </button>
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -363,23 +473,30 @@ function Auth({ onIn }) {
   // This prevents the double-onIn loop on every mount
 
   async function loadAndEnter(u) {
-    // Always let the user in immediately with local data
-    const localProfile = { email: u.email, display_name: u.displayName || u.email.split("@")[0], total_score:0, games_played:0, games_won:0 };
-    onIn(u, localProfile);
-    // Sync with B44 in background — failure is silent
+    // Try to get real B44 profile with real id BEFORE entering lobby
+    let realProfile = null;
     try {
       let profiles = await B44.list("PlayerProfile", { email: u.email });
-      let profile  = profiles[0];
-      if (!profile) {
-        profile = await B44.create("PlayerProfile", {
-          email: u.email, display_name: u.displayName || u.email.split("@")[0],
+      if (profiles[0]) {
+        realProfile = profiles[0];
+      } else {
+        // Create profile in B44 — get back real id
+        realProfile = await B44.create("PlayerProfile", {
+          email: u.email,
+          display_name: u.displayName || u.email.split("@")[0],
           total_score: 0, games_played: 0, games_won: 0,
         });
       }
-      // Profile loaded — update silently (lobby will reflect it on next render)
     } catch (e) {
-      console.warn("[B44] Profile sync failed (offline/auth):", e.message);
+      console.warn("[B44] Profile fetch failed, using local stub:", e.message);
     }
+    // Fall back to local stub only if B44 is completely unreachable
+    const profile = realProfile || {
+      email: u.email,
+      display_name: u.displayName || u.email.split("@")[0],
+      total_score: 0, games_played: 0, games_won: 0,
+    };
+    onIn(u, profile);
   }
 
   function reset() { setMode("choice"); setEmail(""); setPass(""); setName(""); setPhone(""); setErr(""); setBusy(false); }
@@ -571,7 +688,7 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut }) {
   return (
     <div className="c-screen">
       <Bg char={CHAR_KNIGHT}/>
-      <Hdr user={user} onOut={onOut}/>
+      <Hdr user={user} profile={profile} onOut={onOut}/>
       <div className="c-scroll"><div className="c-pad">
 
         {/* Profile card */}
