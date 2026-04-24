@@ -313,9 +313,686 @@ function Bg({ char }) {
   );
 }
 
+
+// ══════════════════════════════════════════════════════════════
+// MENU OVERLAY ASSET MAP
+// ══════════════════════════════════════════════════════════════
+const MENU_CHARS = {
+  profile:  "https://media.base44.com/images/public/69df9a909b33058a5ce47831/954b4f3ac_generated_image.png",
+  leader:   "https://media.base44.com/images/public/69df9a909b33058a5ce47831/01bb86cea_generated_image.png",
+  players:  "https://media.base44.com/images/public/69df9a909b33058a5ce47831/6768995b4_generated_image.png",
+  scores:   "https://media.base44.com/images/public/69df9a909b33058a5ce47831/344c7ea6e_generated_image.png",
+  verses:   "https://media.base44.com/images/public/69df9a909b33058a5ce47831/674863114_generated_image.png",
+  language: "https://media.base44.com/images/public/69df9a909b33058a5ce47831/848e9abc5_generated_image.png",
+  tutorial: "https://media.base44.com/images/public/69df9a909b33058a5ce47831/292372d85_generated_image.png",
+};
+
+// ── Shared overlay shell ──────────────────────────────────────
+// charKey: key into MENU_CHARS
+// title: tab title string
+// onClose: close handler
+// children: scroll panel content
+function MenuOverlay({ charKey, title, onClose, children }) {
+  return (
+    <div style={{
+      position:"fixed",inset:0,zIndex:1500,
+      fontFamily:"'Cinzel',serif",
+      overflowY:"auto",
+    }}>
+      {/* Cinematic underlay layers */}
+      {/* Layer 1 — landscape */}
+      <div style={{
+        position:"fixed",inset:0,zIndex:0,
+        backgroundImage:`url(${LANDSCAPE_BG})`,
+        backgroundSize:"cover",backgroundPosition:"center top",
+        backgroundRepeat:"no-repeat",
+      }}/>
+      {/* Layer 2 — character */}
+      <div style={{
+        position:"fixed",inset:0,zIndex:1,
+        backgroundImage:`url(${MENU_CHARS[charKey]})`,
+        backgroundSize:"contain",
+        backgroundPosition:"center bottom",
+        backgroundRepeat:"no-repeat",
+        opacity:0.28,
+      }}/>
+      {/* Layer 3 — cobalt gradient */}
+      <div style={{
+        position:"fixed",inset:0,zIndex:2,
+        background:"linear-gradient(180deg,#0D1F35ee 0%,#1A3A5Cbb 40%,rgba(13,31,53,0.55) 100%)",
+      }}/>
+      {/* Layer 4 — gold rim */}
+      <div style={{position:"fixed",top:0,left:0,right:0,height:3,zIndex:3,
+        background:"linear-gradient(90deg,transparent,#F5C842,transparent)"
+      }}/>
+
+      {/* Close button — crossed swords ⚔️ */}
+      <button onClick={onClose} style={{
+        position:"fixed",top:14,right:14,zIndex:1600,
+        width:44,height:44,borderRadius:"50%",
+        background:"rgba(212,146,26,0.18)",
+        border:"1.5px solid rgba(245,200,66,0.4)",
+        color:"#F5C842",fontSize:20,cursor:"pointer",
+        display:"flex",alignItems:"center",justifyContent:"center",
+        boxShadow:"0 2px 12px rgba(0,0,0,0.4)",
+        transition:"background 0.15s",
+      }}
+        onMouseEnter={e=>e.currentTarget.style.background="rgba(212,146,26,0.35)"}
+        onMouseLeave={e=>e.currentTarget.style.background="rgba(212,146,26,0.18)"}
+      >⚔️</button>
+
+      {/* Screen title */}
+      <div style={{
+        position:"relative",zIndex:4,
+        textAlign:"center",
+        paddingTop:56,paddingBottom:8,
+      }}>
+        <div style={{
+          fontSize:22,fontWeight:900,color:"#F5C842",
+          letterSpacing:4,textTransform:"uppercase",
+          textShadow:"0 2px 18px rgba(212,146,26,0.6)",
+        }}>{title}</div>
+        <div style={{
+          width:60,height:2,margin:"10px auto 0",
+          background:"linear-gradient(90deg,transparent,#F5C842,transparent)",
+        }}/>
+      </div>
+
+      {/* Scroll panel — 50% opacity see-through */}
+      <div style={{
+        position:"relative",zIndex:4,
+        maxWidth:440,margin:"18px auto 40px",
+        padding:"0 16px",
+      }}>
+        <div style={{
+          background:"rgba(13,31,53,0.50)",
+          border:"1px solid rgba(245,200,66,0.18)",
+          borderRadius:16,
+          backdropFilter:"blur(6px)",
+          WebkitBackdropFilter:"blur(6px)",
+          overflow:"hidden",
+        }}>
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── Semi-transparent button style ────────────────────────────
+const btnStyle = (color="#D4921A") => ({
+  width:"100%",padding:"13px 0",borderRadius:12,
+  background:`rgba(${color==="teal"?"30,122,140":"212,146,26"},0.50)`,
+  border:`1.5px solid rgba(${color==="teal"?"58,189,212":"245,200,66"},0.45)`,
+  color: color==="teal" ? "#3ABDD4" : "#F5C842",
+  fontFamily:"'Cinzel',serif",fontSize:13,fontWeight:700,
+  letterSpacing:2,cursor:"pointer",
+  backdropFilter:"blur(4px)",
+  transition:"background 0.15s",
+});
+
+// ══════════════════════════════════════════════════════════════
+// 1. MY PROFILE OVERLAY (upgraded with cinematic underlay)
+// ══════════════════════════════════════════════════════════════
+function ProfileOverlay({ user, profile, rank, onClose }) {
+  const name    = profile?.display_name || user?.displayName || user?.email?.split("@")[0] || "Warrior";
+  const email   = user?.email || profile?.email || "";
+  const score   = profile?.total_score  || 0;
+  const played  = profile?.games_played || 0;
+  const won     = profile?.games_won    || 0;
+  const lost    = Math.max(0, played - won);
+  const winPct  = played > 0 ? Math.round((won/played)*100) : 0;
+  const init    = name[0].toUpperCase();
+  const r       = rank || { icon:"📜", label:"Scribe", color:"#64748b" };
+  const RANKS   = [
+    {label:"Scribe",  min:0,  max:1,   color:"#64748b"},
+    {label:"Squire",  min:1,  max:100, color:"#1E7A8C"},
+    {label:"Warrior", min:100,max:300, color:"#D4921A"},
+    {label:"Knight",  min:300,max:700, color:"#C05A2A"},
+    {label:"Champion",min:700,max:700, color:"#7B2D8B"},
+  ];
+  const cur     = RANKS.find(rk=>rk.label===r.label)||RANKS[0];
+  const nxt     = RANKS[RANKS.indexOf(cur)+1];
+  const prog    = nxt ? Math.min(100,Math.round(((score-cur.min)/(nxt.min-cur.min))*100)) : 100;
+  const toNext  = nxt ? Math.max(0,nxt.min-score) : 0;
+
+  return (
+    <MenuOverlay charKey="profile" title="My Profile" onClose={onClose}>
+      <div style={{padding:"24px 20px 28px"}}>
+        {/* Avatar */}
+        <div style={{textAlign:"center",marginBottom:24}}>
+          <div style={{
+            width:72,height:72,borderRadius:"50%",margin:"0 auto 14px",
+            background:"rgba(212,146,26,0.18)",border:`3px solid ${r.color}`,
+            display:"flex",alignItems:"center",justifyContent:"center",
+            fontSize:30,fontWeight:900,color:"#F5C842",
+            boxShadow:`0 0 20px ${r.color}55`,
+          }}>{init}</div>
+          <div style={{fontSize:20,fontWeight:900,color:"#F5C842",letterSpacing:2,marginBottom:4,textTransform:"uppercase"}}>{name}</div>
+          <div style={{fontSize:11,color:"rgba(245,200,66,0.45)",letterSpacing:1,marginBottom:8}}>{email}</div>
+          <div style={{display:"inline-block",padding:"4px 14px",borderRadius:20,
+            background:`${r.color}22`,border:`1px solid ${r.color}66`,
+            color:r.color,fontSize:11,fontWeight:700,letterSpacing:2}}>
+            {r.icon} {r.label.toUpperCase()}
+          </div>
+        </div>
+        {/* Progress */}
+        {nxt && (
+          <div style={{marginBottom:16,padding:"14px 16px",background:"rgba(255,255,255,0.04)",borderRadius:10,border:"1px solid rgba(245,200,66,0.1)"}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:6}}>
+              <span style={{fontSize:9,color:"rgba(245,200,66,0.45)",letterSpacing:2}}>RANK PROGRESS</span>
+              <span style={{fontSize:9,color:r.color,letterSpacing:1}}>{toNext} pts to {nxt.label}</span>
+            </div>
+            <div style={{height:5,borderRadius:3,background:"rgba(255,255,255,0.08)",overflow:"hidden"}}>
+              <div style={{height:"100%",borderRadius:3,background:`linear-gradient(90deg,${r.color},#F5C842)`,width:`${prog}%`,transition:"width 0.8s ease"}}/>
+            </div>
+          </div>
+        )}
+        {/* Stats */}
+        {[["✨","Total Score",score],["🎮","Games Played",played],["🏆","Victories",won],["💀","Defeats",lost],["📊","Win Rate",winPct+"%"]].map(([icon,label,val],i,arr)=>(
+          <div key={label} style={{display:"flex",alignItems:"center",justifyContent:"space-between",
+            padding:"11px 0",borderBottom:i<arr.length-1?"1px solid rgba(245,200,66,0.07)":"none"}}>
+            <div style={{display:"flex",alignItems:"center",gap:10}}>
+              <span style={{fontSize:15}}>{icon}</span>
+              <span style={{fontSize:12,color:"rgba(245,200,66,0.65)",letterSpacing:1}}>{label}</span>
+            </div>
+            <span style={{fontSize:17,fontWeight:900,color:"#F5C842"}}>{val}</span>
+          </div>
+        ))}
+        <div style={{marginTop:20}}>
+          <button style={btnStyle()} onClick={onClose}>BACK TO BATTLE</button>
+        </div>
+      </div>
+    </MenuOverlay>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// 2. LEADERBOARD OVERLAY
+// ══════════════════════════════════════════════════════════════
+function LeaderboardOverlay({ profile, onClose }) {
+  const [players, setPlayers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    B44.list("PlayerProfile", {})
+      .then(data => {
+        const sorted = [...data].sort((a,b)=>(b.total_score||0)-(a.total_score||0)).slice(0,20);
+        setPlayers(sorted);
+      })
+      .catch(()=>setPlayers([]))
+      .finally(()=>setLoading(false));
+  }, []);
+
+  const myEmail = profile?.email || "";
+
+  return (
+    <MenuOverlay charKey="leader" title="Leaderboard" onClose={onClose}>
+      <div style={{padding:"20px 20px 28px"}}>
+        {loading ? (
+          <div style={{textAlign:"center",padding:32,color:"rgba(245,200,66,0.5)",fontSize:13,letterSpacing:2}}>LOADING...</div>
+        ) : players.length === 0 ? (
+          <div style={{textAlign:"center",padding:32,color:"rgba(245,200,66,0.4)",fontSize:12}}>No warriors on the board yet.</div>
+        ) : (
+          players.map((p,i) => {
+            const r    = rankBadge(p.total_score||0);
+            const isMe = p.email === myEmail;
+            const medal= i===0?"🥇":i===1?"🥈":i===2?"🥉":null;
+            return (
+              <div key={p.id||i} style={{
+                display:"flex",alignItems:"center",gap:12,
+                padding:"12px 0",
+                borderBottom: i<players.length-1 ? "1px solid rgba(245,200,66,0.07)" : "none",
+                background: isMe ? "rgba(212,146,26,0.08)" : "none",
+                borderRadius: isMe ? 8 : 0,
+                paddingLeft: isMe ? 8 : 0,
+              }}>
+                <div style={{width:28,textAlign:"center",fontSize:i<3?18:13,color:"rgba(245,200,66,0.5)",fontWeight:900}}>
+                  {medal || `#${i+1}`}
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:700,color:isMe?"#F5C842":"rgba(245,200,66,0.85)",letterSpacing:1}}>
+                    {p.display_name || p.email?.split("@")[0]}
+                    {isMe && <span style={{fontSize:9,marginLeft:6,color:"#3ABDD4",letterSpacing:2}}> YOU</span>}
+                  </div>
+                  <div style={{fontSize:10,color:r.color,letterSpacing:1,marginTop:2}}>{r.icon} {r.label}</div>
+                </div>
+                <div style={{fontSize:18,fontWeight:900,color:"#F5C842"}}>{p.total_score||0}</div>
+              </div>
+            );
+          })
+        )}
+        <div style={{marginTop:20}}>
+          <button style={btnStyle()} onClick={onClose}>BACK TO BATTLE</button>
+        </div>
+      </div>
+    </MenuOverlay>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// 3. PLAYER LIST OVERLAY
+// ══════════════════════════════════════════════════════════════
+function PlayerListOverlay({ user, profile, onClose, onChallenge }) {
+  const [players, setPlayers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    B44.list("PlayerProfile", {})
+      .then(data => setPlayers(data.filter(p=>p.email !== (user?.email||""))))
+      .catch(()=>setPlayers([]))
+      .finally(()=>setLoading(false));
+  }, []);
+
+  return (
+    <MenuOverlay charKey="players" title="Challenge a Warrior" onClose={onClose}>
+      <div style={{padding:"20px 20px 28px"}}>
+        <div style={{fontSize:10,color:"rgba(245,200,66,0.4)",letterSpacing:3,textAlign:"center",marginBottom:16}}>SELECT YOUR OPPONENT</div>
+        {loading ? (
+          <div style={{textAlign:"center",padding:32,color:"rgba(245,200,66,0.5)",fontSize:13,letterSpacing:2}}>LOADING...</div>
+        ) : players.length === 0 ? (
+          <div style={{textAlign:"center",padding:32,color:"rgba(245,200,66,0.4)",fontSize:12}}>No warriors available.</div>
+        ) : (
+          players.map((p,i)=>{
+            const r = rankBadge(p.total_score||0);
+            return (
+              <div key={p.id||i} style={{
+                display:"flex",alignItems:"center",gap:12,
+                padding:"13px 0",
+                borderBottom: i<players.length-1 ? "1px solid rgba(245,200,66,0.07)" : "none",
+              }}>
+                <div style={{
+                  width:40,height:40,borderRadius:"50%",flexShrink:0,
+                  background:"rgba(212,146,26,0.15)",border:`2px solid ${r.color}44`,
+                  display:"flex",alignItems:"center",justifyContent:"center",
+                  fontSize:16,fontWeight:900,color:"#F5C842",
+                }}>
+                  {(p.display_name||p.email||"W")[0].toUpperCase()}
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:13,fontWeight:700,color:"rgba(245,200,66,0.9)",letterSpacing:1}}>
+                    {p.display_name||p.email?.split("@")[0]}
+                  </div>
+                  <div style={{fontSize:10,color:r.color,letterSpacing:1,marginTop:2}}>{r.icon} {r.label} · {p.total_score||0} pts</div>
+                </div>
+                <button
+                  onClick={()=>{ onClose(); onChallenge && onChallenge(p); }}
+                  style={{
+                    padding:"8px 14px",borderRadius:10,
+                    background:"rgba(212,146,26,0.50)",
+                    border:"1.5px solid rgba(245,200,66,0.45)",
+                    color:"#F5C842",fontFamily:"'Cinzel',serif",fontSize:11,
+                    fontWeight:700,letterSpacing:1,cursor:"pointer",
+                    backdropFilter:"blur(4px)",
+                  }}>
+                  ⚔️ SEND
+                </button>
+              </div>
+            );
+          })
+        )}
+        <div style={{marginTop:20}}>
+          <button style={btnStyle()} onClick={onClose}>BACK TO BATTLE</button>
+        </div>
+      </div>
+    </MenuOverlay>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// 4. MY SCORES OVERLAY
+// ══════════════════════════════════════════════════════════════
+function MyScoresOverlay({ user, profile, onClose }) {
+  const [games,   setGames]   = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const email = user?.email || "";
+    Promise.all([
+      B44.list("GameSession", { challenger_id: email }),
+      B44.list("GameSession", { answerer_id:   email }),
+    ])
+      .then(([asC, asA]) => {
+        const all = [...asC, ...asA]
+          .filter(g=>g.status==="complete"||g.status==="finished")
+          .sort((a,b)=>new Date(b.created_date)-new Date(a.created_date))
+          .slice(0,15);
+        setGames(all);
+      })
+      .catch(()=>setGames([]))
+      .finally(()=>setLoading(false));
+  }, []);
+
+  const score   = profile?.total_score  || 0;
+  const played  = profile?.games_played || 0;
+  const won     = profile?.games_won    || 0;
+  const winPct  = played > 0 ? Math.round((won/played)*100) : 0;
+
+  return (
+    <MenuOverlay charKey="scores" title="My Scores" onClose={onClose}>
+      <div style={{padding:"20px 20px 28px"}}>
+        {/* Summary row */}
+        <div style={{display:"flex",justifyContent:"space-around",marginBottom:20,paddingBottom:16,borderBottom:"1px solid rgba(245,200,66,0.1)"}}>
+          {[["✨",score,"TOTAL"],["🏆",won,"WINS"],["📊",winPct+"%","WIN RATE"]].map(([icon,val,lbl])=>(
+            <div key={lbl} style={{textAlign:"center"}}>
+              <div style={{fontSize:11,marginBottom:4}}>{icon}</div>
+              <div style={{fontSize:22,fontWeight:900,color:"#F5C842"}}>{val}</div>
+              <div style={{fontSize:9,color:"rgba(245,200,66,0.4)",letterSpacing:2}}>{lbl}</div>
+            </div>
+          ))}
+        </div>
+        {/* Game history */}
+        <div style={{fontSize:10,color:"rgba(245,200,66,0.4)",letterSpacing:3,marginBottom:12}}>RECENT BATTLES</div>
+        {loading ? (
+          <div style={{textAlign:"center",padding:24,color:"rgba(245,200,66,0.5)",fontSize:13,letterSpacing:2}}>LOADING...</div>
+        ) : games.length === 0 ? (
+          <div style={{textAlign:"center",padding:24,color:"rgba(245,200,66,0.4)",fontSize:12}}>No completed battles yet. Go fight!</div>
+        ) : (
+          games.map((g,i)=>{
+            const email  = user?.email||"";
+            const isChallenger = g.challenger_id===email;
+            const myScore  = isChallenger ? (g.my_score||0) : (g.opp_score||0);
+            const oppScore = isChallenger ? (g.opp_score||0) : (g.my_score||0);
+            const oppName  = isChallenger ? (g.answerer_name||g.answerer_id||"Opponent") : (g.challenger_name||g.challenger_id||"Opponent");
+            const won      = myScore > oppScore;
+            return (
+              <div key={g.id||i} style={{
+                display:"flex",alignItems:"center",gap:10,
+                padding:"11px 0",
+                borderBottom: i<games.length-1 ? "1px solid rgba(245,200,66,0.07)" : "none",
+              }}>
+                <div style={{fontSize:16}}>{won?"🏆":"💀"}</div>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:12,color:"rgba(245,200,66,0.85)",letterSpacing:1}}>vs {oppName}</div>
+                  <div style={{fontSize:10,color:"rgba(245,200,66,0.4)",marginTop:2}}>
+                    {new Date(g.created_date).toLocaleDateString()}
+                  </div>
+                </div>
+                <div style={{textAlign:"right"}}>
+                  <div style={{fontSize:14,fontWeight:900,color:won?"#F5C842":"#C05A2A"}}>{myScore} – {oppScore}</div>
+                  <div style={{fontSize:9,color:won?"#3ABDD4":"#C05A2A",letterSpacing:1}}>{won?"VICTORY":"DEFEAT"}</div>
+                </div>
+              </div>
+            );
+          })
+        )}
+        <div style={{marginTop:20}}>
+          <button style={btnStyle()} onClick={onClose}>BACK TO BATTLE</button>
+        </div>
+      </div>
+    </MenuOverlay>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// 5. CUSTOM VERSE PACK OVERLAY
+// ══════════════════════════════════════════════════════════════
+const VERSE_PACK_KEY = "wb_custom_verses";
+function CustomVersePackOverlay({ onClose }) {
+  const load = () => { try { return JSON.parse(localStorage.getItem(VERSE_PACK_KEY)||"[]"); } catch { return []; } };
+  const [slots, setSlots] = useState(load);
+  const [editing, setEditing] = useState(null); // index or null
+  const [draft,   setDraft]   = useState({ref:"",text:""});
+
+  function save(updated) {
+    setSlots(updated);
+    localStorage.setItem(VERSE_PACK_KEY, JSON.stringify(updated));
+  }
+  function openEdit(i) {
+    setEditing(i);
+    setDraft(slots[i] ? { ref:slots[i].ref||"", text:slots[i].text||"" } : {ref:"",text:""});
+  }
+  function saveSlot() {
+    if (!draft.ref.trim()||!draft.text.trim()) return;
+    const updated = [...slots];
+    updated[editing] = { ref:draft.ref.trim(), text:draft.text.trim() };
+    save(updated); setEditing(null);
+  }
+  function deleteSlot(i) {
+    const updated = [...slots];
+    updated.splice(i,1);
+    save(updated);
+  }
+
+  const SLOTS = 10;
+
+  return (
+    <MenuOverlay charKey="verses" title="Custom Verse Pack" onClose={onClose}>
+      <div style={{padding:"20px 20px 28px"}}>
+        <div style={{fontSize:10,color:"rgba(245,200,66,0.4)",letterSpacing:3,textAlign:"center",marginBottom:16}}>
+          {slots.length}/{SLOTS} SLOTS USED
+        </div>
+        {/* Slot progress bar */}
+        <div style={{height:4,borderRadius:2,background:"rgba(255,255,255,0.08)",overflow:"hidden",marginBottom:20}}>
+          <div style={{height:"100%",borderRadius:2,background:"linear-gradient(90deg,#1E7A8C,#F5C842)",width:`${(slots.length/SLOTS)*100}%`,transition:"width 0.5s"}}/>
+        </div>
+
+        {editing !== null ? (
+          /* Edit form */
+          <div>
+            <div style={{fontSize:11,color:"rgba(245,200,66,0.5)",letterSpacing:2,marginBottom:8}}>VERSE REFERENCE</div>
+            <input value={draft.ref} onChange={e=>setDraft(d=>({...d,ref:e.target.value}))}
+              placeholder="e.g. John 3:16"
+              style={{width:"100%",boxSizing:"border-box",padding:"10px 12px",borderRadius:10,
+                border:"1.5px solid rgba(245,200,66,0.3)",background:"rgba(13,31,53,0.6)",
+                color:"#F4F0E8",fontFamily:"'Cinzel',serif",fontSize:13,marginBottom:12,outline:"none"}}/>
+            <div style={{fontSize:11,color:"rgba(245,200,66,0.5)",letterSpacing:2,marginBottom:8}}>VERSE TEXT</div>
+            <textarea value={draft.text} onChange={e=>setDraft(d=>({...d,text:e.target.value}))}
+              placeholder="Enter verse text..."
+              rows={4}
+              style={{width:"100%",boxSizing:"border-box",padding:"10px 12px",borderRadius:10,
+                border:"1.5px solid rgba(245,200,66,0.3)",background:"rgba(13,31,53,0.6)",
+                color:"#F4F0E8",fontFamily:"sans-serif",fontSize:13,resize:"vertical",outline:"none",marginBottom:16}}/>
+            <div style={{display:"flex",gap:10}}>
+              <button style={{...btnStyle("teal"),flex:1}} onClick={saveSlot}>💾 SAVE</button>
+              <button style={{...btnStyle(),flex:1,background:"rgba(255,255,255,0.08)"}} onClick={()=>setEditing(null)}>CANCEL</button>
+            </div>
+          </div>
+        ) : (
+          /* Slot list */
+          <div>
+            {slots.map((v,i)=>(
+              <div key={i} style={{
+                display:"flex",alignItems:"center",gap:10,padding:"12px 0",
+                borderBottom:"1px solid rgba(245,200,66,0.07)",
+              }}>
+                <div style={{
+                  width:28,height:28,borderRadius:6,flexShrink:0,
+                  background:"rgba(212,146,26,0.18)",border:"1px solid rgba(245,200,66,0.25)",
+                  display:"flex",alignItems:"center",justifyContent:"center",
+                  fontSize:10,fontWeight:900,color:"#F5C842",
+                }}>{i+1}</div>
+                <div style={{flex:1,overflow:"hidden"}}>
+                  <div style={{fontSize:12,fontWeight:700,color:"#F5C842",letterSpacing:1}}>{v.ref}</div>
+                  <div style={{fontSize:10,color:"rgba(245,200,66,0.45)",marginTop:2,
+                    overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{v.text}</div>
+                </div>
+                <button onClick={()=>openEdit(i)} style={{background:"none",border:"none",color:"rgba(245,200,66,0.5)",fontSize:15,cursor:"pointer",padding:"4px 6px"}}>✏️</button>
+                <button onClick={()=>deleteSlot(i)} style={{background:"none",border:"none",color:"rgba(192,90,42,0.7)",fontSize:15,cursor:"pointer",padding:"4px 6px"}}>🗑️</button>
+              </div>
+            ))}
+            {slots.length < SLOTS && (
+              <button
+                onClick={()=>openEdit(slots.length)}
+                style={{
+                  width:"100%",padding:"12px 0",marginTop:14,borderRadius:12,
+                  background:"rgba(30,122,140,0.50)",border:"1.5px solid rgba(58,189,212,0.45)",
+                  color:"#3ABDD4",fontFamily:"'Cinzel',serif",fontSize:12,fontWeight:700,
+                  letterSpacing:2,cursor:"pointer",backdropFilter:"blur(4px)",
+                }}>
+                + ADD VERSE
+              </button>
+            )}
+            {slots.length === 0 && (
+              <div style={{textAlign:"center",padding:"24px 0",color:"rgba(245,200,66,0.3)",fontSize:12}}>
+                Your verse pack is empty.<br/>Add up to 10 personal verses.
+              </div>
+            )}
+            <div style={{marginTop:16}}>
+              <button style={btnStyle()} onClick={onClose}>BACK TO BATTLE</button>
+            </div>
+          </div>
+        )}
+      </div>
+    </MenuOverlay>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// 6. LANGUAGE OVERLAY
+// ══════════════════════════════════════════════════════════════
+const LANGUAGES = [
+  { code:"en", flag:"🇺🇸", name:"English",    native:"English"    },
+  { code:"es", flag:"🇪🇸", name:"Spanish",    native:"Español"    },
+  { code:"fr", flag:"🇫🇷", name:"French",     native:"Français"   },
+  { code:"de", flag:"🇩🇪", name:"German",     native:"Deutsch"    },
+  { code:"pt", flag:"🇵🇹", name:"Portuguese", native:"Português"  },
+  { code:"it", flag:"🇮🇹", name:"Italian",    native:"Italiano"   },
+  { code:"zh", flag:"🇨🇳", name:"Chinese",    native:"中文"        },
+  { code:"ru", flag:"🇷🇺", name:"Russian",    native:"Русский"    },
+  { code:"ja", flag:"🇯🇵", name:"Japanese",   native:"日本語"      },
+  { code:"ar", flag:"🇸🇦", name:"Arabic",     native:"العربية"    },
+  { code:"ko", flag:"🇰🇷", name:"Korean",     native:"한국어"      },
+  { code:"hi", flag:"🇮🇳", name:"Hindi",      native:"हिन्दी"     },
+];
+const LANG_KEY = "wb_language";
+
+function LanguageOverlay({ onClose }) {
+  const [selected, setSelected] = useState(()=>localStorage.getItem(LANG_KEY)||"en");
+
+  function pick(code) {
+    setSelected(code);
+    localStorage.setItem(LANG_KEY, code);
+  }
+
+  return (
+    <MenuOverlay charKey="language" title="Language" onClose={onClose}>
+      <div style={{padding:"20px 20px 28px"}}>
+        <div style={{fontSize:10,color:"rgba(245,200,66,0.4)",letterSpacing:3,textAlign:"center",marginBottom:6}}>SELECT YOUR LANGUAGE</div>
+        <div style={{fontSize:10,color:"rgba(58,189,212,0.5)",letterSpacing:2,textAlign:"center",marginBottom:18}}>🌐 MULTILINGUAL SUPPORT COMING SOON</div>
+        {LANGUAGES.map((lang,i)=>{
+          const active = selected===lang.code;
+          return (
+            <button key={lang.code}
+              onClick={()=>pick(lang.code)}
+              style={{
+                width:"100%",display:"flex",alignItems:"center",gap:14,
+                padding:"13px 16px",
+                borderRadius:10,marginBottom:6,
+                background: active ? "rgba(212,146,26,0.50)" : "rgba(255,255,255,0.04)",
+                border: active ? "1.5px solid rgba(245,200,66,0.55)" : "1px solid rgba(245,200,66,0.1)",
+                cursor:"pointer",textAlign:"left",
+                backdropFilter:"blur(4px)",
+                transition:"background 0.15s",
+              }}>
+              <span style={{fontSize:22}}>{lang.flag}</span>
+              <div style={{flex:1}}>
+                <div style={{fontFamily:"'Cinzel',serif",fontSize:13,fontWeight:700,
+                  color:active?"#F5C842":"rgba(245,200,66,0.75)",letterSpacing:1}}>{lang.name}</div>
+                <div style={{fontSize:11,color:"rgba(245,200,66,0.4)",marginTop:1}}>{lang.native}</div>
+              </div>
+              {active && <span style={{color:"#F5C842",fontSize:16}}>✓</span>}
+            </button>
+          );
+        })}
+        <div style={{marginTop:16}}>
+          <button style={btnStyle()} onClick={onClose}>BACK TO BATTLE</button>
+        </div>
+      </div>
+    </MenuOverlay>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
+// 7. TUTORIAL OVERLAY
+// ══════════════════════════════════════════════════════════════
+const TUTORIAL_STEPS = [
+  {
+    icon:"⚔️",
+    title:"The Challenge",
+    body:"Challenge any warrior to a 10-round Bible verse battle. Each round, one player picks the difficulty — the other must answer.",
+  },
+  {
+    icon:"📖",
+    title:"Know the Verse",
+    body:"A Bible verse appears. You must identify the correct Book, Chapter, and Verse from 4 choices. Higher difficulty = more points.",
+  },
+  {
+    icon:"⏱️",
+    title:"The Timer",
+    body:"You have 20 seconds. At higher ranks, Papa's hint fires earlier to help you learn — but the Word rewards those who study.",
+  },
+  {
+    icon:"📜",
+    title:"The Recovery Scroll",
+    body:"Answer wrong? You get one chance to recover. Spin the scroll wheels to the correct Book, Chapter, and Verse in 7 seconds.",
+  },
+  {
+    icon:"💥",
+    title:"WHAM SLAM",
+    body:"Nail the correct answer and WHAM SLAM fires — a cinematic explosion of glory. The crowd knows who knows the Word.",
+  },
+  {
+    icon:"🏆",
+    title:"Rank Up",
+    body:"Every correct answer earns points. Scribe → Squire → Warrior → Knight → Champion. Climb the leaderboard. Know the Word. Win the battle.",
+  },
+];
+
+function TutorialOverlay({ onClose }) {
+  const [step, setStep] = useState(0);
+  const cur = TUTORIAL_STEPS[step];
+  const isLast = step === TUTORIAL_STEPS.length - 1;
+
+  return (
+    <MenuOverlay charKey="tutorial" title="How to Play" onClose={onClose}>
+      <div style={{padding:"28px 24px 28px"}}>
+        {/* Step indicator */}
+        <div style={{display:"flex",justifyContent:"center",gap:6,marginBottom:24}}>
+          {TUTORIAL_STEPS.map((_,i)=>(
+            <div key={i} onClick={()=>setStep(i)} style={{
+              width: i===step ? 20 : 7,height:7,borderRadius:4,cursor:"pointer",
+              background: i===step ? "#F5C842" : i<step ? "rgba(245,200,66,0.4)" : "rgba(245,200,66,0.15)",
+              transition:"all 0.25s",
+            }}/>
+          ))}
+        </div>
+
+        {/* Step content */}
+        <div style={{textAlign:"center",padding:"0 8px",minHeight:160}}>
+          <div style={{fontSize:48,marginBottom:16,
+            filter:"drop-shadow(0 0 12px rgba(212,146,26,0.6))"}}>{cur.icon}</div>
+          <div style={{
+            fontSize:17,fontWeight:900,color:"#F5C842",
+            letterSpacing:2,textTransform:"uppercase",marginBottom:14,
+          }}>{cur.title}</div>
+          <div style={{
+            fontSize:13,color:"rgba(244,240,232,0.85)",
+            lineHeight:1.7,fontFamily:"sans-serif",letterSpacing:0.3,
+          }}>{cur.body}</div>
+        </div>
+
+        {/* Navigation */}
+        <div style={{display:"flex",gap:10,marginTop:28}}>
+          {step > 0 && (
+            <button style={{...btnStyle(),flex:1,background:"rgba(255,255,255,0.08)"}} onClick={()=>setStep(s=>s-1)}>
+              ← PREV
+            </button>
+          )}
+          <button style={{...btnStyle("teal"),flex:1}} onClick={isLast ? onClose : ()=>setStep(s=>s+1)}>
+            {isLast ? "BEGIN THE BATTLE ⚔️" : "NEXT →"}
+          </button>
+        </div>
+      </div>
+    </MenuOverlay>
+  );
+}
+
+
+
 function Hdr({ user, profile, onOut }) {
   const [open, setOpen] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
+  const [activeTab, setActiveTab] = useState(null); // "profile"|"leader"|"players"|"scores"|"verses"|"language"|"tutorial"
   const init = user ? (user.displayName || user.email || "W")[0].toUpperCase() : null;
   const rank = profile ? rankBadge(profile.total_score || 0) : null;
 
@@ -331,11 +1008,7 @@ function Hdr({ user, profile, onOut }) {
 
   function handleItem(action) {
     setOpen(false);
-    // Placeholders — wire individually as each section is built
-    if (action === "profile") {
-      setShowProfile(true);
-    }
-    // All other items are future build sections
+    setActiveTab(action);
   }
 
   return (
@@ -429,10 +1102,14 @@ function Hdr({ user, profile, onOut }) {
           </button>
         </div>
       </div>
-      {/* Profile Modal */}
-      {showProfile && (
-        <ProfileModal user={user} profile={profile} rank={rank} onClose={()=>setShowProfile(false)}/>
-      )}
+      {/* Menu Overlays — all 7 tabs */}
+      {activeTab==="profile"  && <ProfileOverlay   user={user} profile={profile} rank={rank} onClose={()=>setActiveTab(null)}/>}
+      {activeTab==="leader"   && <LeaderboardOverlay profile={profile} onClose={()=>setActiveTab(null)}/>}
+      {activeTab==="players"  && <PlayerListOverlay  user={user} profile={profile} onClose={()=>setActiveTab(null)} onChallenge={()=>{}}/>}
+      {activeTab==="scores"   && <MyScoresOverlay    user={user} profile={profile} onClose={()=>setActiveTab(null)}/>}
+      {activeTab==="verses"   && <CustomVersePackOverlay onClose={()=>setActiveTab(null)}/>}
+      {activeTab==="language" && <LanguageOverlay    onClose={()=>setActiveTab(null)}/>}
+      {activeTab==="tutorial" && <TutorialOverlay    onClose={()=>setActiveTab(null)}/>}
     </>
   );
 }
