@@ -629,7 +629,7 @@ const btnStyle = (color="#D4921A") => ({
 // ══════════════════════════════════════════════════════════════
 // 1. MY PROFILE OVERLAY (upgraded with cinematic underlay)
 // ══════════════════════════════════════════════════════════════
-function ProfileOverlay({ user, profile, rank, onClose }) {
+function ProfileOverlay({ user, profile, rank, onClose, onSmsToggle }) {
   const name    = profile?.display_name || user?.displayName || user?.email?.split("@")[0] || "Warrior";
   const email   = user?.email || profile?.email || "";
   const score   = profile?.total_score  || 0;
@@ -694,6 +694,48 @@ function ProfileOverlay({ user, profile, rank, onClose }) {
             <span style={{fontSize:17,fontWeight:900,color:"#F5C842"}}>{val}</span>
           </div>
         ))}
+        {/* ── Task 3: SMS Toggle + Re-consent ── */}
+        {profile?.phone ? (
+          <div style={{marginTop:20,padding:"16px",background:"rgba(255,255,255,0.04)",borderRadius:12,border:"1px solid rgba(212,146,26,0.15)"}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
+              <div>
+                <div style={{fontSize:13,color:"rgba(245,200,66,0.85)",fontWeight:700,letterSpacing:1}}>📱 Game Alerts</div>
+                <div style={{fontSize:10,color:"rgba(245,200,66,0.4)",marginTop:2}}>{profile.phone}</div>
+              </div>
+              {/* Toggle switch */}
+              <div
+                onClick={() => onSmsToggle && onSmsToggle(!profile.sms_enabled)}
+                style={{
+                  width:46,height:26,borderRadius:13,cursor:"pointer",
+                  background: profile.sms_enabled ? "#D4921A" : "rgba(255,255,255,0.12)",
+                  border:`1px solid ${profile.sms_enabled ? "#F5C842" : "rgba(255,255,255,0.2)"}`,
+                  position:"relative",transition:"background 0.25s",flexShrink:0,
+                }}>
+                <div style={{
+                  position:"absolute",top:3,
+                  left: profile.sms_enabled ? 23 : 3,
+                  width:18,height:18,borderRadius:"50%",
+                  background:"#fff",transition:"left 0.25s",
+                  boxShadow:"0 1px 4px rgba(0,0,0,0.4)",
+                }}/>
+              </div>
+            </div>
+            {profile.sms_enabled ? (
+              <p style={{fontSize:10,color:"rgba(245,200,66,0.45)",margin:0,lineHeight:1.6}}>
+                SMS alerts active. Reply <strong style={{color:"rgba(245,200,66,0.7)"}}>STOP</strong> to any message to unsubscribe anytime.
+                Msg &amp; data rates may apply.
+              </p>
+            ) : (
+              <p style={{fontSize:10,color:"rgba(245,200,66,0.35)",margin:0,lineHeight:1.6}}>
+                SMS alerts off. Toggle on to receive challenge notifications.
+                By enabling, you consent to receive WhamBible game alert texts.
+                Msg frequency varies. Msg &amp; data rates may apply.
+                Reply <strong style={{color:"rgba(245,200,66,0.5)"}}>STOP</strong> to unsubscribe anytime.
+              </p>
+            )}
+          </div>
+        ) : null}
+
         <div style={{marginTop:20}}>
           <button style={btnStyle()} onClick={onClose}>BACK TO BATTLE</button>
         </div>
@@ -1298,7 +1340,7 @@ function Hdr({ user, profile, onOut }) {
         </div>
       </div>
       {/* Menu Overlays — all 7 tabs */}
-      {activeTab==="profile"  && <ProfileOverlay   user={user} profile={profile} rank={rank} onClose={()=>setActiveTab(null)}/>}
+      {activeTab==="profile"  && <ProfileOverlay   user={user} profile={profile} rank={rank} onClose={()=>setActiveTab(null)} onSmsToggle={handleSmsToggle}/>}
       {activeTab==="leader"   && <LeaderboardOverlay profile={profile} onClose={()=>setActiveTab(null)}/>}
       {activeTab==="players"  && <PlayerListOverlay  user={user} profile={profile} onClose={()=>setActiveTab(null)} onChallenge={()=>{}}/>}
       {activeTab==="scores"   && <MyScoresOverlay    user={user} profile={profile} onClose={()=>setActiveTab(null)}/>}
@@ -1608,9 +1650,10 @@ function Auth({ onIn }) {
   const [email, setEmail] = useState("");
   const [pass,  setPass]  = useState("");
   const [name,  setName]  = useState("");
-  const [phone, setPhone] = useState("");
-  const [err,   setErr]   = useState("");
-  const [busy,  setBusy]  = useState(false);
+  const [phone,      setPhone]      = useState("");
+  const [smsConsent, setSmsConsent] = useState(false); // Task 3: explicit checkbox consent
+  const [err,        setErr]        = useState("");
+  const [busy,       setBusy]       = useState(false);
 
   // NOTE: session check is handled at Challenge() root level — do NOT re-check here
   // This prevents the double-onIn loop on every mount
@@ -1655,7 +1698,7 @@ function Auth({ onIn }) {
       const user = LocalAuth.create(email.trim(), pass, name.trim());
       const localProfile = {
         email: user.email, display_name: name.trim(),
-        phone: phone.trim() || "", sms_enabled: !!phone.trim(),
+        phone: phone.trim() || "", sms_enabled: !!(phone.trim() && smsConsent),
         total_score: 0, games_played: 0, games_won: 0,
       };
       // Let user in immediately
@@ -1725,13 +1768,36 @@ function Auth({ onIn }) {
               <input className="c-inp" type="tel" autoComplete="tel" placeholder="+1 555 000 0000"
                 value={phone} onChange={e=>{setPhone(e.target.value);setErr("");}} disabled={busy}/>
               {phone.trim() && (
-                <div style={{
-                  fontSize:10,color:"rgba(245,200,66,0.45)",lineHeight:1.7,
-                  letterSpacing:0.3,marginBottom:4,padding:"8px 10px",
-                  background:"rgba(212,146,26,0.06)",borderRadius:8,
-                  border:"1px solid rgba(212,146,26,0.15)",
-                }}>
-                  By providing your phone number you consent to receive WhamBible game alert text messages. Msg frequency varies. Msg &amp; data rates may apply. Reply <strong style={{color:"rgba(245,200,66,0.7)"}}>STOP</strong> to cancel, <strong style={{color:"rgba(245,200,66,0.7)"}}>HELP</strong> for help.
+                /* ── Task 3: TCPA/CTIA/10DLC compliant SMS opt-in ── */
+                <div style={{marginTop:6,marginBottom:4}}>
+                  {/* Checkbox 1 — SMS Consent (carrier required, unchecked by default) */}
+                  <label style={{
+                    display:"flex",alignItems:"flex-start",gap:10,cursor:"pointer",
+                    padding:"10px 12px",borderRadius:8,
+                    background: smsConsent ? "rgba(212,146,26,0.10)" : "rgba(212,146,26,0.04)",
+                    border:`1px solid ${smsConsent ? "rgba(212,146,26,0.4)" : "rgba(212,146,26,0.15)"}`,
+                    transition:"all 0.2s",
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={smsConsent}
+                      onChange={e => setSmsConsent(e.target.checked)}
+                      disabled={busy}
+                      style={{
+                        marginTop:2,flexShrink:0,
+                        accentColor:"#D4921A",
+                        width:16,height:16,cursor:"pointer",
+                      }}
+                    />
+                    <span style={{fontSize:10,color:"rgba(245,200,66,0.75)",lineHeight:1.7,letterSpacing:0.3}}>
+                      By checking this box, I agree to receive automated SMS game alert messages from{" "}
+                      <strong style={{color:"rgba(245,200,66,0.9)"}}>WhamBible</strong> at the number above.
+                      Message frequency varies. Msg &amp; data rates may apply.
+                      Reply <strong style={{color:"#F5C842"}}>STOP</strong> to unsubscribe.
+                      Reply <strong style={{color:"#F5C842"}}>HELP</strong> for support.
+                      Consent is not a condition of purchase or use.
+                    </span>
+                  </label>
                 </div>
               )}
               {err ? <div className="c-err">⚠️ {err}</div> : <div style={{height:18}}/>}
@@ -3202,6 +3268,31 @@ export default function Challenge() {
       })
       .catch(() => {}); // silent — local profile is fine
   }, []);
+
+  // ── Task 3: SMS toggle handler ──
+  // Updates local profile state immediately; syncs to B44 in background
+  function handleSmsToggle(newVal) {
+    setProfile(p => ({ ...p, sms_enabled: newVal }));
+    // Persist to localStorage profile cache
+    try {
+      const cached = JSON.parse(sessionStorage.getItem("wb_profile_cache") || "{}");
+      sessionStorage.setItem("wb_profile_cache", JSON.stringify({ ...cached, sms_enabled: newVal }));
+    } catch(e) {}
+    // Update LocalAuth profile
+    try {
+      const lp = LocalAuth.currentUser();
+      if (lp) {
+        localStorage.setItem(`wb_profile_${lp.uid}`, JSON.stringify({
+          ...(JSON.parse(localStorage.getItem(`wb_profile_${lp.uid}`) || "{}")),
+          sms_enabled: newVal
+        }));
+      }
+    } catch(e) {}
+    // Background sync to B44 entity
+    if (profile?.id) {
+      B44.update("PlayerProfile", profile.id, { sms_enabled: newVal }).catch(() => {});
+    }
+  }
 
   useEffect(() => {
     const el = document.getElementById("wb-ch-s");
