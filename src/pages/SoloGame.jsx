@@ -24,24 +24,317 @@ const C = {
 };
 
 // ── Sample Verse Pool ──
-const VERSES = [
-  { ref:"John 3:16",        book:"John",        ch:3,  vs:16, text:"For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life." },
-  { ref:"Psalm 23:1",       book:"Psalms",       ch:23, vs:1,  text:"The Lord is my shepherd; I shall not want." },
-  { ref:"Romans 8:28",      book:"Romans",       ch:8,  vs:28, text:"And we know that in all things God works for the good of those who love him, who have been called according to his purpose." },
-  { ref:"Proverbs 3:5",     book:"Proverbs",     ch:3,  vs:5,  text:"Trust in the Lord with all your heart and lean not on your own understanding." },
-  { ref:"Isaiah 40:31",     book:"Isaiah",       ch:40, vs:31, text:"But those who hope in the Lord will renew their strength. They will soar on wings like eagles; they will run and not grow weary, they will walk and not be faint." },
-  { ref:"Jeremiah 29:11",   book:"Jeremiah",     ch:29, vs:11, text:"For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, plans to give you hope and a future." },
-  { ref:"Philippians 4:13", book:"Philippians",  ch:4,  vs:13, text:"I can do all this through him who gives me strength." },
-  { ref:"Matthew 5:9",      book:"Matthew",      ch:5,  vs:9,  text:"Blessed are the peacemakers, for they will be called children of God." },
-  { ref:"Psalm 46:1",       book:"Psalms",       ch:46, vs:1,  text:"God is our refuge and strength, an ever-present help in trouble." },
-  { ref:"John 14:6",        book:"John",         ch:14, vs:6,  text:"Jesus answered, 'I am the way and the truth and the life. No one comes to the Father except through me.'" },
+// ══════════════════════════════════════════════════════════════════
+// ── WHAM_VERSES — 201 verses, 4 tiers (Tasks 6 + 7) ─────────────
+// tier: "squire"(5pt) | "warrior"(10pt) | "knight"(15pt) | "champion"(20pt)
+// All text ≤ 280 chars. NIV. Pre-filtered at definition time.
+// ══════════════════════════════════════════════════════════════════
+
+const WHAM_VERSES = [
+  // ── SQUIRE (5pt) ─────────────────────────────────────────────
+  { book:"John",          ch:3,  vs:16,  tier:"squire",   text:"For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life." },
+  { book:"Psalms",        ch:23, vs:1,   tier:"squire",   text:"The Lord is my shepherd, I lack nothing." },
+  { book:"Romans",        ch:8,  vs:28,  tier:"squire",   text:"And we know that in all things God works for the good of those who love him, who have been called according to his purpose." },
+  { book:"Proverbs",      ch:3,  vs:5,   tier:"squire",   text:"Trust in the Lord with all your heart and lean not on your own understanding." },
+  { book:"Philippians",   ch:4,  vs:13,  tier:"squire",   text:"I can do all this through him who gives me strength." },
+  { book:"Jeremiah",      ch:29, vs:11,  tier:"squire",   text:"For I know the plans I have for you, declares the Lord, plans to prosper you and not to harm you, plans to give you hope and a future." },
+  { book:"Isaiah",        ch:40, vs:31,  tier:"squire",   text:"But those who hope in the Lord will renew their strength. They will soar on wings like eagles; they will run and not grow weary, they will walk and not be faint." },
+  { book:"John",          ch:14, vs:6,   tier:"squire",   text:"Jesus answered, I am the way and the truth and the life. No one comes to the Father except through me." },
+  { book:"Psalms",        ch:46, vs:1,   tier:"squire",   text:"God is our refuge and strength, an ever-present help in trouble." },
+  { book:"Matthew",       ch:5,  vs:9,   tier:"squire",   text:"Blessed are the peacemakers, for they will be called children of God." },
+  { book:"Romans",        ch:3,  vs:23,  tier:"squire",   text:"For all have sinned and fall short of the glory of God." },
+  { book:"Romans",        ch:6,  vs:23,  tier:"squire",   text:"For the wages of sin is death, but the gift of God is eternal life in Christ Jesus our Lord." },
+  { book:"Ephesians",     ch:2,  vs:8,   tier:"squire",   text:"For it is by grace you have been saved, through faith, and this is not from yourselves, it is the gift of God." },
+  { book:"Matthew",       ch:28, vs:19,  tier:"squire",   text:"Therefore go and make disciples of all nations, baptizing them in the name of the Father and of the Son and of the Holy Spirit." },
+  { book:"John",          ch:3,  vs:17,  tier:"squire",   text:"For God did not send his Son into the world to condemn the world, but to save the world through him." },
+  { book:"Proverbs",      ch:3,  vs:6,   tier:"squire",   text:"In all your ways submit to him, and he will make your paths straight." },
+  { book:"Matthew",       ch:6,  vs:33,  tier:"squire",   text:"But seek first his kingdom and his righteousness, and all these things will be given to you as well." },
+  { book:"Psalms",        ch:119,vs:105, tier:"squire",   text:"Your word is a lamp for my feet, a light on my path." },
+  { book:"Philippians",   ch:4,  vs:6,   tier:"squire",   text:"Do not be anxious about anything, but in every situation, by prayer and petition, with thanksgiving, present your requests to God." },
+  { book:"Romans",        ch:10, vs:9,   tier:"squire",   text:"If you declare with your mouth, Jesus is Lord, and believe in your heart that God raised him from the dead, you will be saved." },
+  { book:"John",          ch:11, vs:25,  tier:"squire",   text:"Jesus said to her, I am the resurrection and the life. The one who believes in me will live, even though they die." },
+  { book:"Psalms",        ch:27, vs:1,   tier:"squire",   text:"The Lord is my light and my salvation, whom shall I fear? The Lord is the stronghold of my life, of whom shall I be afraid?" },
+  { book:"Matthew",       ch:11, vs:28,  tier:"squire",   text:"Come to me, all you who are weary and burdened, and I will give you rest." },
+  { book:"Joshua",        ch:1,  vs:9,   tier:"squire",   text:"Have I not commanded you? Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go." },
+  { book:"Galatians",     ch:2,  vs:20,  tier:"squire",   text:"I have been crucified with Christ and I no longer live, but Christ lives in me." },
+  { book:"2 Timothy",     ch:3,  vs:16,  tier:"squire",   text:"All Scripture is God-breathed and is useful for teaching, rebuking, correcting and training in righteousness." },
+  { book:"John",          ch:10, vs:10,  tier:"squire",   text:"The thief comes only to steal and kill and destroy; I have come that they may have life, and have it to the full." },
+  { book:"1 John",        ch:4,  vs:8,   tier:"squire",   text:"Whoever does not love does not know God, because God is love." },
+  { book:"Psalms",        ch:23, vs:4,   tier:"squire",   text:"Even though I walk through the darkest valley, I will fear no evil, for you are with me; your rod and your staff, they comfort me." },
+  { book:"Isaiah",        ch:41, vs:10,  tier:"squire",   text:"So do not fear, for I am with you; do not be dismayed, for I am your God. I will strengthen you and help you." },
+  { book:"John",          ch:13, vs:34,  tier:"squire",   text:"A new command I give you: Love one another. As I have loved you, so you must love one another." },
+  { book:"Matthew",       ch:22, vs:37,  tier:"squire",   text:"Jesus replied: Love the Lord your God with all your heart and with all your soul and with all your mind." },
+  { book:"Hebrews",       ch:11, vs:1,   tier:"squire",   text:"Now faith is confidence in what we hope for and assurance about what we do not see." },
+  { book:"1 Corinthians", ch:13, vs:4,   tier:"squire",   text:"Love is patient, love is kind. It does not envy, it does not boast, it is not proud." },
+  { book:"Psalms",        ch:37, vs:4,   tier:"squire",   text:"Take delight in the Lord, and he will give you the desires of your heart." },
+  { book:"John",          ch:8,  vs:32,  tier:"squire",   text:"Then you will know the truth, and the truth will set you free." },
+  { book:"Proverbs",      ch:22, vs:6,   tier:"squire",   text:"Start children off on the way they should go, and even when they are old they will not turn from it." },
+  { book:"Matthew",       ch:7,  vs:7,   tier:"squire",   text:"Ask and it will be given to you; seek and you will find; knock and the door will be opened to you." },
+  { book:"Philippians",   ch:4,  vs:7,   tier:"squire",   text:"And the peace of God, which transcends all understanding, will guard your hearts and your minds in Christ Jesus." },
+  { book:"Luke",          ch:1,  vs:37,  tier:"squire",   text:"For no word from God will ever fail." },
+  { book:"Romans",        ch:12, vs:2,   tier:"squire",   text:"Do not conform to the pattern of this world, but be transformed by the renewing of your mind." },
+  { book:"Psalms",        ch:139,vs:14,  tier:"squire",   text:"I praise you because I am fearfully and wonderfully made; your works are wonderful, I know that full well." },
+  { book:"Matthew",       ch:19, vs:26,  tier:"squire",   text:"Jesus looked at them and said, With man this is impossible, but with God all things are possible." },
+  { book:"John",          ch:3,  vs:36,  tier:"squire",   text:"Whoever believes in the Son has eternal life, but whoever rejects the Son will not see life." },
+  { book:"Ephesians",     ch:4,  vs:32,  tier:"squire",   text:"Be kind and compassionate to one another, forgiving each other, just as in Christ God forgave you." },
+  { book:"Psalms",        ch:91, vs:1,   tier:"squire",   text:"Whoever dwells in the shelter of the Most High will rest in the shadow of the Almighty." },
+  { book:"Mark",          ch:10, vs:45,  tier:"squire",   text:"For even the Son of Man did not come to be served, but to serve, and to give his life as a ransom for many." },
+  { book:"1 Peter",       ch:5,  vs:7,   tier:"squire",   text:"Cast all your anxiety on him because he cares for you." },
+  { book:"Acts",          ch:2,  vs:38,  tier:"squire",   text:"Peter replied, Repent and be baptized, every one of you, in the name of Jesus Christ for the forgiveness of your sins." },
+  { book:"Micah",         ch:6,  vs:8,   tier:"squire",   text:"He has shown you, O mortal, what is good. And what does the Lord require of you? To act justly and to love mercy and to walk humbly with your God." },
+  { book:"Matthew",       ch:5,  vs:16,  tier:"squire",   text:"In the same way, let your light shine before others, that they may see your good deeds and glorify your Father in heaven." },
+  { book:"Luke",          ch:6,  vs:31,  tier:"squire",   text:"Do to others as you would have them do to you." },
+  { book:"Galatians",     ch:5,  vs:22,  tier:"squire",   text:"But the fruit of the Spirit is love, joy, peace, forbearance, kindness, goodness, faithfulness." },
+  { book:"James",         ch:1,  vs:17,  tier:"squire",   text:"Every good and perfect gift is from above, coming down from the Father of the heavenly lights." },
+  { book:"Colossians",    ch:3,  vs:23,  tier:"squire",   text:"Whatever you do, work at it with all your heart, as working for the Lord, not for human masters." },
+  { book:"1 John",        ch:1,  vs:9,   tier:"squire",   text:"If we confess our sins, he is faithful and just and will forgive us our sins and purify us from all unrighteousness." },
+  { book:"Matthew",       ch:6,  vs:9,   tier:"squire",   text:"This, then, is how you should pray: Our Father in heaven, hallowed be your name." },
+  { book:"Revelation",    ch:3,  vs:20,  tier:"squire",   text:"Here I am! I stand at the door and knock. If anyone hears my voice and opens the door, I will come in and eat with that person, and they with me." },
+  { book:"Romans",        ch:8,  vs:38,  tier:"squire",   text:"For I am convinced that neither death nor life, neither angels nor demons, neither the present nor the future nor any powers, will be able to separate us from the love of God." },
+  { book:"Proverbs",      ch:31, vs:30,  tier:"squire",   text:"Charm is deceptive, and beauty is fleeting; but a woman who fears the Lord is to be praised." },
+
+  // ── WARRIOR (10pt) ───────────────────────────────────────────
+  { book:"Isaiah",        ch:53, vs:5,   tier:"warrior",  text:"But he was pierced for our transgressions, he was crushed for our iniquities; the punishment that brought us peace was on him, and by his wounds we are healed." },
+  { book:"Romans",        ch:5,  vs:8,   tier:"warrior",  text:"But God demonstrates his own love for us in this: While we were still sinners, Christ died for us." },
+  { book:"Hebrews",       ch:12, vs:1,   tier:"warrior",  text:"Therefore, since we are surrounded by such a great cloud of witnesses, let us throw off everything that hinders and the sin that so easily entangles." },
+  { book:"James",         ch:1,  vs:2,   tier:"warrior",  text:"Consider it pure joy, my brothers and sisters, whenever you face trials of many kinds." },
+  { book:"1 Corinthians", ch:10, vs:13,  tier:"warrior",  text:"No temptation has overtaken you except what is common to mankind. And God is faithful; he will not let you be tempted beyond what you can bear." },
+  { book:"Proverbs",      ch:4,  vs:23,  tier:"warrior",  text:"Above all else, guard your heart, for everything you do flows from it." },
+  { book:"Romans",        ch:1,  vs:16,  tier:"warrior",  text:"For I am not ashamed of the gospel, because it is the power of God that brings salvation to everyone who believes." },
+  { book:"Matthew",       ch:6,  vs:34,  tier:"warrior",  text:"Therefore do not worry about tomorrow, for tomorrow will worry about itself. Each day has enough trouble of its own." },
+  { book:"Psalms",        ch:34, vs:8,   tier:"warrior",  text:"Taste and see that the Lord is good; blessed is the one who takes refuge in him." },
+  { book:"John",          ch:15, vs:5,   tier:"warrior",  text:"I am the vine; you are the branches. If you remain in me and I in you, you will bear much fruit; apart from me you can do nothing." },
+  { book:"2 Corinthians", ch:5,  vs:17,  tier:"warrior",  text:"Therefore, if anyone is in Christ, the new creation has come: The old has gone, the new is here!" },
+  { book:"Philippians",   ch:4,  vs:19,  tier:"warrior",  text:"And my God will meet all your needs according to the riches of his glory in Christ Jesus." },
+  { book:"Psalms",        ch:16, vs:11,  tier:"warrior",  text:"You make known to me the path of life; you will fill me with joy in your presence, with eternal pleasures at your right hand." },
+  { book:"Isaiah",        ch:26, vs:3,   tier:"warrior",  text:"You will keep in perfect peace those whose minds are steadfast, because they trust in you." },
+  { book:"Romans",        ch:15, vs:13,  tier:"warrior",  text:"May the God of hope fill you with all joy and peace as you trust in him, so that you may overflow with hope by the power of the Holy Spirit." },
+  { book:"Ephesians",     ch:6,  vs:11,  tier:"warrior",  text:"Put on the full armor of God, so that you can take your stand against the devil's schemes." },
+  { book:"2 Timothy",     ch:1,  vs:7,   tier:"warrior",  text:"For the Spirit God gave us does not make us timid, but gives us power, love and self-discipline." },
+  { book:"Lamentations",  ch:3,  vs:22,  tier:"warrior",  text:"Because of the Lord's great love we are not consumed, for his compassions never fail." },
+  { book:"Proverbs",      ch:11, vs:25,  tier:"warrior",  text:"A generous person will prosper; whoever refreshes others will be refreshed." },
+  { book:"Matthew",       ch:5,  vs:6,   tier:"warrior",  text:"Blessed are those who hunger and thirst for righteousness, for they will be filled." },
+  { book:"John",          ch:16, vs:33,  tier:"warrior",  text:"I have told you these things, so that in me you may have peace. In this world you will have trouble. But take heart! I have overcome the world." },
+  { book:"1 Corinthians", ch:6,  vs:19,  tier:"warrior",  text:"Do you not know that your bodies are temples of the Holy Spirit, who is in you, whom you have received from God? You are not your own." },
+  { book:"Hebrews",       ch:4,  vs:12,  tier:"warrior",  text:"For the word of God is alive and active. Sharper than any double-edged sword, it penetrates even to dividing soul and spirit, joints and marrow." },
+  { book:"Psalms",        ch:1,  vs:1,   tier:"warrior",  text:"Blessed is the one who does not walk in step with the wicked or stand in the way that sinners take or sit in the company of mockers." },
+  { book:"Mark",          ch:16, vs:15,  tier:"warrior",  text:"He said to them, Go into all the world and preach the gospel to all creation." },
+  { book:"Acts",          ch:1,  vs:8,   tier:"warrior",  text:"But you will receive power when the Holy Spirit comes on you; and you will be my witnesses in Jerusalem, and in all Judea and Samaria, and to the ends of the earth." },
+  { book:"Matthew",       ch:5,  vs:3,   tier:"warrior",  text:"Blessed are the poor in spirit, for theirs is the kingdom of heaven." },
+  { book:"Psalms",        ch:100,vs:4,   tier:"warrior",  text:"Enter his gates with thanksgiving and his courts with praise; give thanks to him and praise his name." },
+  { book:"James",         ch:4,  vs:7,   tier:"warrior",  text:"Submit yourselves, then, to God. Resist the devil, and he will flee from you." },
+  { book:"Colossians",    ch:3,  vs:2,   tier:"warrior",  text:"Set your minds on things above, not on earthly things." },
+  { book:"1 Peter",       ch:2,  vs:9,   tier:"warrior",  text:"But you are a chosen people, a royal priesthood, a holy nation, God's special possession." },
+  { book:"Romans",        ch:8,  vs:1,   tier:"warrior",  text:"Therefore, there is now no condemnation for those who are in Christ Jesus." },
+  { book:"Psalms",        ch:51, vs:10,  tier:"warrior",  text:"Create in me a pure heart, O God, and renew a steadfast spirit within me." },
+  { book:"Proverbs",      ch:16, vs:9,   tier:"warrior",  text:"In their hearts humans plan their course, but the Lord establishes their steps." },
+  { book:"John",          ch:14, vs:27,  tier:"warrior",  text:"Peace I leave with you; my peace I give you. I do not give to you as the world gives." },
+  { book:"Luke",          ch:15, vs:7,   tier:"warrior",  text:"I tell you that in the same way there will be more rejoicing in heaven over one sinner who repents than over ninety-nine righteous persons who do not need to repent." },
+  { book:"2 Chronicles",  ch:7,  vs:14,  tier:"warrior",  text:"If my people, who are called by my name, will humble themselves and pray and seek my face and turn from their wicked ways, then I will hear from heaven." },
+  { book:"Matthew",       ch:5,  vs:44,  tier:"warrior",  text:"But I tell you, love your enemies and pray for those who persecute you." },
+  { book:"Ephesians",     ch:3,  vs:20,  tier:"warrior",  text:"Now to him who is able to do immeasurably more than all we ask or imagine, according to his power that is at work within us." },
+  { book:"1 John",        ch:3,  vs:16,  tier:"warrior",  text:"This is how we know what love is: Jesus Christ laid down his life for us." },
+  { book:"Psalms",        ch:56, vs:3,   tier:"warrior",  text:"When I am afraid, I put my trust in you." },
+  { book:"Romans",        ch:12, vs:12,  tier:"warrior",  text:"Be joyful in hope, patient in affliction, faithful in prayer." },
+  { book:"Isaiah",        ch:43, vs:2,   tier:"warrior",  text:"When you pass through the waters, I will be with you; and when you pass through the rivers, they will not sweep over you." },
+  { book:"Matthew",       ch:6,  vs:14,  tier:"warrior",  text:"For if you forgive other people when they sin against you, your heavenly Father will also forgive you." },
+  { book:"Proverbs",      ch:12, vs:25,  tier:"warrior",  text:"Anxiety weighs down the heart, but a kind word cheers it up." },
+  { book:"1 Thessalonians",ch:5, vs:16,  tier:"warrior",  text:"Rejoice always, pray continually, give thanks in all circumstances; for this is God's will for you in Christ Jesus." },
+  { book:"Luke",          ch:12, vs:48,  tier:"warrior",  text:"From everyone who has been given much, much will be demanded; and from the one who has been entrusted with much, much more will be asked." },
+  { book:"Hebrews",       ch:13, vs:8,   tier:"warrior",  text:"Jesus Christ is the same yesterday and today and forever." },
+  { book:"John",          ch:1,  vs:14,  tier:"warrior",  text:"The Word became flesh and made his dwelling among us. We have seen his glory, the glory of the one and only Son, who came from the Father, full of grace and truth." },
+  { book:"Philippians",   ch:2,  vs:3,   tier:"warrior",  text:"Do nothing out of selfish ambition or vain conceit. Rather, in humility value others above yourselves." },
+  { book:"Matthew",       ch:18, vs:20,  tier:"warrior",  text:"For where two or three gather in my name, there am I with them." },
+  { book:"James",         ch:2,  vs:17,  tier:"warrior",  text:"In the same way, faith by itself, if it is not accompanied by action, is dead." },
+  { book:"Psalms",        ch:46, vs:10,  tier:"warrior",  text:"He says, Be still, and know that I am God; I will be exalted among the nations, I will be exalted in the earth." },
+  { book:"Proverbs",      ch:18, vs:10,  tier:"warrior",  text:"The name of the Lord is a fortified tower; the righteous run to it and are safe." },
+  { book:"Galatians",     ch:6,  vs:9,   tier:"warrior",  text:"Let us not become weary in doing good, for at the proper time we will reap a harvest if we do not give up." },
+  { book:"Nehemiah",      ch:8,  vs:10,  tier:"warrior",  text:"Do not grieve, for the joy of the Lord is your strength." },
+  { book:"Zephaniah",     ch:3,  vs:17,  tier:"warrior",  text:"The Lord your God is with you, the Mighty Warrior who saves. He will take great delight in you; in his love he will no longer rebuke you, but will rejoice over you with singing." },
+  { book:"Matthew",       ch:5,  vs:8,   tier:"warrior",  text:"Blessed are the pure in heart, for they will see God." },
+  { book:"Isaiah",        ch:9,  vs:6,   tier:"warrior",  text:"For to us a child is born, to us a son is given, and the government will be on his shoulders. And he will be called Wonderful Counselor, Mighty God, Everlasting Father, Prince of Peace." },
+
+  // ── KNIGHT (15pt) ────────────────────────────────────────────
+  { book:"Isaiah",        ch:55, vs:8,   tier:"knight",   text:"For my thoughts are not your thoughts, neither are your ways my ways, declares the Lord." },
+  { book:"Romans",        ch:12, vs:18,  tier:"knight",   text:"If it is possible, as far as it depends on you, live at peace with everyone." },
+  { book:"Psalms",        ch:84, vs:11,  tier:"knight",   text:"For the Lord God is a sun and shield; the Lord bestows favor and honor; no good thing does he withhold from those whose walk is blameless." },
+  { book:"Proverbs",      ch:21, vs:23,  tier:"knight",   text:"Those who guard their mouths and their tongues keep themselves from calamity." },
+  { book:"Hebrews",       ch:11, vs:6,   tier:"knight",   text:"And without faith it is impossible to please God, because anyone who comes to him must believe that he exists and that he rewards those who earnestly seek him." },
+  { book:"1 Corinthians", ch:13, vs:13,  tier:"knight",   text:"And now these three remain: faith, hope and love. But the greatest of these is love." },
+  { book:"Psalms",        ch:73, vs:26,  tier:"knight",   text:"My flesh and my heart may fail, but God is the strength of my heart and my portion forever." },
+  { book:"James",         ch:1,  vs:22,  tier:"knight",   text:"Do not merely listen to the word, and so deceive yourselves. Do what it says." },
+  { book:"2 Corinthians", ch:4,  vs:17,  tier:"knight",   text:"For our light and momentary troubles are achieving for us an eternal glory that far outweighs them all." },
+  { book:"Proverbs",      ch:27, vs:17,  tier:"knight",   text:"As iron sharpens iron, so one person sharpens another." },
+  { book:"Romans",        ch:8,  vs:31,  tier:"knight",   text:"What, then, shall we say in response to these things? If God is for us, who can be against us?" },
+  { book:"Isaiah",        ch:58, vs:6,   tier:"knight",   text:"Is not this the kind of fasting I have chosen: to loose the chains of injustice and untie the cords of the yoke, to set the oppressed free and break every yoke?" },
+  { book:"Matthew",       ch:25, vs:40,  tier:"knight",   text:"The King will reply, Truly I tell you, whatever you did for one of the least of these brothers and sisters of mine, you did for me." },
+  { book:"Luke",          ch:10, vs:27,  tier:"knight",   text:"He answered, Love the Lord your God with all your heart and with all your soul and with all your strength and with all your mind; and, Love your neighbor as yourself." },
+  { book:"John",          ch:15, vs:13,  tier:"knight",   text:"Greater love has no one than this: to lay down one's life for one's friends." },
+  { book:"Psalms",        ch:62, vs:5,   tier:"knight",   text:"Yes, my soul, find rest in God; my hope comes from him." },
+  { book:"Acts",          ch:4,  vs:12,  tier:"knight",   text:"Salvation is found in no one else, for there is no other name under heaven given to mankind by which we must be saved." },
+  { book:"1 Peter",       ch:3,  vs:15,  tier:"knight",   text:"But in your hearts revere Christ as Lord. Always be prepared to give an answer to everyone who asks you to give the reason for the hope that you have." },
+  { book:"Ephesians",     ch:2,  vs:10,  tier:"knight",   text:"For we are God\'s handiwork, created in Christ Jesus to do good works, which God prepared in advance for us to do." },
+  { book:"Romans",        ch:12, vs:1,   tier:"knight",   text:"Therefore, I urge you, brothers and sisters, in view of God\'s mercy, to offer your bodies as a living sacrifice, holy and pleasing to God." },
+  { book:"Psalms",        ch:18, vs:2,   tier:"knight",   text:"The Lord is my rock, my fortress and my deliverer; my God is my rock, in whom I take refuge, my shield and the horn of my salvation, my stronghold." },
+  { book:"Colossians",    ch:1,  vs:17,  tier:"knight",   text:"He is before all things, and in him all things hold together." },
+  { book:"Isaiah",        ch:40, vs:8,   tier:"knight",   text:"The grass withers and the flowers fall, but the word of our God endures forever." },
+  { book:"Matthew",       ch:7,  vs:12,  tier:"knight",   text:"So in everything, do to others what you would have them do to you, for this sums up the Law and the Prophets." },
+  { book:"John",          ch:6,  vs:35,  tier:"knight",   text:"Then Jesus declared, I am the bread of life. Whoever comes to me will never go hungry, and whoever believes in me will never be thirsty." },
+  { book:"Psalms",        ch:103,vs:12,  tier:"knight",   text:"As far as the east is from the west, so far has he removed our transgressions from us." },
+  { book:"Proverbs",      ch:28, vs:13,  tier:"knight",   text:"Whoever conceals their sins does not prosper, but the one who confesses and renounces them finds mercy." },
+  { book:"Philippians",   ch:1,  vs:6,   tier:"knight",   text:"Being confident of this, that he who began a good work in you will carry it on to completion until the day of Christ Jesus." },
+  { book:"Isaiah",        ch:61, vs:1,   tier:"knight",   text:"The Spirit of the Sovereign Lord is on me, because the Lord has anointed me to proclaim good news to the poor." },
+  { book:"1 Corinthians", ch:15, vs:55,  tier:"knight",   text:"Where, O death, is your victory? Where, O death, is your sting?" },
+  { book:"Psalms",        ch:121,vs:1,   tier:"knight",   text:"I lift up my eyes to the mountains, where does my help come from? My help comes from the Lord, the Maker of heaven and earth." },
+  { book:"Jeremiah",      ch:17, vs:9,   tier:"knight",   text:"The heart is deceitful above all things and beyond cure. Who can understand it?" },
+  { book:"Romans",        ch:5,  vs:3,   tier:"knight",   text:"Not only so, but we also glory in our sufferings, because we know that suffering produces perseverance." },
+  { book:"Matthew",       ch:4,  vs:19,  tier:"knight",   text:"Come, follow me, Jesus said, and I will send you out to fish for people." },
+  { book:"Hebrews",       ch:10, vs:25,  tier:"knight",   text:"Not giving up meeting together, as some are in the habit of doing, but encouraging one another." },
+  { book:"Proverbs",      ch:13, vs:20,  tier:"knight",   text:"Walk with the wise and become wise, for a companion of fools suffers harm." },
+  { book:"Revelation",    ch:21, vs:4,   tier:"knight",   text:"He will wipe every tear from their eyes. There will be no more death or mourning or crying or pain, for the old order of things has passed away." },
+  { book:"Psalms",        ch:150,vs:6,   tier:"knight",   text:"Let everything that has breath praise the Lord. Praise the Lord." },
+  { book:"Romans",        ch:8,  vs:26,  tier:"knight",   text:"In the same way, the Spirit helps us in our weakness. We do not know what we ought to pray for, but the Spirit himself intercedes for us." },
+  { book:"Luke",          ch:23, vs:34,  tier:"knight",   text:"Jesus said, Father, forgive them, for they do not know what they are doing." },
+  { book:"1 Timothy",     ch:6,  vs:10,  tier:"knight",   text:"For the love of money is a root of all kinds of evil. Some people, eager for money, have wandered from the faith." },
+  { book:"Psalms",        ch:145,vs:18,  tier:"knight",   text:"The Lord is near to all who call on him, to all who call on him in truth." },
+  { book:"Ephesians",     ch:6,  vs:12,  tier:"knight",   text:"For our struggle is not against flesh and blood, but against the rulers, against the authorities, against the powers of this dark world." },
+  { book:"Matthew",       ch:16, vs:24,  tier:"knight",   text:"Then Jesus said to his disciples, Whoever wants to be my disciple must deny themselves and take up their cross and follow me." },
+  { book:"John",          ch:17, vs:17,  tier:"knight",   text:"Sanctify them by the truth; your word is truth." },
+  { book:"Proverbs",      ch:10, vs:9,   tier:"knight",   text:"Whoever walks in integrity walks securely, but whoever takes crooked paths will be found out." },
+  { book:"2 Timothy",     ch:4,  vs:7,   tier:"knight",   text:"I have fought the good fight, I have finished the race, I have kept the faith." },
+  { book:"Luke",          ch:4,  vs:18,  tier:"knight",   text:"The Spirit of the Lord is on me, because he has anointed me to proclaim good news to the poor." },
+  { book:"Psalms",        ch:30, vs:5,   tier:"knight",   text:"For his anger lasts only a moment, but his favor lasts a lifetime; weeping may stay for the night, but rejoicing comes in the morning." },
+  { book:"James",         ch:5,  vs:16,  tier:"knight",   text:"Therefore confess your sins to each other and pray for each other so that you may be healed. The prayer of a righteous person is powerful and effective." },
+  { book:"Mark",          ch:11, vs:24,  tier:"knight",   text:"Therefore I tell you, whatever you ask for in prayer, believe that you have received it, and it will be yours." },
+
+  // ── CHAMPION (20pt) ──────────────────────────────────────────
+  { book:"Ezekiel",       ch:36, vs:26,  tier:"champion", text:"I will give you a new heart and put a new spirit in you; I will remove from you your heart of stone and give you a heart of flesh." },
+  { book:"Hosea",         ch:4,  vs:6,   tier:"champion", text:"My people are destroyed from lack of knowledge. Because you have rejected knowledge, I also reject you as my priests." },
+  { book:"Habakkuk",      ch:2,  vs:4,   tier:"champion", text:"See, the enemy is puffed up; his desires are not upright, but the righteous person will live by his faithfulness." },
+  { book:"Deuteronomy",   ch:8,  vs:3,   tier:"champion", text:"He humbled you, causing you to hunger and then feeding you with manna, to teach you that man does not live on bread alone but on every word that comes from the mouth of God." },
+  { book:"Amos",          ch:5,  vs:24,  tier:"champion", text:"But let justice roll on like a river, righteousness like a never-failing stream!" },
+  { book:"Zechariah",     ch:4,  vs:6,   tier:"champion", text:"Not by might nor by power, but by my Spirit, says the Lord Almighty." },
+  { book:"Leviticus",     ch:19, vs:18,  tier:"champion", text:"Do not seek revenge or bear a grudge against anyone among your people, but love your neighbor as yourself. I am the Lord." },
+  { book:"Ecclesiastes",  ch:12, vs:13,  tier:"champion", text:"Now all has been heard; here is the conclusion of the matter: Fear God and keep his commandments, for this is the duty of all mankind." },
+  { book:"Isaiah",        ch:1,  vs:18,  tier:"champion", text:"Come now, let us settle the matter, says the Lord. Though your sins are like scarlet, they shall be as white as snow." },
+  { book:"Deuteronomy",   ch:31, vs:6,   tier:"champion", text:"Be strong and courageous. Do not be afraid or terrified because of them, for the Lord your God goes with you; he will never leave you nor forsake you." },
+  { book:"Malachi",       ch:3,  vs:10,  tier:"champion", text:"Bring the whole tithe into the storehouse, that there may be food in my house. Test me in this, says the Lord Almighty." },
+  { book:"Job",           ch:19, vs:25,  tier:"champion", text:"I know that my redeemer lives, and that in the end he will stand on the earth." },
+  { book:"Numbers",       ch:6,  vs:24,  tier:"champion", text:"The Lord bless you and keep you; the Lord make his face shine on you and be gracious to you; the Lord turn his face toward you and give you peace." },
+  { book:"Exodus",        ch:14, vs:14,  tier:"champion", text:"The Lord will fight for you; you need only to be still." },
+  { book:"Isaiah",        ch:7,  vs:14,  tier:"champion", text:"Therefore the Lord himself will give you a sign: The virgin will conceive and give birth to a son, and will call him Immanuel." },
+  { book:"Daniel",        ch:3,  vs:17,  tier:"champion", text:"If we are thrown into the blazing furnace, the God we serve is able to deliver us from it, and he will deliver us from Your Majesty\'s hand." },
+  { book:"Genesis",       ch:1,  vs:1,   tier:"champion", text:"In the beginning God created the heavens and the earth." },
+  { book:"Genesis",       ch:12, vs:2,   tier:"champion", text:"I will make you into a great nation, and I will bless you; I will make your name great, and you will be a blessing." },
+  { book:"Psalms",        ch:22, vs:1,   tier:"champion", text:"My God, my God, why have you forsaken me? Why are you so far from saving me, so far from my cries of anguish?" },
+  { book:"Proverbs",      ch:9,  vs:10,  tier:"champion", text:"The fear of the Lord is the beginning of wisdom, and knowledge of the Holy One is understanding." },
+  { book:"Ecclesiastes",  ch:3,  vs:1,   tier:"champion", text:"There is a time for everything, and a season for every activity under the heavens." },
+  { book:"Isaiah",        ch:6,  vs:8,   tier:"champion", text:"Then I heard the voice of the Lord saying, Whom shall I send? And who will go for us? And I said, Here am I. Send me!" },
+  { book:"Nahum",         ch:1,  vs:7,   tier:"champion", text:"The Lord is good, a refuge in times of trouble. He cares for those who trust in him." },
+  { book:"Job",           ch:38, vs:4,   tier:"champion", text:"Where were you when I laid the earth\'s foundation? Tell me, if you understand." },
+  { book:"Psalms",        ch:2,  vs:8,   tier:"champion", text:"Ask me, and I will make the nations your inheritance, the ends of the earth your possession." },
+  { book:"Ezra",          ch:7,  vs:10,  tier:"champion", text:"For Ezra had devoted himself to the study and observance of the Law of the Lord, and to teaching its decrees and laws in Israel." },
+  { book:"Jonah",         ch:2,  vs:9,   tier:"champion", text:"But I, with shouts of grateful praise, will sacrifice to you. What I have vowed I will make good. I will say, Salvation comes from the Lord." },
+  { book:"2 Kings",       ch:6,  vs:16,  tier:"champion", text:"Don\'t be afraid, the prophet answered. Those who are with us are more than those who are with them." },
+  { book:"Haggai",        ch:2,  vs:9,   tier:"champion", text:"The glory of this present house will be greater than the glory of the former house, says the Lord Almighty. And in this place I will grant peace." },
+  { book:"Obadiah",       ch:1,  vs:4,   tier:"champion", text:"Though you soar like the eagle and make your nest among the stars, from there I will bring you down, declares the Lord." },
 ];
 
+// ══════════════════════════════════════════════════════════════════
+// ── TASK 7: Bible Expansion — Allowed Books by Rank ──────────────
+//
+// NT = always available (all players from day one)
+// OT unlocks progressively by rank:
+//   Scribe  : NT only
+//   Squire  : NT + Psalms + Proverbs
+//   Warrior : + Major Prophets (Isaiah, Jeremiah, Ezekiel, Lamentations)
+//   Knight  : + Wisdom books + Minor Prophets + historical books
+//   Champion: Full Bible — all 66 books
+//
+// drawVerse(tierKey, rank) — picks a random verse from the pool that:
+//   1. Matches the tier (difficulty selected)
+//   2. Is from an allowed book for this rank
+//   3. Is ≤ 280 chars (already guaranteed by pool definition)
+//   Retries up to 50 times before falling back to NT-only squire verse.
+// ══════════════════════════════════════════════════════════════════
+
+const NT_BOOKS = [
+  "Matthew","Mark","Luke","John","Acts",
+  "Romans","1 Corinthians","2 Corinthians","Galatians","Ephesians",
+  "Philippians","Colossians","1 Thessalonians","2 Thessalonians",
+  "1 Timothy","2 Timothy","Titus","Philemon",
+  "Hebrews","James","1 Peter","2 Peter",
+  "1 John","2 John","3 John","Jude","Revelation"
+];
+
+const SQUIRE_BOOKS  = [...NT_BOOKS, "Psalms","Proverbs"];
+const WARRIOR_BOOKS = [...SQUIRE_BOOKS,
+  "Isaiah","Jeremiah","Ezekiel","Lamentations"
+];
+const KNIGHT_BOOKS  = [...WARRIOR_BOOKS,
+  "Job","Ecclesiastes","Song of Solomon",
+  "Daniel","Hosea","Joel","Amos","Obadiah","Jonah",
+  "Micah","Nahum","Habakkuk","Zephaniah","Haggai","Zechariah","Malachi",
+  "Joshua","Judges","Ruth","1 Samuel","2 Samuel",
+  "1 Kings","2 Kings","1 Chronicles","2 Chronicles",
+  "Ezra","Nehemiah","Esther"
+];
+// Champion = all 66 — no restriction (null means no filter)
+const CHAMPION_BOOKS = null;
+
+function getAllowedBooks(rank) {
+  switch (rank) {
+    case "champion": return CHAMPION_BOOKS;
+    case "knight":   return KNIGHT_BOOKS;
+    case "warrior":  return WARRIOR_BOOKS;
+    case "squire":   return SQUIRE_BOOKS;
+    default:         return NT_BOOKS; // Scribe
+  }
+}
+
+// ── Rank-up celebration toast ──────────────────────────────────────
+// Call after score update. Returns unlock message or null.
+function getRankUpMessage(oldScore, newScore) {
+  const thresholds = [
+    { score: 100,  rank: "Squire",   msg: "🗡️ You are now a Squire!\n📖 Psalms & Proverbs unlocked!" },
+    { score: 300,  rank: "Warrior",  msg: "⚔️ You are now a Warrior!\n📖 Major Prophets unlocked!" },
+    { score: 600,  rank: "Knight",   msg: "🛡️ You are now a Knight!\n📖 Wisdom & Minor Prophets unlocked!" },
+    { score: 1000, rank: "Champion", msg: "👑 You are now a Champion!\n📖 Full Bible unlocked!" },
+  ];
+  for (const t of thresholds) {
+    if (oldScore < t.score && newScore >= t.score) return t.msg;
+  }
+  return null;
+}
+
+function getRank(score) {
+  if (score >= 1000) return "champion";
+  if (score >= 600)  return "knight";
+  if (score >= 300)  return "warrior";
+  if (score >= 100)  return "squire";
+  return "scribe";
+}
+
+// ── drawVerse(tierKey, rank) ───────────────────────────────────────
+// tierKey: "squire" | "warrior" | "knight" | "champion"
+// rank:    player\'s current rank string
+function drawVerse(tierKey, rank) {
+  const allowed   = getAllowedBooks(rank);
+  const tierPool  = WHAM_VERSES.filter(v =>
+    v.tier === tierKey &&
+    (allowed === null || allowed.includes(v.book))
+  );
+  // Fallback: if tier pool is empty after book filter, use squire NT pool
+  const pool = tierPool.length > 0
+    ? tierPool
+    : WHAM_VERSES.filter(v => v.tier === "squire" && NT_BOOKS.includes(v.book));
+  return pool[Math.floor(Math.random() * pool.length)];
+}
 const LEVELS = [
-  { pts:5,  name:"Squire",   icon:"🗡️", color:"#1E7A8C", hint:10 },
-  { pts:10, name:"Warrior",  icon:"⚔️", color:"#D4921A", hint:13 },
-  { pts:15, name:"Knight",   icon:"🛡️", color:"#C05A2A", hint:15 },
-  { pts:20, name:"Champion", icon:"👑", color:"#7B2D8B", hint:17 },
+  { pts:5,  tier:"squire",   name:"Squire",   icon:"🗡️", color:"#1E7A8C", hint:10 },
+  { pts:10, tier:"warrior",  name:"Warrior",  icon:"⚔️", color:"#D4921A", hint:13 },
+  { pts:15, tier:"knight",   name:"Knight",   icon:"🛡️", color:"#C05A2A", hint:15 },
+  { pts:20, tier:"champion", name:"Champion", icon:"👑", color:"#7B2D8B", hint:17 },
 ];
 
 
@@ -1093,7 +1386,23 @@ function LevelSelect({ onSelect }) {
 
 // ── SCREEN: Game Play ──
 function GamePlay({ level, onDone }) {
-  const queue       = useRef(shuffle(VERSES).slice(0, 5).map(v => ({ ...v, options: makeOptions(v) })));
+  // ── Build round queue using drawVerse (Task 6+7) ──
+  // level.tier: "squire"|"warrior"|"knight"|"champion"
+  // playerRank: derived from score stored in localStorage
+  const playerScore = parseInt(localStorage.getItem("wham_score") || "0", 10);
+  const playerRank  = getRank(playerScore);
+  const queue = useRef((() => {
+    const drawn = [];
+    const seen  = new Set();
+    let   tries = 0;
+    while (drawn.length < 5 && tries < 200) {
+      tries++;
+      const v = drawVerse(level.tier, playerRank);
+      const key = `${v.book}-${v.ch}-${v.vs}`;
+      if (!seen.has(key)) { seen.add(key); drawn.push({ ...v, options: makeOptions(v) }); }
+    }
+    return drawn;
+  })());
   const [idx, setIdx]           = useState(0);
   const [score, setScore]       = useState(0);
   const [timeLeft, setTime]     = useState(20);
@@ -1108,6 +1417,7 @@ function GamePlay({ level, onDone }) {
   const answeredRef = useRef(false);
   const [streak,      setStreak]      = useState(0);
   const [streakFlash, setStreakFlash] = useState(false);
+  const [rankUpMsg,   setRankUpMsg]   = useState(null); // Task 7 rank-up toast
   const [spRecovery,  setSpRecovery] = useState(false);
   const [whamDrain,   setWhamDrain]  = useState(false);
   const panelRef = useRef(null);
@@ -1138,7 +1448,12 @@ function GamePlay({ level, onDone }) {
     setAnswered(true);
     setChosen(opt);
     const correct = opt === correctAnswer;
-    if (correct) setScore(s => s + level.pts);
+    if (correct) {
+      const newTotal = playerScore + score + level.pts;
+      const msg = getRankUpMessage(playerScore + score, newTotal);
+      setScore(s => s + level.pts);
+      if (msg) setTimeout(() => setRankUpMsg(msg), 900); // show after WHAM SLAM
+    }
     setResults(r => [...r, { correct, ref: verse.ref }]);
     if (correct) {
       const newStreak = streak + 1;
@@ -1146,6 +1461,9 @@ function GamePlay({ level, onDone }) {
       if (newStreak >= 3 && newStreak % 3 === 0) {
         // Every 3rd consecutive correct — streak bonus +5, flash fires BEFORE wham slam
         setScore(s => s + 5);
+        const streakTotal = playerScore + score + level.pts + 5;
+        const streakMsg = getRankUpMessage(playerScore + score + level.pts, streakTotal);
+        if (streakMsg) setTimeout(() => setRankUpMsg(streakMsg), 1500);
         setStreakFlash(true);
       } else {
         setWhamSlam(true);
@@ -1203,6 +1521,39 @@ function GamePlay({ level, onDone }) {
       {spRecovery && <SPRecovery verse={verse} onDone={handleRecoveryDone} />}
       {streakFlash && <StreakFlash onDone={handleStreakFlashDone} />}
       {whamSlam && <WhamSlam message="+5" onDone={handleWhamSlamDone} />}
+
+      {/* ── Task 7: Rank-Up Toast ── */}
+      {rankUpMsg && (
+        <div
+          onClick={() => setRankUpMsg(null)}
+          style={{
+            position:"fixed", inset:0, zIndex:8000,
+            display:"flex", alignItems:"center", justifyContent:"center",
+            background:"rgba(10,5,0,0.75)",
+            animation:"wbFadeIn 0.4s ease",
+          }}
+        >
+          <div style={{
+            background:"linear-gradient(160deg, #0D1F35 0%, #1A3A5C 60%, #1E7A8C 100%)",
+            border:"2px solid #D4921A",
+            borderRadius:20, padding:"32px 28px", maxWidth:320, textAlign:"center",
+            boxShadow:"0 0 40px rgba(212,146,26,0.5)",
+            animation:"wbScaleIn 0.35s cubic-bezier(0.34,1.56,0.64,1)",
+          }}>
+            <div style={{ fontSize:48, marginBottom:12, lineHeight:1 }}>📖</div>
+            {rankUpMsg.split("\n").map((line, i) => (
+              <p key={i} style={{
+                fontFamily:"'Cinzel',serif",
+                fontSize: i===0 ? 22 : 16,
+                fontWeight: i===0 ? 800 : 600,
+                color: i===0 ? "#F5C842" : "#E8D5A0",
+                margin:"6px 0", lineHeight:1.3,
+              }}>{line}</p>
+            ))}
+            <p style={{ fontSize:12, color:"rgba(232,213,160,0.6)", marginTop:16 }}>Tap to continue</p>
+          </div>
+        </div>
+      )}
 
       <div className="wb-content">
         <div style={{ width:"100%", display:"flex", justifyContent:"space-between", alignItems:"center", padding:"12px 0 6px" }}>
@@ -1432,7 +1783,12 @@ export default function SoloGame() {
         <LevelSelect onSelect={(lv) => { setLevel(lv); setScreen("game"); }} />
       )}
       {screen === "game" && level && (
-        <GamePlay level={level} onDone={(result) => { setGameResult(result); setScreen("gameover"); }} />
+        <GamePlay level={level} onDone={(result) => {
+          // Persist cumulative score to localStorage for drawVerse book-unlock logic
+          const prev = parseInt(localStorage.getItem("wham_score") || "0", 10);
+          localStorage.setItem("wham_score", String(prev + result.score));
+          setGameResult(result); setScreen("gameover");
+        }} />
       )}
       {screen === "gameover" && (
         <GameOver
