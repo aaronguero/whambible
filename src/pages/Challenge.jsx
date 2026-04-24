@@ -294,6 +294,7 @@ html,body,#root{height:100%;margin:0;padding:0;overflow:hidden;}
 .c-lv-pts{font-size:20px;font-weight:900;color:#F5C842;margin-left:auto;flex-shrink:0;}
 .c-wait{text-align:center;padding:32px 0;}
 .c-wait-icon{font-size:48px;margin-bottom:12px;animation:pulse 2s ease-in-out infinite;}
+@keyframes rr-lock-drain{from{width:100%}to{width:0%}}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.6;transform:scale(0.92)}}
 .c-pl-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(26,58,92,0.3);border:1px solid rgba(245,200,66,0.1);border-radius:12px;margin-bottom:8px;cursor:pointer;transition:all .15s;}
 .c-pl-row:hover{background:rgba(30,122,140,0.2);border-color:rgba(245,200,66,0.3);}
@@ -2137,35 +2138,60 @@ function Answer({ user, game, role, onDone }) {
 }
 
 // ══════════════════════════════════════════════════════════════
-// ROUND RESULT — verse reveal + scores between rounds
+// ROUND RESULT — verse reveal + read lock + nav
 // ══════════════════════════════════════════════════════════════
-function RoundResult({ correct, pts, game, role, onNext }) {
-  const [revealed, setRevealed] = useState(false);
+const RESULT_LOCK_MS = 3000; // player must read for 3s before Continue unlocks
+
+function RoundResult({ user, profile, game, role, correct, pts, onNext, onOut }) {
+  const [revealed,  setRevealed]  = useState(false);
+  const [readLock,  setReadLock]  = useState(true);   // locked until 3s elapsed
+  const [countdown, setCountdown] = useState(3);      // visual 3→2→1
 
   const myScore  = role === "challenger" ? game?.challenger_score||0 : game?.answerer_score||0;
   const oppScore = role === "challenger" ? game?.answerer_score||0   : game?.challenger_score||0;
   const oppName  = role === "challenger" ? game?.answerer_name       : game?.challenger_name;
 
-  // Verse data from the round just played
-  const verse    = game?.pending_verse;
-  const lv       = LEVELS.find(l => l.pts === (game?.pending_pts || pts)) || LEVELS[0];
-  const ref      = verse ? `${verse.book} ${verse.ch}:${verse.vs}` : null;
+  const verse = game?.pending_verse;
+  const lv    = LEVELS.find(l => l.pts === (game?.pending_pts || pts)) || LEVELS[0];
+  const ref   = verse ? `${verse.book} ${verse.ch}:${verse.vs}` : null;
 
-  // Auto-reveal verse text after a short breath
+  const isGameOver = game?.status === "complete";
+
+  // Verse fade-in
   useEffect(() => {
-    const t = setTimeout(() => setRevealed(true), 420);
+    const t = setTimeout(() => setRevealed(true), 380);
     return () => clearTimeout(t);
+  }, []);
+
+  // Read lock — 3s countdown then unlock Continue
+  useEffect(() => {
+    const tick = setInterval(() => {
+      setCountdown(c => {
+        if (c <= 1) {
+          clearInterval(tick);
+          setReadLock(false);
+          return 0;
+        }
+        return c - 1;
+      });
+    }, 1000);
+    return () => clearInterval(tick);
   }, []);
 
   return (
     <div className="c-screen">
       <Bg char={correct ? CHAR_MP : CHAR_KNIGHT}/>
+      <Hdr user={user} profile={profile} onOut={onOut}/>
       <div className="c-scroll"><div className="c-pad" style={{paddingTop:80}}>
 
         {/* Result badge */}
         <div className="c-card" style={{textAlign:"center",marginBottom:12}}>
           <div className="c-curl"/>
-          <div style={{fontSize:52,marginBottom:8,filter:correct?"drop-shadow(0 0 18px #F5C84288)":"none",transition:"filter 0.4s"}}>
+          <div style={{
+            fontSize:52,marginBottom:8,
+            filter:correct?"drop-shadow(0 0 18px #F5C84288)":"none",
+            transition:"filter 0.4s",
+          }}>
             {correct ? "✅" : "❌"}
           </div>
           <h1 className="c-h1" style={{fontSize:20,marginBottom:4}}>
@@ -2176,26 +2202,24 @@ function RoundResult({ correct, pts, game, role, onNext }) {
           </p>
         </div>
 
-        {/* Verse reveal — the learning moment */}
+        {/* Verse reveal — THE LEARNING MOMENT */}
         {verse && (
           <div style={{
             opacity: revealed ? 1 : 0,
-            transform: revealed ? "translateY(0)" : "translateY(12px)",
-            transition: "opacity 0.5s ease, transform 0.5s ease",
+            transform: revealed ? "translateY(0)" : "translateY(14px)",
+            transition: "opacity 0.55s ease, transform 0.55s ease",
           }}>
             <div className="c-card" style={{marginBottom:12}}>
               <div className="c-curl"/>
               <div style={{fontSize:10,color:lv.color,letterSpacing:2,marginBottom:10,textAlign:"center"}}>
                 {lv.icon} {lv.name} · {pts} pts
               </div>
-              {/* Verse text */}
               <div style={{
-                fontSize:15,fontStyle:"italic",color:C.offWhite,lineHeight:1.65,
+                fontSize:15,fontStyle:"italic",color:C.offWhite,lineHeight:1.7,
                 textAlign:"center",marginBottom:14,padding:"0 4px",
               }}>
                 "{verse.text}"
               </div>
-              {/* Reference — highlighted */}
               <div style={{
                 textAlign:"center",padding:"10px 16px",
                 background:`${lv.color}22`,border:`1px solid ${lv.color}55`,
@@ -2211,14 +2235,14 @@ function RoundResult({ correct, pts, game, role, onNext }) {
         )}
 
         {/* Score board */}
-        <div className="c-card" style={{marginBottom:14}}>
+        <div className="c-card" style={{marginBottom:16}}>
           <div className="c-curl"/>
           <div style={{display:"flex",justifyContent:"space-around",padding:"4px 0"}}>
             <div className="c-score-box">
               <div className="c-score-val" style={{color:C.goldLight}}>{myScore}</div>
               <div className="c-score-lbl">You</div>
             </div>
-            <div style={{alignSelf:"center",fontSize:10,color:C.goldDim,letterSpacing:2}}>
+            <div style={{alignSelf:"center",fontSize:10,color:C.goldDim,letterSpacing:2,textAlign:"center"}}>
               R{(game?.round||0)}/{TOTAL_ROUNDS}
             </div>
             <div className="c-score-box">
@@ -2228,10 +2252,54 @@ function RoundResult({ correct, pts, game, role, onNext }) {
           </div>
         </div>
 
-        <button className="c-btn-a" onClick={onNext} style={{marginBottom:8}}>
-          {game?.status === "complete" ? "See Final Results ▶" : "Continue ▶"}
+        {/* ── ACTION BUTTONS ── */}
+
+        {/* Primary: Continue / Final Results — locked during read window */}
+        <button
+          className="c-btn-a"
+          onClick={readLock ? undefined : onNext}
+          style={{
+            marginBottom:10,
+            opacity: readLock ? 0.45 : 1,
+            cursor:  readLock ? "not-allowed" : "pointer",
+            transition:"opacity 0.4s",
+            position:"relative",overflow:"hidden",
+          }}
+        >
+          {readLock
+            ? `Read the verse… (${countdown})`
+            : isGameOver ? "⚔️ See Final Results" : "Continue ▶"}
+          {/* Progress bar that drains while locked */}
+          {readLock && (
+            <div style={{
+              position:"absolute",bottom:0,left:0,
+              height:3,
+              background:`${C.teal}`,
+              animation:`rr-lock-drain ${RESULT_LOCK_MS}ms linear forwards`,
+              borderRadius:"0 0 12px 12px",
+            }}/>
+          )}
         </button>
-        <div style={{height:20}}/>
+
+        {/* Secondary: Back to Challenge lobby */}
+        <button
+          className="c-btn-b"
+          onClick={()=>window.location.href="/challenge"}
+          style={{marginBottom:10}}
+        >
+          ← Back to Arena
+        </button>
+
+        {/* Tertiary: Play Solo */}
+        <button
+          className="c-btn-c"
+          onClick={()=>window.location.href="/"}
+          style={{marginBottom:4}}
+        >
+          🗡️ Play Solo
+        </button>
+
+        <div style={{height:24}}/>
       </div></div>
     </div>
   );
@@ -2411,7 +2479,7 @@ export default function Challenge() {
       {screen==="level"   && <SelectLevel user={user} profile={profile} game={game} role={role} onPick={onLevelPicked}/>}
       {screen==="waiting" && <Waiting user={user} game={game} role={role} onUpdate={onWaitingUpdate}/>}
       {screen==="answer"  && <Answer user={user} game={game} role={role} onDone={onAnswered}/>}
-      {screen==="result"  && <RoundResult correct={lastResult?.correct} pts={lastResult?.pts} game={game} role={role} onNext={onResultNext}/>}
+      {screen==="result"  && <RoundResult user={user} profile={profile} game={game} role={role} correct={lastResult?.correct} pts={lastResult?.pts} onNext={onResultNext} onOut={onOut}/>}
       {screen==="gameover"&& <GameOver user={user} game={game} role={role} onHome={()=>setScreen("lobby")}/>}
     </>
   );
