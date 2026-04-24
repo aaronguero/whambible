@@ -886,8 +886,8 @@ function MyScoresOverlay({ user, profile, onClose }) {
           games.map((g,i)=>{
             const email  = user?.email||"";
             const isChallenger = g.challenger_id===email;
-            const myScore  = isChallenger ? (g.my_score||0) : (g.opp_score||0);
-            const oppScore = isChallenger ? (g.opp_score||0) : (g.my_score||0);
+            const myScore  = isChallenger ? (g.challenger_score||0) : (g.answerer_score||0);
+            const oppScore = isChallenger ? (g.answerer_score||0)   : (g.challenger_score||0);
             const oppName  = isChallenger ? (g.answerer_name||g.answerer_id||"Opponent") : (g.challenger_name||g.challenger_id||"Opponent");
             const won      = myScore > oppScore;
             return (
@@ -1636,6 +1636,16 @@ function Auth({ onIn }) {
               <label className="c-lbl">Phone (optional · for challenge alerts)</label>
               <input className="c-inp" type="tel" autoComplete="tel" placeholder="+1 555 000 0000"
                 value={phone} onChange={e=>{setPhone(e.target.value);setErr("");}} disabled={busy}/>
+              {phone.trim() && (
+                <div style={{
+                  fontSize:10,color:"rgba(245,200,66,0.45)",lineHeight:1.7,
+                  letterSpacing:0.3,marginBottom:4,padding:"8px 10px",
+                  background:"rgba(212,146,26,0.06)",borderRadius:8,
+                  border:"1px solid rgba(212,146,26,0.15)",
+                }}>
+                  By providing your phone number you consent to receive WhamBible game alert text messages. Msg frequency varies. Msg &amp; data rates may apply. Reply <strong style={{color:"rgba(245,200,66,0.7)"}}>STOP</strong> to cancel, <strong style={{color:"rgba(245,200,66,0.7)"}}>HELP</strong> for help.
+                </div>
+              )}
               {err ? <div className="c-err">⚠️ {err}</div> : <div style={{height:18}}/>}
               <button className="c-btn-a" type="submit" disabled={busy}>{busy?"Creating…":"🕊️ Create Account"}</button>
             </form>
