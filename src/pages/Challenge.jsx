@@ -2176,8 +2176,10 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
         const raw = await B44.list("PlayerProfile");
         const all = Array.isArray(raw) ? raw : (raw?.records || []);
         const lq  = q.toLowerCase();
+        const myEmail = user?.email || profile?.email || "";
+        const myId    = profile?.id || "";
         const res = all.filter(p =>
-          p.email !== (user?.email||"") && p.id !== profile?.id &&
+          p.email !== myEmail && (myId ? p.id !== myId : true) &&
           ((p.display_name||"").toLowerCase().includes(lq) ||
            (p.email||"").toLowerCase().includes(lq))
         );
@@ -2223,12 +2225,13 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
   }
 
   async function loadPlayers() {
-    if (!profile) return;
     setLoading(true);
     try {
       const raw    = await B44.list("PlayerProfile");
       const all    = Array.isArray(raw) ? raw : (raw?.records || []);
-      const others = all.filter(p => p.email !== user?.email && p.id !== profile?.id);
+      const myEmail = user?.email || profile?.email || "";
+      const myId    = profile?.id || "";
+      const others = all.filter(p => p.email !== myEmail && (myId ? p.id !== myId : true));
       setAllPlayers(others);
       loadedRef.current.new = true;
     } catch(e) { console.warn("[Lobby] loadPlayers:", e.message); }
@@ -2501,8 +2504,8 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
             {/* Search bar */}
             <div style={{position:"relative",marginBottom:10}}>
               <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",fontSize:13,opacity:0.45}}>🔍</span>
-              <input type="text" autoCapitalize="none" autoCorrect="off" spellCheck="false" value={search}
-                onChange={e=>setSearch(e.target.value)}
+              <input type="text" autoCapitalize="none" autoCorrect="off" spellCheck="false" inputMode="search" value={search}
+                onChange={e=>setSearch(e.target.value.toLowerCase())}
                 placeholder="Search warriors by name…"
                 style={{
                   width:"100%", boxSizing:"border-box",
