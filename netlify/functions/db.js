@@ -4,21 +4,24 @@
 // The token never touches the browser.
 //
 // SECRETS (Netlify env vars):
-//   BASE44_SERVICE_TOKEN — Base44 service token
+//   BASE44_SERVICE_TOKEN — Base44 service token (JWT)
 //   BASE44_APP_ID        — App ID (69df9a909b33058a5ce47831)
 //
 // ENDPOINT: /.netlify/functions/db
 // METHOD:   POST
 // BODY:     { action, entity, id, data, query }
 //   action: "list" | "get" | "create" | "update"
+//
+// FIXED 2026-04-25:
+//   - BASE URL: app.base44.com (was api.base44.com — 404'd)
+//   - AUTH: Authorization: Bearer (was x-api-key — 403'd)
 // ============================================================
 
 const TOKEN  = process.env.BASE44_SERVICE_TOKEN;
 const APP_ID = process.env.BASE44_APP_ID || "69df9a909b33058a5ce47831";
-const BASE   = `https://api.base44.com/api/apps/${APP_ID}/entities`;
+const BASE   = `https://app.base44.com/api/apps/${APP_ID}/entities`;
 
 exports.handler = async (event) => {
-  const origin = event.headers.origin || event.headers.Origin || "https://whambible.com";
   const cors = {
     "Access-Control-Allow-Origin":  "*",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
@@ -45,9 +48,10 @@ exports.handler = async (event) => {
     return { statusCode: 400, headers: cors, body: "Missing action or entity" };
   }
 
+  // Auth header: Authorization: Bearer <token>
   const headers = {
-    "Content-Type":  "application/json",
-    "x-api-key": TOKEN,
+    "Content-Type":   "application/json",
+    "Authorization":  `Bearer ${TOKEN}`,
   };
 
   let url, method, fetchBody;
@@ -55,8 +59,7 @@ exports.handler = async (event) => {
   try {
     switch (action) {
       case "list": {
-        const params = query ? `?json_query=${encodeURIComponent(JSON.stringify(query))}` : "";
-        url    = `${BASE}/${entity}${params}`;
+        url    = `${BASE}/${entity}`;
         method = "GET";
         break;
       }
@@ -88,7 +91,7 @@ exports.handler = async (event) => {
     const result = await res.json();
 
     if (!res.ok) {
-      console.error(`[db] B44 ${action} ${entity} ${res.status}:`, result);
+      console.error(`[db] B44 ${action} ${entity} ${res.status}:`, JSON.stringify(result).slice(0,200));
       return { statusCode: res.status, headers: cors, body: JSON.stringify({ error: result }) };
     }
 

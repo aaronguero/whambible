@@ -35,7 +35,7 @@ const WHAM_AUDIO    = "https://media.base44.com/videos/public/69c40c6701d9dfdb1d
 // On production (whambible.com): route through Netlify function (token stays server-side)
 const IS_PREVIEW = window.location.hostname.includes("base44.app");
 const DB_URL     = "/.netlify/functions/db";
-const B44_API    = "https://api.base44.com/api/apps/69df9a909b33058a5ce47831/entities";
+const B44_API    = "https://app.base44.com/api/apps/69df9a909b33058a5ce47831/entities";
 // Service token — read-only, non-secret, same token in Netlify env
 // Needed for direct API calls on the Base44 preview domain
 // Token injected at build time — never hardcode here (Memory #29)
@@ -48,7 +48,7 @@ const B44 = {
       let opts = {
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": B44_TOKEN,
+          "Authorization": `Bearer ${B44_TOKEN}`,
         }
       };
       if (payload.action === "list") {
