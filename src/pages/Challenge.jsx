@@ -38,7 +38,8 @@ const DB_URL     = "/.netlify/functions/db";
 const B44_API    = "https://api.base44.com/api/apps/69df9a909b33058a5ce47831/entities";
 // Service token — read-only, non-secret, same token in Netlify env
 // Needed for direct API calls on the Base44 preview domain
-const B44_TOKEN  = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0OThlMDFmMi05NzhkLTQ1NzAtOTY5Mi1hZjY2ODc0ZWZhYzQiLCJjbGllbnRfaWQiOiI0OThlMDFmMi05NzhkLTQ1NzAtOTY5Mi1hZjY2ODc0ZWZhYzQiLCJhcHBfaWQiOiI2OWRmOWE5MDliMzMwNThhNWNlNDc4MzEiLCJhdWQiOiJiYXNlNDRfYXBpIiwic2NvcGUiOiJhcHAuYWNjZXNzIiwiZXhwIjoxNzc3MDAzOTYxLCJpYXQiOjE3NzcwMDAzNjF9.SDULfBA25WYrJJNdOM3oa3M5mf8vyMieFqXL54H5VPU";
+// Token injected at build time — never hardcode here (Memory #29)
+const B44_TOKEN  = import.meta.env.VITE_B44_TOKEN || "";
 
 const B44 = {
   async _call(payload) {
