@@ -2017,13 +2017,16 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
   async function loadPlayers() {
     setLoading(true);
     try {
-      const all = await B44.list("PlayerProfile");
+      const raw = await B44.list("PlayerProfile");
+      const all = Array.isArray(raw) ? raw : (raw?.records || []);
       setPlayers(all.filter(p => {
         const myEmail = user?.email;
         const myId    = profile?.id;
         return p.email !== myEmail && p.id !== myId;
       }));
-    } catch {}
+    } catch(e) {
+      console.warn("[Lobby] loadPlayers failed:", e.message);
+    }
     setLoading(false);
   }
 

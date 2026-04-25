@@ -15,7 +15,7 @@
 
 const TOKEN  = process.env.BASE44_SERVICE_TOKEN;
 const APP_ID = process.env.BASE44_APP_ID || "69df9a909b33058a5ce47831";
-const BASE   = `https://app.base44.com/api/apps/${APP_ID}/entities`;
+const BASE   = `https://api.base44.com/api/apps/${APP_ID}/entities`;
 
 exports.handler = async (event) => {
   const origin = event.headers.origin || event.headers.Origin || "https://whambible.com";
@@ -47,7 +47,7 @@ exports.handler = async (event) => {
 
   const headers = {
     "Content-Type":  "application/json",
-    "Authorization": `Bearer ${TOKEN}`,
+    "x-api-key": TOKEN,
   };
 
   let url, method, fetchBody;
