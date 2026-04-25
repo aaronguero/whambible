@@ -200,7 +200,7 @@ function rankBadge(score) {
   if (score >= 1000) return { icon:"👑", label:"Champion", color:"#7B2D8B" };
   if (score >= 600)  return { icon:"🛡️", label:"Knight",   color:"#C05A2A" };
   if (score >= 300)  return { icon:"⚔️", label:"Warrior",  color:"#D4921A" };
-  if (score >= 1)    return { icon:"🗡️", label:"Squire",   color:"#1E7A8C" };
+  if (score >= 100)  return { icon:"🗡️", label:"Squire",   color:"#1E7A8C" };
   return                    { icon:"📜", label:"Scribe",   color:"#64748b" };
 }
 
@@ -651,8 +651,8 @@ function ProfileOverlay({ user, profile, rank, onClose, onSmsToggle }) {
   const init    = name[0].toUpperCase();
   const r       = rank || { icon:"📜", label:"Scribe", color:"#64748b" };
   const RANKS   = [
-    {label:"Scribe",   min:0,    max:1,    color:"#64748b"},
-    {label:"Squire",   min:1,    max:300,  color:"#1E7A8C"},
+    {label:"Scribe",   min:0,    max:100,  color:"#64748b"},
+    {label:"Squire",   min:100,  max:300,  color:"#1E7A8C"},
     {label:"Warrior",  min:300,  max:600,  color:"#D4921A"},
     {label:"Knight",   min:600,  max:1000, color:"#C05A2A"},
     {label:"Champion", min:1000, max:1000, color:"#7B2D8B"},
@@ -1183,7 +1183,7 @@ const TUTORIAL_STEPS = [
   {
     icon:"🏆",
     title:"Rank Up",
-    body:"Every correct answer earns points. Pick any difficulty — any rank. Scribe (0 pts) → Squire (1+) → Warrior (300+) → Knight (600+) → Champion (1000+). Know the Word. Win the battle.",
+    body:"Every correct answer earns points. Pick any difficulty — any rank. Scribe (0) → Squire (100) → Warrior (300) → Knight (600) → Champion (1000+). Know the Word. Win the battle.",
   },
 ];
 
@@ -1378,8 +1378,8 @@ function ProfileModal({ user, profile, rank, onClose }) {
 
   // Next rank threshold + progress
   const RANKS = [
-    { label:"Scribe",   min:0,    max:1,    color:"#64748b" },
-    { label:"Squire",   min:1,    max:300,  color:"#1E7A8C" },
+    { label:"Scribe",   min:0,    max:100,  color:"#64748b" },
+    { label:"Squire",   min:100,  max:300,  color:"#1E7A8C" },
     { label:"Warrior",  min:300,  max:600,  color:"#D4921A" },
     { label:"Knight",   min:600,  max:1000, color:"#C05A2A" },
     { label:"Champion", min:1000, max:1000, color:"#7B2D8B" },
@@ -1824,15 +1824,12 @@ function Auth({ onIn }) {
         phone: phone.trim() || "", sms_enabled: !!(phone.trim() && smsConsent),
         total_score: 0, games_played: 0, games_won: 0,
       };
-      // AWAIT B44 profile creation so .id is available immediately (fixes self-filter bug)
-      let b44Profile = null;
-      try {
-        b44Profile = await B44.create("PlayerProfile", localProfile);
-      } catch (be) {
-        console.warn("[B44] Profile create failed, using local stub:", be.message);
-      }
-      // Use real profile with .id if we got it, fallback to local stub
-      onIn(user, b44Profile || localProfile);
+      // Let user in immediately
+      onIn(user, localProfile);
+      // Sync to B44 in background — 403 or failure won't block the user
+      B44.create("PlayerProfile", localProfile).catch(e =>
+        console.warn("[B44] Profile create failed (will retry later):", e.message)
+      );
     } catch (e2) {
       // Only show error if LOCAL auth failed (e.g. account already exists)
       setErr(parseError(e2));
@@ -2234,13 +2231,7 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
       const all    = Array.isArray(raw) ? raw : (raw?.records || []);
       const myEmail = user?.email || profile?.email || "";
       const myId    = profile?.id || "";
-      const myName  = profile?.display_name || "";
-      // Triple-filter: by email (primary), by B44 id (if available), by display_name (safety net)
-      const others = all.filter(p =>
-        p.email !== myEmail &&
-        (myId   ? p.id           !== myId   : true) &&
-        (myName ? p.display_name !== myName : true)
-      );
+      const others = all.filter(p => p.email !== myEmail && (myId ? p.id !== myId : true));
       setAllPlayers(others);
       loadedRef.current.new = true;
     } catch(e) { console.warn("[Lobby] loadPlayers:", e.message); }
@@ -2270,16 +2261,6 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
   }
 
   function challenge(opponent) {
-    // Self-challenge guard — should never happen but belt-and-suspenders
-    const myEmail = user?.email || profile?.email || "";
-    const myId    = profile?.id || "";
-    if (
-      (myEmail && opponent.email === myEmail) ||
-      (myId    && opponent.id    === myId)
-    ) {
-      console.warn("[Lobby] Blocked self-challenge attempt");
-      return;
-    }
     // Store opponent locally — SelectLevel → VersePick will create the session
     onChallenge(null, "challenger", opponent);
   }
@@ -3828,7 +3809,6 @@ function GameOver({ user, profile, game, role, onHome, onOut, onSmsToggle }) {
 function SelectLevel({ user, profile, game, role, pendingOpponent, onPick, onOut, onSmsToggle }) {
   // oppName: for new challenge = pendingOpponent.display_name; for round 2+ = game field
   const oppName = pendingOpponent?.display_name || (role === "challenger" ? game?.answerer_name : game?.challenger_name);
-  const [loading, setLoading] = React.useState(false);
 
   function pickLevel(lv) {
     // Just bubble up the level — VersePick will finalize creation/update
@@ -4738,5 +4718,3 @@ export default function Challenge() {
     </>
   );
 }
-// cache-bust 1777146570
-
