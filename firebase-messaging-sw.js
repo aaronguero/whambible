@@ -1,29 +1,15 @@
-importScripts('https://www.gstatic.com/firebasejs/10.11.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.11.0/firebase-messaging-compat.js');
-
-firebase.initializeApp({
-  apiKey:            "%%FIREBASE_API_KEY%%",
-  authDomain:        "wham-bible.firebaseapp.com",
-  projectId:         "wham-bible",
-  storageBucket:     "wham-bible.firebasestorage.app",
-  messagingSenderId: "207184555743",
-  appId:             "1:207184555743:web:0bd4b8350701d02f79836a"
-});
-
-const messaging = firebase.messaging();
-
-messaging.onBackgroundMessage(payload => {
-  const n = payload.notification || {};
-  self.registration.showNotification(n.title || 'WhamBible', {
-    body:  n.body  || '',
-    icon:  '/icon-192.png',
-    badge: '/icon-192.png',
-    data:  payload.data || {}
-  });
-});
-
-self.addEventListener('notificationclick', e => {
-  e.notification.close();
-  const url = e.notification.data?.url || '/';
-  e.waitUntil(clients.openWindow(url));
+// ──────────────────────────────────────────────────────────────
+// SELF-DESTRUCT: This service worker immediately unregisters
+// itself and all other workers. The old Firebase SW was causing
+// browsers to serve stale cached assets after deploys.
+// ──────────────────────────────────────────────────────────────
+self.addEventListener('install', () => self.skipWaiting());
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    self.registration.unregister().then(() => {
+      return self.clients.matchAll({ type: 'window' });
+    }).then(clients => {
+      clients.forEach(c => c.navigate && c.navigate(c.url));
+    })
+  );
 });

@@ -6,6 +6,14 @@
     <meta name="theme-color" content="#0D1F35" />
     <title>WhamBible</title>
     <link rel="manifest" href="/manifest.json" />
+    <!-- Kill any stale service workers (old Firebase SW was caching assets) -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(regs => {
+          regs.forEach(r => r.unregister());
+        });
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
