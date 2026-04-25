@@ -2051,7 +2051,7 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
   const [games,      setGames]      = useState([]);      // visible 10
   const [loading,    setLoading]    = useState(false);
   const [panelSnap,  setPanelSnap]  = useState("up");    // "up" | "down"
-  const [panelRaw,   setPanelRaw]   = useState(0.38);    // fraction from top
+  const [panelRaw,   setPanelRaw]   = useState(0.52);    // fraction from top
   const [panelDrag,  setPanelDrag]  = useState(false);
   const [panelBgSc,  setPanelBgSc]  = useState(1.0);
   const panelDragRef  = useRef(null);
@@ -2060,9 +2060,9 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
   const loadedRef     = useRef({ new: false, active: false });
 
   // ── Panel constants (per screen handling standards) ──
-  const SNAP_UP   = 0.38;   // expanded  — below profile card
-  const SNAP_DOWN = 0.76;   // peeked    — handle + title only
-  const LIM_TOP   = 0.30;   // hard ceiling
+  const SNAP_UP   = 0.52;   // expanded  — character visible above panel
+  const SNAP_DOWN = 0.82;   // peeked    — tabs row + pill only
+  const LIM_TOP   = 0.34;   // hard ceiling
   const LIM_BOT   = 0.86;   // hard floor
   const RUBBER    = 0.28;
 
@@ -2073,7 +2073,7 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
     return panelRaw;
   })();
   const panelTopPx  = Math.round(panelDisplay * panelWinH);
-  const panelMaxH   = Math.round(0.62 * panelWinH);
+  const panelMaxH   = Math.round(0.58 * panelWinH);
   const panelH      = Math.min(panelWinH - panelTopPx - 16, panelMaxH);
 
   // Margin squeeze
@@ -2263,43 +2263,47 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
   // ── Slot row styles ──
   const sRow = {
     display:"flex", alignItems:"center", gap:10,
-    height:52, padding:"0 10px",
-    borderRadius:10,
-    border:"1px solid rgba(245,200,66,0.12)",
-    background:"rgba(26,58,92,0.22)",
-    marginBottom:6,
+    minHeight:56, padding:"8px 12px",
+    borderRadius:12,
+    border:"1px solid rgba(245,200,66,0.10)",
+    background:"rgba(13,31,53,0.28)",
+    marginBottom:7,
     boxSizing:"border-box",
     transition:"background 0.15s",
   };
   const sRowFilled = {
     ...sRow,
-    background:"rgba(26,58,92,0.40)",
-    border:"1px solid rgba(245,200,66,0.22)",
+    background:"rgba(26,58,92,0.50)",
+    border:"1px solid rgba(245,200,66,0.24)",
   };
   const btnBattle = {
     flexShrink:0,
-    padding:"5px 10px",
-    borderRadius:8,
-    border:"1.5px solid rgba(245,200,66,0.5)",
-    background:"rgba(212,146,26,0.18)",
+    padding:"8px 14px",
+    borderRadius:10,
+    border:"1.5px solid rgba(245,200,66,0.55)",
+    background:"linear-gradient(135deg,rgba(212,146,26,0.30),rgba(30,122,140,0.18))",
     color:"#F5C842",
     fontFamily:"'Cinzel',serif",
-    fontSize:10,
+    fontSize:11,
     fontWeight:700,
     cursor:"pointer",
-    letterSpacing:0.8,
+    letterSpacing:0.6,
+    minWidth:72,
+    textAlign:"center",
   };
   const btnDecline = {
     flexShrink:0,
-    padding:"5px 8px",
-    borderRadius:8,
-    border:"1px solid rgba(192,90,42,0.4)",
-    background:"rgba(192,90,42,0.12)",
-    color:"rgba(245,150,100,0.85)",
+    padding:"8px 12px",
+    borderRadius:10,
+    border:"1px solid rgba(192,90,42,0.45)",
+    background:"rgba(192,90,42,0.14)",
+    color:"rgba(245,160,110,0.90)",
     fontFamily:"'Cinzel',serif",
-    fontSize:10,
+    fontSize:11,
     fontWeight:700,
     cursor:"pointer",
+    minWidth:44,
+    textAlign:"center",
   };
 
   return (
@@ -2307,67 +2311,43 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
       <Bg char={CHAR_KNIGHT} bgScale={panelBgSc}/>
       <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle} onChallenge={challenge}/>
 
-      {/* ── Profile card (above panel) ── */}
+      {/* ── Profile card — fixed below Hdr ── */}
       <div style={{
-        position:"fixed", top:56, left:16, right:16,
-        zIndex:4,
-        background:"rgba(13,31,53,0.88)",
+        position:"fixed", top:56, left:14, right:14,
+        zIndex:6,
+        background:"rgba(13,31,53,0.92)",
         borderRadius:14,
-        border:"1px solid rgba(245,200,66,0.15)",
-        padding:"12px 16px",
-        display:"flex", alignItems:"center", gap:14,
-        backdropFilter:"blur(8px)",
+        border:"1px solid rgba(245,200,66,0.18)",
+        padding:"10px 14px",
+        display:"flex", alignItems:"center", gap:12,
+        backdropFilter:"blur(10px)",
       }}>
-        <div style={{width:40,height:40,borderRadius:"50%",background:`linear-gradient(135deg,${C.teal},${C.gold})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:900,color:"#fff",flexShrink:0}}>
+        {/* Avatar */}
+        <div style={{
+          width:38,height:38,borderRadius:"50%",flexShrink:0,
+          background:`linear-gradient(135deg,${C.teal},${C.gold})`,
+          display:"flex",alignItems:"center",justifyContent:"center",
+          fontSize:17,fontWeight:900,color:"#fff",
+        }}>
           {(myName||"W")[0].toUpperCase()}
         </div>
+        {/* Name + rank */}
         <div style={{flex:1,minWidth:0}}>
-          <div style={{fontSize:14,fontWeight:700,color:C.offWhite,fontFamily:"'Cinzel',serif",letterSpacing:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{myName}</div>
-          <div style={{fontSize:10,color:rank.color,letterSpacing:1.5}}>{rank.label} · {profile?.total_score||0} pts</div>
+          <div style={{fontSize:13,fontWeight:700,color:C.offWhite,fontFamily:"'Cinzel',serif",letterSpacing:0.8,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{myName}</div>
+          <div style={{fontSize:9,color:rank.color,letterSpacing:1.5,marginTop:1}}>{rank.label} · {profile?.total_score||0} pts</div>
         </div>
-        <div style={{display:"flex",gap:16,flexShrink:0}}>
+        {/* Stats */}
+        <div style={{display:"flex",gap:18,flexShrink:0}}>
           {[["Games",profile?.games_played||0],["Wins",profile?.games_won||0]].map(([l,v])=>(
             <div key={l} style={{textAlign:"center"}}>
-              <div style={{fontSize:16,fontWeight:900,color:C.goldLight}}>{v}</div>
-              <div style={{fontSize:8,color:C.goldDim,letterSpacing:1.5}}>{l}</div>
+              <div style={{fontSize:15,fontWeight:900,color:C.goldLight,lineHeight:1}}>{v}</div>
+              <div style={{fontSize:8,color:C.goldDim,letterSpacing:1.5,marginTop:2}}>{l.toUpperCase()}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* ── Tab toggle + refresh (above panel, below profile) ── */}
-      <div style={{
-        position:"fixed",
-        top: panelTopPx - 46,
-        left: panelMargin + 4,
-        right: panelMargin + 4,
-        zIndex:8,
-        display:"flex", gap:6, alignItems:"center",
-      }}>
-        {[["new","⚔️ Challenge"],["active","📬 My Battles"]].map(([t,l])=>(
-          <button key={t} type="button" onClick={()=>setTab(t)}
-            style={{flex:1,padding:"8px 0",borderRadius:10,
-              border:`1.5px solid ${tab===t?"rgba(245,200,66,0.5)":"rgba(245,200,66,0.12)"}`,
-              background:tab===t?"rgba(212,146,26,0.18)":"rgba(13,31,53,0.70)",
-              color:tab===t?"#F5C842":"rgba(245,200,66,0.45)",
-              fontFamily:"'Cinzel',serif",fontSize:11,fontWeight:700,cursor:"pointer",letterSpacing:0.8,
-              backdropFilter:"blur(6px)",
-            }}>
-            {l}
-          </button>
-        ))}
-        <button type="button" onClick={refresh} disabled={loading}
-          style={{flexShrink:0,width:34,height:34,borderRadius:10,
-            border:"1.5px solid rgba(245,200,66,0.2)",background:"rgba(13,31,53,0.70)",
-            color:loading?"rgba(245,200,66,0.25)":"rgba(245,200,66,0.7)",
-            fontSize:15,cursor:loading?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",
-            backdropFilter:"blur(6px)",
-          }}>
-          {loading ? "…" : "↺"}
-        </button>
-      </div>
-
-      {/* ── Floating panel (per screen handling standards) ── */}
+      {/* ── Floating panel — snaps below profile, shows character behind ── */}
       <div style={{
         position:"fixed",
         left: panelMargin, right: panelMargin,
@@ -2376,38 +2356,93 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
         zIndex:10,
         borderRadius:18,
         overflow:"hidden",
-        boxShadow:"0 8px 40px rgba(0,0,0,0.55), 0 0 0 1px rgba(245,200,66,0.18)",
+        boxShadow:"0 8px 40px rgba(0,0,0,0.60), 0 0 0 1px rgba(245,200,66,0.20)",
         display:"flex", flexDirection:"column",
         transition: panelTransition,
       }}>
 
-        {/* Handle bar */}
+        {/* ── Handle bar: drag pill + tabs + chevron all in one row ── */}
         <div
           onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
           onMouseDown={onMouseDown}
           style={{
             flexShrink:0,
-            display:"flex", alignItems:"center", justifyContent:"center",
-            position:"relative",
-            paddingTop:10, paddingBottom:8,
-            background:"rgba(13,31,53,0.80)",
-            borderBottom:"1px solid rgba(245,200,66,0.15)",
+            background:"rgba(10,24,44,0.96)",
+            borderBottom:"1px solid rgba(245,200,66,0.18)",
             cursor:"grab", userSelect:"none", touchAction:"none",
           }}>
-          <div style={{width:40,height:4,borderRadius:2,background:"rgba(245,200,66,0.45)"}}/>
-          <div style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:11,color:C.goldDim,letterSpacing:2,fontFamily:"'Cinzel',serif",fontWeight:700}}>
-            {tab === "new" ? "CHOOSE YOUR OPPONENT" : "ACTIVE BATTLES"}
+
+          {/* Drag pill row */}
+          <div style={{display:"flex",justifyContent:"center",paddingTop:8,paddingBottom:4}}>
+            <div style={{width:36,height:4,borderRadius:2,background:"rgba(245,200,66,0.40)"}}/>
           </div>
-          <button type="button" onClick={e=>{ e.stopPropagation(); toggleSnap(); }}
-            onMouseDown={e=>e.stopPropagation()} onTouchStart={e=>e.stopPropagation()}
-            style={{
-              position:"absolute", right:12, top:"50%", transform:"translateY(-50%)",
-              background:"rgba(212,146,26,0.18)", border:"1px solid rgba(245,200,66,0.35)",
-              borderRadius:8, color:"#F5C842", fontSize:14, width:30, height:26,
-              display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer",
-            }}>
-            {panelSnap === "down" ? "▲" : "▼"}
-          </button>
+
+          {/* Tab row */}
+          <div style={{display:"flex",gap:6,padding:"0 10px 10px",alignItems:"center"}}>
+            {/* ⚔️ Challenge tab */}
+            <button type="button"
+              onMouseDown={e=>e.stopPropagation()} onTouchStart={e=>e.stopPropagation()}
+              onClick={()=>setTab("new")}
+              style={{
+                flex:1, padding:"9px 0",
+                borderRadius:10,
+                border:`1.5px solid ${tab==="new"?"rgba(245,200,66,0.55)":"rgba(245,200,66,0.14)"}`,
+                background:tab==="new"
+                  ?"linear-gradient(135deg,rgba(212,146,26,0.28),rgba(30,122,140,0.18))"
+                  :"rgba(13,31,53,0.60)",
+                color:tab==="new"?"#F5C842":"rgba(245,200,66,0.42)",
+                fontFamily:"'Cinzel',serif",fontSize:11,fontWeight:700,
+                letterSpacing:0.8,cursor:"pointer",
+                transition:"all 0.18s",
+              }}>
+              ⚔️ Challenge
+            </button>
+            {/* 📬 My Battles tab */}
+            <button type="button"
+              onMouseDown={e=>e.stopPropagation()} onTouchStart={e=>e.stopPropagation()}
+              onClick={()=>setTab("active")}
+              style={{
+                flex:1, padding:"9px 0",
+                borderRadius:10,
+                border:`1.5px solid ${tab==="active"?"rgba(245,200,66,0.55)":"rgba(245,200,66,0.14)"}`,
+                background:tab==="active"
+                  ?"linear-gradient(135deg,rgba(212,146,26,0.28),rgba(30,122,140,0.18))"
+                  :"rgba(13,31,53,0.60)",
+                color:tab==="active"?"#F5C842":"rgba(245,200,66,0.42)",
+                fontFamily:"'Cinzel',serif",fontSize:11,fontWeight:700,
+                letterSpacing:0.8,cursor:"pointer",
+                transition:"all 0.18s",
+              }}>
+              📬 My Battles
+            </button>
+            {/* Refresh */}
+            <button type="button"
+              onMouseDown={e=>e.stopPropagation()} onTouchStart={e=>e.stopPropagation()}
+              onClick={refresh} disabled={loading}
+              style={{
+                flexShrink:0,width:36,height:36,borderRadius:10,
+                border:"1.5px solid rgba(245,200,66,0.20)",
+                background:"rgba(13,31,53,0.70)",
+                color:loading?"rgba(245,200,66,0.22)":"rgba(245,200,66,0.65)",
+                fontSize:16,cursor:loading?"default":"pointer",
+                display:"flex",alignItems:"center",justifyContent:"center",
+              }}>
+              {loading?"…":"↺"}
+            </button>
+            {/* Chevron */}
+            <button type="button"
+              onMouseDown={e=>e.stopPropagation()} onTouchStart={e=>e.stopPropagation()}
+              onClick={e=>{ e.stopPropagation(); toggleSnap(); }}
+              style={{
+                flexShrink:0,width:36,height:36,borderRadius:10,
+                border:"1px solid rgba(245,200,66,0.35)",
+                background:"rgba(212,146,26,0.18)",
+                color:"#F5C842",fontSize:14,cursor:"pointer",
+                display:"flex",alignItems:"center",justifyContent:"center",
+              }}>
+              {panelSnap==="down"?"▲":"▼"}
+            </button>
+          </div>
         </div>
 
         {/* Scrollable content */}
