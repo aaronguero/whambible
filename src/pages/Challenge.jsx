@@ -1660,14 +1660,16 @@ function Auth({ onIn }) {
   const [err,        setErr]        = useState("");
   const [busy,       setBusy]       = useState(false);
 
-  // ── Drag / rubber-band state (same as MenuOverlay) ────────
-  const AUTH_SNAP_DOWN = 0.52;   // card rests at 52% from top
-  const AUTH_SNAP_UP   = 0.16;   // card snapped up: 16% from top
-  const AUTH_LIMIT_TOP = 0.08;
-  const AUTH_LIMIT_BOT = 0.72;
+  // ── Drag / rubber-band state ─────────────────────────────
+  // EXPANDED = panel top at 28% → full form visible incl. SMS checkbox
+  // PEEK     = panel top at 74% → handle + title visible, chevron ▲ to re-open
+  const AUTH_SNAP_DOWN = 0.74;   // peek: only handle + title above fold
+  const AUTH_SNAP_UP   = 0.28;   // expanded: full form visible
+  const AUTH_LIMIT_TOP = 0.18;   // hard ceiling (don't go above title)
+  const AUTH_LIMIT_BOT = 0.84;   // hard floor
   const AUTH_RUBBER    = 0.28;
-  const [authSnap,     setAuthSnap]     = useState("up");
-  const [authRawTop,   setAuthRawTop]   = useState(AUTH_SNAP_UP);
+  const [authSnap,     setAuthSnap]     = useState("up");   // start EXPANDED
+  const [authRawTop,   setAuthRawTop]   = useState(AUTH_SNAP_UP);  // 28%
   const [authDragging, setAuthDragging] = useState(false);
   const [authBgScale,  setAuthBgScale]  = useState(1.0);
   const authDragRef = useRef(null);
@@ -1684,7 +1686,7 @@ function Auth({ onIn }) {
     return authRawTop;
   })();
   const authTopPx  = Math.round(authDisplayTop * authWinH);
-  const authMaxH   = Math.round(0.78 * authWinH);
+  const authMaxH   = Math.round(0.70 * authWinH);  // 70% max — enough for full create form
   const authPanelH = Math.min(authWinH - authTopPx - 16, authMaxH);
 
   function authApplyRubberBg(frac) {
