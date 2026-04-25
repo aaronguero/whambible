@@ -373,7 +373,7 @@ function getAllowedBooks(rank) {
 // Call after score update. Returns unlock message or null.
 function getRankUpMessage(oldScore, newScore) {
   const thresholds = [
-    { score: 100,  rank: "Squire",   msg: "🗡️ You are now a Squire!\n📖 Psalms & Proverbs unlocked!" },
+    { score: 1,    rank: "Squire",   msg: "🗡️ You are now a Squire!\n📖 Psalms & Proverbs unlocked!" },
     { score: 300,  rank: "Warrior",  msg: "⚔️ You are now a Warrior!\n📖 Major Prophets unlocked!" },
     { score: 600,  rank: "Knight",   msg: "🛡️ You are now a Knight!\n📖 Wisdom & Minor Prophets unlocked!" },
     { score: 1000, rank: "Champion", msg: "👑 You are now a Champion!\n📖 Full Bible unlocked!" },
@@ -388,7 +388,7 @@ function getRank(score) {
   if (score >= 1000) return "champion";
   if (score >= 600)  return "knight";
   if (score >= 300)  return "warrior";
-  if (score >= 100)  return "squire";
+  if (score >= 1)    return "squire";
   return "scribe";
 }
 
@@ -1734,7 +1734,7 @@ function GamePlay({ level, onDone }) {
 function GameOver({ score, results, level, onReplay, onHome }) {
   const correct = results.filter(r => r.correct).length;
   const pct     = Math.round((correct / results.length) * 100);
-  const rank    = score >= 1000 ? "Champion 👑" : score >= 600 ? "Knight 🛡️" : score >= 300 ? "Warrior ⚔️" : score >= 100 ? "Squire 🗡️" : "Scribe 📜";
+  const rank    = score >= 1000 ? "Champion 👑" : score >= 600 ? "Knight 🛡️" : score >= 300 ? "Warrior ⚔️" : score >= 1   ? "Squire 🗡️" : "Scribe 📜";
 
   return (
     <div className="wb-screen">

@@ -200,7 +200,7 @@ function rankBadge(score) {
   if (score >= 1000) return { icon:"👑", label:"Champion", color:"#7B2D8B" };
   if (score >= 600)  return { icon:"🛡️", label:"Knight",   color:"#C05A2A" };
   if (score >= 300)  return { icon:"⚔️", label:"Warrior",  color:"#D4921A" };
-  if (score >= 100)  return { icon:"🗡️", label:"Squire",   color:"#1E7A8C" };
+  if (score >= 1)    return { icon:"🗡️", label:"Squire",   color:"#1E7A8C" };
   return                    { icon:"📜", label:"Scribe",   color:"#64748b" };
 }
 
@@ -651,8 +651,8 @@ function ProfileOverlay({ user, profile, rank, onClose, onSmsToggle }) {
   const init    = name[0].toUpperCase();
   const r       = rank || { icon:"📜", label:"Scribe", color:"#64748b" };
   const RANKS   = [
-    {label:"Scribe",   min:0,    max:100,  color:"#64748b"},
-    {label:"Squire",   min:100,  max:300,  color:"#1E7A8C"},
+    {label:"Scribe",   min:0,    max:1,    color:"#64748b"},
+    {label:"Squire",   min:1,    max:300,  color:"#1E7A8C"},
     {label:"Warrior",  min:300,  max:600,  color:"#D4921A"},
     {label:"Knight",   min:600,  max:1000, color:"#C05A2A"},
     {label:"Champion", min:1000, max:1000, color:"#7B2D8B"},
@@ -1183,7 +1183,7 @@ const TUTORIAL_STEPS = [
   {
     icon:"🏆",
     title:"Rank Up",
-    body:"Every correct answer earns points. Pick any difficulty — any rank. Scribe (0) → Squire (100) → Warrior (300) → Knight (600) → Champion (1000+). Know the Word. Win the battle.",
+    body:"Every correct answer earns points. Pick any difficulty — any rank. Scribe (0 pts) → Squire (1+) → Warrior (300+) → Knight (600+) → Champion (1000+). Know the Word. Win the battle.",
   },
 ];
 
@@ -1378,8 +1378,8 @@ function ProfileModal({ user, profile, rank, onClose }) {
 
   // Next rank threshold + progress
   const RANKS = [
-    { label:"Scribe",   min:0,    max:100,  color:"#64748b" },
-    { label:"Squire",   min:100,  max:300,  color:"#1E7A8C" },
+    { label:"Scribe",   min:0,    max:1,    color:"#64748b" },
+    { label:"Squire",   min:1,    max:300,  color:"#1E7A8C" },
     { label:"Warrior",  min:300,  max:600,  color:"#D4921A" },
     { label:"Knight",   min:600,  max:1000, color:"#C05A2A" },
     { label:"Champion", min:1000, max:1000, color:"#7B2D8B" },
