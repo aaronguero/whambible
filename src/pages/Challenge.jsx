@@ -2007,6 +2007,8 @@ function Auth({ onIn }) {
 function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle }) {
   const [tab,       setTab]       = useState("new");  // "new" | "active"
   const [players,   setPlayers]   = useState([]);
+  const [allPlayers, setAllPlayers] = useState([]);   // full list for search
+  const [search,    setSearch]    = useState("");
   const [games,     setGames]     = useState([]);
   const [loading,   setLoading]   = useState(false);
   const rank = rankBadge(profile?.total_score || 0);
@@ -2014,16 +2016,29 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
 
   useEffect(() => { if (tab === "new") loadPlayers(); else loadGames(); }, [tab]);
 
+  // Filter whenever search changes
+  useEffect(() => {
+    if (!search.trim()) { setPlayers(allPlayers); return; }
+    const q = search.toLowerCase();
+    setPlayers(allPlayers.filter(p =>
+      (p.display_name || "").toLowerCase().includes(q) ||
+      (p.email || "").toLowerCase().includes(q)
+    ));
+  }, [search, allPlayers]);
+
   async function loadPlayers() {
+    if (!profile) return;  // wait for profile before fetching
     setLoading(true);
     try {
       const raw = await B44.list("PlayerProfile");
       const all = Array.isArray(raw) ? raw : (raw?.records || []);
-      setPlayers(all.filter(p => {
+      const others = all.filter(p => {
         const myEmail = user?.email;
         const myId    = profile?.id;
         return p.email !== myEmail && p.id !== myId;
-      }));
+      });
+      setAllPlayers(others);
+      setPlayers(others);
     } catch(e) {
       console.warn("[Lobby] loadPlayers failed:", e.message);
     }
@@ -2031,17 +2046,22 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
   }
 
   async function loadGames() {
+    if (!profile?.id) return;  // need profile id for accurate filter
     setLoading(true);
     try {
-      const [asChallenger, asAnswerer] = await Promise.all([
-        B44.list("GameSession", { challenger_id: profile?.id }),
-        B44.list("GameSession", { answerer_id:   profile?.id }),
+      const [raw1, raw2] = await Promise.all([
+        B44.list("GameSession", { challenger_id: profile.id }),
+        B44.list("GameSession", { answerer_id:   profile.id }),
       ]);
+      const asChallenger = Array.isArray(raw1) ? raw1 : [];
+      const asAnswerer   = Array.isArray(raw2) ? raw2 : [];
       const all = [...asChallenger, ...asAnswerer]
         .filter(g => g.status !== "complete" && g.status !== "cancelled")
         .sort((a,b) => new Date(b.updated_date||0) - new Date(a.updated_date||0));
       setGames(all);
-    } catch {}
+    } catch(e) {
+      console.warn("[Lobby] loadGames failed:", e.message);
+    }
     setLoading(false);
   }
 
@@ -2114,11 +2134,42 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
           <div className="c-curl"/>
           {loading && <div style={{textAlign:"center",padding:24}}><div className="c-spin"/></div>}
 
-          {/* New game — player list */}
+          {/* New game — player search + list */}
           {!loading && tab === "new" && (
             <>
-              <h2 style={{fontSize:13,color:C.goldLight,letterSpacing:2,margin:"0 0 14px",textAlign:"center"}}>CHOOSE YOUR OPPONENT</h2>
-              {players.length === 0 && <div className="c-empty">No other players yet.<br/>Invite friends to join!</div>}
+              <h2 style={{fontSize:13,color:C.goldLight,letterSpacing:2,margin:"0 0 12px",textAlign:"center"}}>CHOOSE YOUR OPPONENT</h2>
+
+              {/* Search input */}
+              <div style={{position:"relative",marginBottom:14}}>
+                <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:14,opacity:0.5}}>🔍</span>
+                <input
+                  type="text"
+                  value={search}
+                  onChange={e=>setSearch(e.target.value)}
+                  placeholder="Search by name…"
+                  style={{
+                    width:"100%",boxSizing:"border-box",
+                    padding:"10px 12px 10px 34px",
+                    borderRadius:10,
+                    border:"1.5px solid rgba(245,200,66,0.25)",
+                    background:"rgba(13,31,53,0.7)",
+                    color:C.offWhite,
+                    fontFamily:"'Cinzel',serif",
+                    fontSize:12,
+                    outline:"none",
+                  }}
+                />
+                {search.length > 0 && (
+                  <span onClick={()=>setSearch("")}
+                    style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",
+                      fontSize:16,cursor:"pointer",opacity:0.5,color:C.goldLight}}>✕</span>
+                )}
+              </div>
+
+              {allPlayers.length === 0 && <div className="c-empty">No other players yet.<br/>Invite friends to join!</div>}
+              {allPlayers.length > 0 && players.length === 0 && search.length > 0 && (
+                <div className="c-empty">No players match "{search}"</div>
+              )}
               {players.map(p => {
                 const r = rankBadge(p.total_score || 0);
                 return (
