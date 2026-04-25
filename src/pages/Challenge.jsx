@@ -2011,12 +2011,26 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
   const [search,    setSearch]    = useState("");
   const [games,     setGames]     = useState([]);
   const [loading,   setLoading]   = useState(false);
+  const loadedRef   = useRef({ new: false, active: false }); // prevent redundant fetches
   const rank = rankBadge(profile?.total_score || 0);
   const myName = profile?.display_name || user?.displayName || user?.email?.split("@")[0];
 
-  useEffect(() => { if (tab === "new") loadPlayers(); else loadGames(); }, [tab]);
+  // Only fetch if not already loaded for this tab
+  useEffect(() => {
+    if (tab === "new") {
+      if (!loadedRef.current.new) loadPlayers();
+    } else {
+      if (!loadedRef.current.active) loadGames();
+    }
+  }, [tab]);
 
-  // Filter whenever search changes
+  // Manual refresh — clears cache flag then re-fetches
+  function refresh() {
+    if (tab === "new") { loadedRef.current.new = false; loadPlayers(); }
+    else               { loadedRef.current.active = false; loadGames(); }
+  }
+
+  // Search filter — pure in-memory, no debounce needed (no API call)
   useEffect(() => {
     if (!search.trim()) { setPlayers(allPlayers); return; }
     const q = search.toLowerCase();
@@ -2039,6 +2053,7 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
       });
       setAllPlayers(others);
       setPlayers(others);
+      loadedRef.current.new = true;  // mark loaded — skip on next tab switch
     } catch(e) {
       console.warn("[Lobby] loadPlayers failed:", e.message);
     }
@@ -2059,6 +2074,7 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
         .filter(g => g.status !== "complete" && g.status !== "cancelled")
         .sort((a,b) => new Date(b.updated_date||0) - new Date(a.updated_date||0));
       setGames(all);
+      loadedRef.current.active = true;  // mark loaded
     } catch(e) {
       console.warn("[Lobby] loadGames failed:", e.message);
     }
@@ -2120,14 +2136,19 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
           </div>
         </div>
 
-        {/* Tabs */}
-        <div style={{display:"flex",gap:8,marginBottom:14}}>
+        {/* Tabs + Refresh */}
+        <div style={{display:"flex",gap:8,marginBottom:14,alignItems:"center"}}>
           {[["new","⚔️ Challenge"],["active","📬 My Games"]].map(([t,l])=>(
             <button key={t} onClick={()=>setTab(t)}
               style={{flex:1,padding:"10px 0",borderRadius:10,border:`1.5px solid ${tab===t?"rgba(245,200,66,0.5)":"rgba(245,200,66,0.12)"}`,background:tab===t?"rgba(212,146,26,0.15)":"transparent",color:tab===t?"#F5C842":"rgba(245,200,66,0.45)",fontFamily:"'Cinzel',serif",fontSize:12,fontWeight:700,cursor:"pointer",letterSpacing:1}}>
               {l}
             </button>
           ))}
+          <button onClick={refresh} disabled={loading}
+            title="Refresh"
+            style={{flexShrink:0,width:36,height:36,borderRadius:10,border:"1.5px solid rgba(245,200,66,0.2)",background:"rgba(13,31,53,0.6)",color:loading?"rgba(245,200,66,0.25)":"rgba(245,200,66,0.7)",fontSize:16,cursor:loading?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
+            {loading ? "…" : "↺"}
+          </button>
         </div>
 
         <div className="c-card">
