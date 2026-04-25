@@ -1918,7 +1918,7 @@ function Auth({ onIn }) {
           backdropFilter:"blur(12px)",
           WebkitBackdropFilter:"blur(12px)",
         }}>
-          <div style={{maxWidth:440,margin:"0 auto",padding:"20px 16px 32px"}}>
+          <div style={{maxWidth:440,margin:"0 auto",padding:"20px 16px 12px"}}>
 
         {mode === "choice" && (<>
           <div style={{textAlign:"center",marginBottom:22}}>
