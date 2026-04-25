@@ -2041,361 +2041,487 @@ function Auth({ onIn }) {
 // ══════════════════════════════════════════════════════════════
 // LOBBY — start new game OR see active games
 // ══════════════════════════════════════════════════════════════
-function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle }) {
-  const [tab,       setTab]       = useState("new");  // "new" | "active"
-  const [players,   setPlayers]   = useState([]);
-  const [allPlayers, setAllPlayers] = useState([]);   // full list for search
-  const [search,    setSearch]    = useState("");
-  const [games,     setGames]     = useState([]);
-  const [loading,   setLoading]   = useState(false);
-  const loadedRef   = useRef({ new: false, active: false }); // prevent redundant fetches
-  const rank = rankBadge(profile?.total_score || 0);
-  const myName = profile?.display_name || user?.displayName || user?.email?.split("@")[0];
+const LOBBY_SLOTS   = 10;   // fixed visible slots in each panel
+const LOBBY_LS_KEY  = "wb_overflow_games"; // localStorage key for >10 active games
 
-  // Only fetch if not already loaded for this tab
+function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle }) {
+  const [tab,        setTab]        = useState("new");
+  const [allPlayers, setAllPlayers] = useState([]);
+  const [search,     setSearch]     = useState("");
+  const [games,      setGames]      = useState([]);      // visible 10
+  const [loading,    setLoading]    = useState(false);
+  const [panelSnap,  setPanelSnap]  = useState("up");    // "up" | "down"
+  const [panelRaw,   setPanelRaw]   = useState(0.38);    // fraction from top
+  const [panelDrag,  setPanelDrag]  = useState(false);
+  const [panelBgSc,  setPanelBgSc]  = useState(1.0);
+  const panelDragRef  = useRef(null);
+  const panelScrollRef = useRef(null);
+  const panelWinH     = useRef(typeof window !== "undefined" ? window.innerHeight : 812).current;
+  const loadedRef     = useRef({ new: false, active: false });
+
+  // ── Panel constants (per screen handling standards) ──
+  const SNAP_UP   = 0.38;   // expanded  — below profile card
+  const SNAP_DOWN = 0.76;   // peeked    — handle + title only
+  const LIM_TOP   = 0.30;   // hard ceiling
+  const LIM_BOT   = 0.86;   // hard floor
+  const RUBBER    = 0.28;
+
+  // Derived panel position
+  const panelDisplay = (() => {
+    if (panelRaw < LIM_TOP) return LIM_TOP - (LIM_TOP - panelRaw) * RUBBER;
+    if (panelRaw > LIM_BOT) return LIM_BOT + (panelRaw - LIM_BOT) * RUBBER;
+    return panelRaw;
+  })();
+  const panelTopPx  = Math.round(panelDisplay * panelWinH);
+  const panelMaxH   = Math.round(0.62 * panelWinH);
+  const panelH      = Math.min(panelWinH - panelTopPx - 16, panelMaxH);
+
+  // Margin squeeze
+  const panelMargin = (() => {
+    const dt = panelDisplay - LIM_TOP;
+    const db = LIM_BOT - panelDisplay;
+    const t  = Math.max(0, Math.min(1, Math.min(dt, db) / 0.10));
+    return Math.round(4 + t * 12);
+  })();
+
+  // Bg scale rubber-band
+  function applyRubberBg(frac) {
+    if (frac < LIM_TOP) {
+      const t = Math.min((LIM_TOP - frac) / 0.10, 1);
+      setPanelBgSc(1 + t * 0.04);
+    } else if (frac > LIM_BOT) {
+      const t = Math.min((frac - LIM_BOT) / 0.10, 1);
+      setPanelBgSc(1 + t * 0.04);
+    } else { setPanelBgSc(1.0); }
+  }
+
+  function snapToPos(frac) {
+    const mid = (SNAP_UP + SNAP_DOWN) / 2;
+    const target = frac < mid ? SNAP_UP : SNAP_DOWN;
+    setPanelRaw(target);
+    setPanelSnap(target === SNAP_UP ? "up" : "down");
+    setPanelBgSc(1.0);
+  }
+
+  function toggleSnap() {
+    const target = panelSnap === "down" ? SNAP_UP : SNAP_DOWN;
+    setPanelRaw(target);
+    setPanelSnap(panelSnap === "down" ? "up" : "down");
+    setPanelBgSc(1.0);
+  }
+
+  function onTouchStart(e) {
+    panelDragRef.current = { startY: e.touches[0].clientY, startFrac: panelRaw };
+    setPanelDrag(true);
+  }
+  function onTouchMove(e) {
+    if (!panelDragRef.current) return;
+    const dy   = e.touches[0].clientY - panelDragRef.current.startY;
+    const frac = panelDragRef.current.startFrac + dy / panelWinH;
+    setPanelRaw(frac);
+    applyRubberBg(frac);
+  }
+  function onTouchEnd() { setPanelDrag(false); snapToPos(panelRaw); panelDragRef.current = null; }
+  function onMouseDown(e) {
+    panelDragRef.current = { startY: e.clientY, startFrac: panelRaw };
+    setPanelDrag(true); e.preventDefault();
+  }
   useEffect(() => {
-    if (tab === "new") {
-      if (!loadedRef.current.new) loadPlayers();
-    } else {
-      if (!loadedRef.current.active) loadGames();
+    if (!panelDrag) return;
+    function onMM(e) {
+      if (!panelDragRef.current) return;
+      const dy = e.clientY - panelDragRef.current.startY;
+      const frac = panelDragRef.current.startFrac + dy / panelWinH;
+      setPanelRaw(frac); applyRubberBg(frac);
     }
+    function onMU() { setPanelDrag(false); snapToPos(panelRaw); panelDragRef.current = null; }
+    window.addEventListener("mousemove", onMM);
+    window.addEventListener("mouseup",   onMU);
+    return () => { window.removeEventListener("mousemove", onMM); window.removeEventListener("mouseup", onMU); };
+  }, [panelDrag, panelRaw]);
+
+  const panelTransition = panelDrag ? "none" : "top 0.36s cubic-bezier(.34,1.56,.64,1), height 0.36s cubic-bezier(.34,1.56,.64,1)";
+
+  const rank   = rankBadge(profile?.total_score || 0);
+  const myName = profile?.display_name || user?.email?.split("@")[0];
+
+  // Reset snap when tab changes
+  useEffect(() => {
+    setPanelRaw(SNAP_UP); setPanelSnap("up");
+    if (tab === "new") { if (!loadedRef.current.new) loadPlayers(); }
+    else               { loadedRef.current.active = false; loadGames(); }
   }, [tab]);
 
-  // Manual refresh — clears cache flag then re-fetches
+  // search filter
+  const filteredPlayers = !search.trim() ? allPlayers
+    : allPlayers.filter(p =>
+        (p.display_name||"").toLowerCase().includes(search.toLowerCase()) ||
+        (p.email||"").toLowerCase().includes(search.toLowerCase())
+      );
+
+  // Build 10 fixed slots for players
+  const playerSlots = Array.from({ length: LOBBY_SLOTS }, (_, i) => filteredPlayers[i] || null);
+
+  // Build 10 fixed slots for games; overflow → localStorage
+  function buildGameSlots(allGames) {
+    const visible  = allGames.slice(0, LOBBY_SLOTS);
+    const overflow = allGames.slice(LOBBY_SLOTS);
+    if (overflow.length > 0) {
+      try { localStorage.setItem(LOBBY_LS_KEY, JSON.stringify(overflow)); }
+      catch(e) {}
+    } else {
+      try { localStorage.removeItem(LOBBY_LS_KEY); } catch(e) {}
+    }
+    return visible;
+  }
+
+  // When a game slot frees up (battle/decline), pull from overflow
+  function pullFromOverflow(currentGames) {
+    try {
+      const raw = localStorage.getItem(LOBBY_LS_KEY);
+      if (!raw) return currentGames;
+      const overflow = JSON.parse(raw);
+      if (!overflow.length) return currentGames;
+      const next = overflow.shift();
+      localStorage.setItem(LOBBY_LS_KEY, JSON.stringify(overflow));
+      return [...currentGames, next];
+    } catch(e) { return currentGames; }
+  }
+
+  async function loadPlayers() {
+    if (!profile) return;
+    setLoading(true);
+    try {
+      const raw    = await B44.list("PlayerProfile");
+      const all    = Array.isArray(raw) ? raw : (raw?.records || []);
+      const others = all.filter(p => p.email !== user?.email && p.id !== profile?.id);
+      setAllPlayers(others);
+      loadedRef.current.new = true;
+    } catch(e) { console.warn("[Lobby] loadPlayers:", e.message); }
+    setLoading(false);
+  }
+
+  async function loadGames() {
+    if (!profile?.id) return;
+    setLoading(true);
+    try {
+      const [r1, r2] = await Promise.all([
+        B44.list("GameSession", { challenger_id: profile.id }),
+        B44.list("GameSession", { answerer_id:   profile.id }),
+      ]);
+      const all = [...(Array.isArray(r1)?r1:[]), ...(Array.isArray(r2)?r2:[])]
+        .filter(g => g.status !== "complete" && g.status !== "cancelled")
+        .sort((a,b) => new Date(b.updated_date||0) - new Date(a.updated_date||0));
+      setGames(buildGameSlots(all));
+      loadedRef.current.active = true;
+    } catch(e) { console.warn("[Lobby] loadGames:", e.message); }
+    setLoading(false);
+  }
+
   function refresh() {
     if (tab === "new") { loadedRef.current.new = false; loadPlayers(); }
     else               { loadedRef.current.active = false; loadGames(); }
   }
 
-  // Search filter — pure in-memory, no debounce needed (no API call)
-  useEffect(() => {
-    if (!search.trim()) { setPlayers(allPlayers); return; }
-    const q = search.toLowerCase();
-    setPlayers(allPlayers.filter(p =>
-      (p.display_name || "").toLowerCase().includes(q) ||
-      (p.email || "").toLowerCase().includes(q)
-    ));
-  }, [search, allPlayers]);
-
-  async function loadPlayers() {
-    if (!profile) return;  // wait for profile before fetching
-    setLoading(true);
-    try {
-      const raw = await B44.list("PlayerProfile");
-      const all = Array.isArray(raw) ? raw : (raw?.records || []);
-      const others = all.filter(p => {
-        const myEmail = user?.email;
-        const myId    = profile?.id;
-        return p.email !== myEmail && p.id !== myId;
-      });
-      setAllPlayers(others);
-      setPlayers(others);
-      loadedRef.current.new = true;  // mark loaded — skip on next tab switch
-    } catch(e) {
-      console.warn("[Lobby] loadPlayers failed:", e.message);
-    }
-    setLoading(false);
-  }
-
-  async function loadGames() {
-    if (!profile?.id) return;  // need profile id for accurate filter
-    setLoading(true);
-    try {
-      const [raw1, raw2] = await Promise.all([
-        B44.list("GameSession", { challenger_id: profile.id }),
-        B44.list("GameSession", { answerer_id:   profile.id }),
-      ]);
-      const asChallenger = Array.isArray(raw1) ? raw1 : [];
-      const asAnswerer   = Array.isArray(raw2) ? raw2 : [];
-      const all = [...asChallenger, ...asAnswerer]
-        .filter(g => g.status !== "complete" && g.status !== "cancelled")
-        .sort((a,b) => new Date(b.updated_date||0) - new Date(a.updated_date||0));
-      setGames(all);
-      loadedRef.current.active = true;  // mark loaded
-    } catch(e) {
-      console.warn("[Lobby] loadGames failed:", e.message);
-    }
-    setLoading(false);
-  }
-
   async function challenge(opponent) {
-    // Create new game session
     const verse   = rndVerse();
     const options = buildOptions(verse);
     try {
       const game = await B44.create("GameSession", {
-        challenger_id:   profile?.id || user.email,
-        challenger_name: myName,
-        answerer_id:     opponent.id || opponent.email,
-        answerer_name:   opponent.display_name,
-        status:          "pick_level",
-        current_turn:    profile?.id || user.email,
-        round:           0,
+        challenger_id:    profile?.id || user.email,
+        challenger_name:  myName,
+        answerer_id:      opponent.id || opponent.email,
+        answerer_name:    opponent.display_name,
+        status:           "pick_level",
+        current_turn:     profile?.id || user.email,
+        round:            0,
         challenger_score: 0,
         answerer_score:   0,
-        pending_verse:   verse,
-        pending_options: options,
-        progress:        [],
+        pending_verse:    verse,
+        pending_options:  options,
+        progress:         [],
       });
-      // SMS the opponent if they have a phone
       if (opponent.phone && opponent.sms_enabled) {
-        await sendSMS(
-          opponent.phone,
-          `⚔️ ${myName} challenged you to a WhamBible verse battle! Your move.`,
-          game.id
-        );
+        await sendSMS(opponent.phone, `⚔️ ${myName} challenged you to a WhamBible verse battle! Your move.`, game.id);
       }
       onChallenge(game, "challenger");
-    } catch (e) {
-      alert("Could not create game: " + e.message);
-    }
+    } catch(e) { alert("Could not create game: " + e.message); }
   }
+
+  async function declineGame(g) {
+    try {
+      await B44.update("GameSession", g.id, { status: "cancelled" });
+      const updated = games.filter(x => x.id !== g.id);
+      setGames(pullFromOverflow(updated));
+    } catch(e) { alert("Could not decline: " + e.message); }
+  }
+
+  function removePlayer(p) {
+    setAllPlayers(prev => prev.filter(x => x.id !== p.id));
+  }
+
+  // ── Slot row styles ──
+  const sRow = {
+    display:"flex", alignItems:"center", gap:10,
+    height:52, padding:"0 10px",
+    borderRadius:10,
+    border:"1px solid rgba(245,200,66,0.12)",
+    background:"rgba(26,58,92,0.22)",
+    marginBottom:6,
+    boxSizing:"border-box",
+    transition:"background 0.15s",
+  };
+  const sRowFilled = {
+    ...sRow,
+    background:"rgba(26,58,92,0.40)",
+    border:"1px solid rgba(245,200,66,0.22)",
+  };
+  const btnBattle = {
+    flexShrink:0,
+    padding:"5px 10px",
+    borderRadius:8,
+    border:"1.5px solid rgba(245,200,66,0.5)",
+    background:"rgba(212,146,26,0.18)",
+    color:"#F5C842",
+    fontFamily:"'Cinzel',serif",
+    fontSize:10,
+    fontWeight:700,
+    cursor:"pointer",
+    letterSpacing:0.8,
+  };
+  const btnDecline = {
+    flexShrink:0,
+    padding:"5px 8px",
+    borderRadius:8,
+    border:"1px solid rgba(192,90,42,0.4)",
+    background:"rgba(192,90,42,0.12)",
+    color:"rgba(245,150,100,0.85)",
+    fontFamily:"'Cinzel',serif",
+    fontSize:10,
+    fontWeight:700,
+    cursor:"pointer",
+  };
 
   return (
     <div className="c-screen">
-      <Bg char={CHAR_KNIGHT}/>
+      <Bg char={CHAR_KNIGHT} bgScale={panelBgSc}/>
       <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle} onChallenge={challenge}/>
-      <div className="c-scroll"><div className="c-pad">
 
-        {/* Profile card */}
-        <div className="c-card" style={{textAlign:"center",marginBottom:14}}>
-          <div className="c-curl"/>
-          <div style={{fontSize:36,marginBottom:8}}>{rank.icon}</div>
-          <h1 className="c-h1" style={{fontSize:18}}>{myName}</h1>
-          <div style={{fontSize:11,color:rank.color,letterSpacing:2,marginBottom:14}}>{rank.label} · {profile?.total_score||0} pts</div>
-          <div style={{display:"flex",justifyContent:"space-around",borderTop:"1px solid rgba(245,200,66,0.1)",paddingTop:14}}>
-            {[["Games",profile?.games_played||0],["Wins",profile?.games_won||0]].map(([l,v])=>(
-              <div key={l}>
-                <div style={{fontSize:20,fontWeight:900,color:C.goldLight}}>{v}</div>
-                <div style={{fontSize:9,color:C.goldDim,letterSpacing:2}}>{l}</div>
-              </div>
-            ))}
-          </div>
+      {/* ── Profile card (above panel) ── */}
+      <div style={{
+        position:"fixed", top:56, left:16, right:16,
+        zIndex:4,
+        background:"rgba(13,31,53,0.88)",
+        borderRadius:14,
+        border:"1px solid rgba(245,200,66,0.15)",
+        padding:"12px 16px",
+        display:"flex", alignItems:"center", gap:14,
+        backdropFilter:"blur(8px)",
+      }}>
+        <div style={{width:40,height:40,borderRadius:"50%",background:`linear-gradient(135deg,${C.teal},${C.gold})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:18,fontWeight:900,color:"#fff",flexShrink:0}}>
+          {(myName||"W")[0].toUpperCase()}
         </div>
-
-        {/* Tabs + Refresh */}
-        <div style={{display:"flex",gap:8,marginBottom:14,alignItems:"center"}}>
-          {[["new","⚔️ Challenge"],["active","📬 My Games"]].map(([t,l])=>(
-            <button key={t} onClick={()=>setTab(t)}
-              style={{flex:1,padding:"10px 0",borderRadius:10,border:`1.5px solid ${tab===t?"rgba(245,200,66,0.5)":"rgba(245,200,66,0.12)"}`,background:tab===t?"rgba(212,146,26,0.15)":"transparent",color:tab===t?"#F5C842":"rgba(245,200,66,0.45)",fontFamily:"'Cinzel',serif",fontSize:12,fontWeight:700,cursor:"pointer",letterSpacing:1}}>
-              {l}
-            </button>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{fontSize:14,fontWeight:700,color:C.offWhite,fontFamily:"'Cinzel',serif",letterSpacing:1,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{myName}</div>
+          <div style={{fontSize:10,color:rank.color,letterSpacing:1.5}}>{rank.label} · {profile?.total_score||0} pts</div>
+        </div>
+        <div style={{display:"flex",gap:16,flexShrink:0}}>
+          {[["Games",profile?.games_played||0],["Wins",profile?.games_won||0]].map(([l,v])=>(
+            <div key={l} style={{textAlign:"center"}}>
+              <div style={{fontSize:16,fontWeight:900,color:C.goldLight}}>{v}</div>
+              <div style={{fontSize:8,color:C.goldDim,letterSpacing:1.5}}>{l}</div>
+            </div>
           ))}
-          <button onClick={refresh} disabled={loading}
-            title="Refresh"
-            style={{flexShrink:0,width:36,height:36,borderRadius:10,border:"1.5px solid rgba(245,200,66,0.2)",background:"rgba(13,31,53,0.6)",color:loading?"rgba(245,200,66,0.25)":"rgba(245,200,66,0.7)",fontSize:16,cursor:loading?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
-            {loading ? "…" : "↺"}
+        </div>
+      </div>
+
+      {/* ── Tab toggle + refresh (above panel, below profile) ── */}
+      <div style={{
+        position:"fixed",
+        top: panelTopPx - 46,
+        left: panelMargin + 4,
+        right: panelMargin + 4,
+        zIndex:8,
+        display:"flex", gap:6, alignItems:"center",
+      }}>
+        {[["new","⚔️ Challenge"],["active","📬 My Battles"]].map(([t,l])=>(
+          <button key={t} type="button" onClick={()=>setTab(t)}
+            style={{flex:1,padding:"8px 0",borderRadius:10,
+              border:`1.5px solid ${tab===t?"rgba(245,200,66,0.5)":"rgba(245,200,66,0.12)"}`,
+              background:tab===t?"rgba(212,146,26,0.18)":"rgba(13,31,53,0.70)",
+              color:tab===t?"#F5C842":"rgba(245,200,66,0.45)",
+              fontFamily:"'Cinzel',serif",fontSize:11,fontWeight:700,cursor:"pointer",letterSpacing:0.8,
+              backdropFilter:"blur(6px)",
+            }}>
+            {l}
+          </button>
+        ))}
+        <button type="button" onClick={refresh} disabled={loading}
+          style={{flexShrink:0,width:34,height:34,borderRadius:10,
+            border:"1.5px solid rgba(245,200,66,0.2)",background:"rgba(13,31,53,0.70)",
+            color:loading?"rgba(245,200,66,0.25)":"rgba(245,200,66,0.7)",
+            fontSize:15,cursor:loading?"default":"pointer",display:"flex",alignItems:"center",justifyContent:"center",
+            backdropFilter:"blur(6px)",
+          }}>
+          {loading ? "…" : "↺"}
+        </button>
+      </div>
+
+      {/* ── Floating panel (per screen handling standards) ── */}
+      <div style={{
+        position:"fixed",
+        left: panelMargin, right: panelMargin,
+        top: panelTopPx,
+        height: panelH,
+        zIndex:10,
+        borderRadius:18,
+        overflow:"hidden",
+        boxShadow:"0 8px 40px rgba(0,0,0,0.55), 0 0 0 1px rgba(245,200,66,0.18)",
+        display:"flex", flexDirection:"column",
+        transition: panelTransition,
+      }}>
+
+        {/* Handle bar */}
+        <div
+          onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
+          onMouseDown={onMouseDown}
+          style={{
+            flexShrink:0,
+            display:"flex", alignItems:"center", justifyContent:"center",
+            position:"relative",
+            paddingTop:10, paddingBottom:8,
+            background:"rgba(13,31,53,0.80)",
+            borderBottom:"1px solid rgba(245,200,66,0.15)",
+            cursor:"grab", userSelect:"none", touchAction:"none",
+          }}>
+          <div style={{width:40,height:4,borderRadius:2,background:"rgba(245,200,66,0.45)"}}/>
+          <div style={{position:"absolute",left:14,top:"50%",transform:"translateY(-50%)",fontSize:11,color:C.goldDim,letterSpacing:2,fontFamily:"'Cinzel',serif",fontWeight:700}}>
+            {tab === "new" ? "CHOOSE YOUR OPPONENT" : "ACTIVE BATTLES"}
+          </div>
+          <button type="button" onClick={e=>{ e.stopPropagation(); toggleSnap(); }}
+            onMouseDown={e=>e.stopPropagation()} onTouchStart={e=>e.stopPropagation()}
+            style={{
+              position:"absolute", right:12, top:"50%", transform:"translateY(-50%)",
+              background:"rgba(212,146,26,0.18)", border:"1px solid rgba(245,200,66,0.35)",
+              borderRadius:8, color:"#F5C842", fontSize:14, width:30, height:26,
+              display:"flex", alignItems:"center", justifyContent:"center", cursor:"pointer",
+            }}>
+            {panelSnap === "down" ? "▲" : "▼"}
           </button>
         </div>
 
-        <div className="c-card">
-          <div className="c-curl"/>
+        {/* Scrollable content */}
+        <div ref={panelScrollRef} style={{
+          flex:1, overflowY:"auto",
+          background:"rgba(13,31,53,0.72)",
+          backdropFilter:"blur(14px)", WebkitBackdropFilter:"blur(14px)",
+          WebkitOverflowScrolling:"touch",
+          padding:"10px 12px 16px",
+        }}>
+
           {loading && <div style={{textAlign:"center",padding:24}}><div className="c-spin"/></div>}
 
-          {/* New game — player search + list */}
-          {!loading && tab === "new" && (
-            <>
-              <h2 style={{fontSize:13,color:C.goldLight,letterSpacing:2,margin:"0 0 12px",textAlign:"center"}}>CHOOSE YOUR OPPONENT</h2>
-
-              {/* Search input */}
-              <div style={{position:"relative",marginBottom:14}}>
-                <span style={{position:"absolute",left:12,top:"50%",transform:"translateY(-50%)",fontSize:14,opacity:0.5}}>🔍</span>
-                <input
-                  type="text"
-                  value={search}
-                  onChange={e=>setSearch(e.target.value)}
-                  placeholder="Search by name…"
-                  style={{
-                    width:"100%",boxSizing:"border-box",
-                    padding:"10px 12px 10px 34px",
-                    borderRadius:10,
-                    border:"1.5px solid rgba(245,200,66,0.25)",
-                    background:"rgba(13,31,53,0.7)",
-                    color:C.offWhite,
-                    fontFamily:"'Cinzel',serif",
-                    fontSize:12,
-                    outline:"none",
-                  }}
-                />
-                {search.length > 0 && (
-                  <span onClick={()=>setSearch("")}
-                    style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",
-                      fontSize:16,cursor:"pointer",opacity:0.5,color:C.goldLight}}>✕</span>
-                )}
-              </div>
-
-              {allPlayers.length === 0 && <div className="c-empty">No other players yet.<br/>Invite friends to join!</div>}
-              {allPlayers.length > 0 && players.length === 0 && search.length > 0 && (
-                <div className="c-empty">No players match "{search}"</div>
+          {/* ══ CHOOSE YOUR OPPONENT ══ */}
+          {!loading && tab === "new" && (<>
+            {/* Search bar */}
+            <div style={{position:"relative",marginBottom:10}}>
+              <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",fontSize:13,opacity:0.45}}>🔍</span>
+              <input type="text" value={search}
+                onChange={e=>setSearch(e.target.value)}
+                placeholder="Search warriors by name…"
+                style={{
+                  width:"100%", boxSizing:"border-box",
+                  padding:"9px 30px 9px 30px",
+                  borderRadius:9, border:"1.5px solid rgba(245,200,66,0.22)",
+                  background:"rgba(13,31,53,0.75)", color:C.offWhite,
+                  fontFamily:"'Cinzel',serif", fontSize:11, outline:"none",
+                }}/>
+              {search.length > 0 && (
+                <span onClick={()=>setSearch("")}
+                  style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",
+                    fontSize:14,cursor:"pointer",opacity:0.5,color:C.goldLight}}>✕</span>
               )}
-              {players.map(p => {
-                const r = rankBadge(p.total_score || 0);
-                return (
-                  <div key={p.id} className="c-pl-row" onClick={()=>challenge(p)}>
-                    <div className="c-pl-av">{(p.display_name||"W")[0].toUpperCase()}</div>
-                    <div>
-                      <div className="c-pl-name">{p.display_name}</div>
-                      <div className="c-pl-rank">{r.icon} {r.label} · {p.total_score||0} pts</div>
-                    </div>
-                    <div style={{marginLeft:"auto",fontSize:20}}>⚔️</div>
+            </div>
+
+            {/* 10 fixed slots */}
+            {playerSlots.map((p, i) => p ? (
+              <div key={p.id} style={sRowFilled}>
+                <div style={{width:30,height:30,borderRadius:"50%",background:`linear-gradient(135deg,${C.teal},${C.gold})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:"#fff",flexShrink:0}}>
+                  {(p.display_name||"W")[0].toUpperCase()}
+                </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontSize:12,fontWeight:700,color:C.offWhite,fontFamily:"'Cinzel',serif",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.display_name}</div>
+                  <div style={{fontSize:9,color:C.goldDim,letterSpacing:1}}>{rankBadge(p.total_score||0).label} · {p.total_score||0} pts</div>
+                </div>
+                <button type="button" style={btnBattle} onClick={()=>challenge(p)}>⚔️ Battle</button>
+                <button type="button" style={btnDecline} onClick={()=>removePlayer(p)}>✕</button>
+              </div>
+            ) : (
+              <div key={`empty-${i}`} style={sRow}>
+                <div style={{width:30,height:30,borderRadius:"50%",border:"1px dashed rgba(245,200,66,0.15)",flexShrink:0}}/>
+                <div style={{fontSize:11,color:"rgba(245,200,66,0.18)",fontFamily:"'Cinzel',serif",letterSpacing:1,fontStyle:"italic"}}>
+                  {i === 0 && allPlayers.length === 0 ? "No warriors yet — invite friends!" : "—"}
+                </div>
+              </div>
+            ))}
+          </>)}
+
+          {/* ══ ACTIVE BATTLES ══ */}
+          {!loading && tab === "active" && (<>
+            {games.length === 0 && (
+              <div style={{textAlign:"center",padding:"20px 0",color:"rgba(245,200,66,0.35)",fontSize:11,fontFamily:"'Cinzel',serif",letterSpacing:1}}>No active battles.<br/>Challenge a warrior!</div>
+            )}
+
+            {/* 10 fixed slots */}
+            {Array.from({ length: LOBBY_SLOTS }, (_, i) => {
+              const g = games[i] || null;
+              if (!g) return (
+                <div key={`eg-${i}`} style={sRow}>
+                  <div style={{width:30,height:30,borderRadius:"50%",border:"1px dashed rgba(245,200,66,0.15)",flexShrink:0}}/>
+                  <div style={{fontSize:11,color:"rgba(245,200,66,0.18)",fontFamily:"'Cinzel',serif",letterSpacing:1,fontStyle:"italic"}}>—</div>
+                </div>
+              );
+              const isChallenger = g.challenger_id === (profile?.id || user.email);
+              const oppName  = isChallenger ? g.answerer_name : g.challenger_name;
+              const myScore  = isChallenger ? (g.challenger_score||0) : (g.answerer_score||0);
+              const oppScore = isChallenger ? (g.answerer_score||0)   : (g.challenger_score||0);
+              const isMyTurn = g.current_turn === (profile?.id || user.email);
+              return (
+                <div key={g.id} style={sRowFilled}>
+                  <div style={{width:30,height:30,borderRadius:"50%",background:`linear-gradient(135deg,${C.cobalt},${C.teal})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:"#fff",flexShrink:0}}>
+                    {(oppName||"?")[0].toUpperCase()}
                   </div>
-                );
-              })}
-            </>
-          )}
-
-          {/* Active games */}
-          {!loading && tab === "active" && (
-            <>
-              <h2 style={{fontSize:13,color:C.goldLight,letterSpacing:2,margin:"0 0 14px",textAlign:"center"}}>ACTIVE BATTLES</h2>
-              {games.length === 0 && <div className="c-empty">No active games.<br/>Challenge someone!</div>}
-              {games.map(g => {
-                const isChallenger = g.challenger_id === (profile?.id || user.email);
-                const oppName = isChallenger ? g.answerer_name : g.challenger_name;
-                const myScore = isChallenger ? g.challenger_score : g.answerer_score;
-                const oppScore = isChallenger ? g.answerer_score  : g.challenger_score;
-                const isMyTurn = g.current_turn === (profile?.id || user.email);
-                return (
-                  <div key={g.id} className="c-pl-row" onClick={()=>onResumeGame(g, isChallenger?"challenger":"answerer")}>
-                    <div style={{flex:1}}>
-                      <div className="c-pl-name">vs {oppName}</div>
-                      <div className="c-pl-rank">Round {(g.round||0)+1}/{TOTAL_ROUNDS} · {myScore||0}–{oppScore||0}</div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:12,fontWeight:700,color:isMyTurn?C.goldLight:C.offWhite,fontFamily:"'Cinzel',serif",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                      vs {oppName}
                     </div>
-                    <div style={{fontSize:11,fontWeight:700,color:isMyTurn?"#F5C842":"rgba(245,200,66,0.35)",letterSpacing:1}}>
-                      {isMyTurn ? "YOUR TURN ▶" : "WAITING…"}
+                    <div style={{fontSize:9,color:C.goldDim,letterSpacing:1}}>
+                      Rnd {(g.round||0)+1}/{TOTAL_ROUNDS} · {myScore}–{oppScore} {isMyTurn ? "· YOUR TURN ▶" : ""}
                     </div>
                   </div>
-                );
-              })}
-            </>
-          )}
+                  <button type="button" style={btnBattle}
+                    onClick={()=>onResumeGame(g, isChallenger?"challenger":"answerer")}>
+                    ⚔️ Battle
+                  </button>
+                  <button type="button" style={btnDecline}
+                    onClick={()=>declineGame(g)}>
+                    ✗
+                  </button>
+                </div>
+              );
+            })}
+          </>)}
 
-          <div style={{height:8}}/>
-          <button className="c-btn-c" onClick={()=>window.location.href="/"} style={{marginTop:8}}>← Back to Home</button>
-        </div>
-
-      </div></div>
-    </div>
-  );
-}
-
-// ══════════════════════════════════════════════════════════════
-// SELECT LEVEL — challenger picks difficulty for this round
-// ══════════════════════════════════════════════════════════════
-// SELECT LEVEL — turn-guarded: only the current_turn player can pick
-// ══════════════════════════════════════════════════════════════
-function SelectLevel({ user, profile, game, role, onPick, onOut, onSmsToggle }) {
-  const [picking,   setPicking]   = useState(false);  // lock while committing
-  const [guardFail, setGuardFail] = useState(false);  // stale-turn detection
-  const pickedRef = useRef(false);                     // race-condition guard
-
-  const myId    = profile?.id || user?.email;
-  const myName  = profile?.display_name || user?.email?.split("@")[0];
-  const oppName = role === "challenger" ? game?.answerer_name : game?.challenger_name;
-  const isMyTurn = game?.current_turn === myId;
-
-  // Guard: verify turn on mount — catches race where both players land here
-  useEffect(() => {
-    if (!isMyTurn) setGuardFail(true);
-  }, []);
-
-  async function pick(lv) {
-    // Double-guard: block if already picking, or not our turn
-    if (pickedRef.current || picking || !isMyTurn) return;
-    pickedRef.current = true;
-    setPicking(true);
-    try {
-      // Re-fetch session to confirm current_turn hasn't changed under us
-      const fresh = await B44.get("GameSession", game.id);
-      if (fresh.current_turn !== myId || fresh.status !== "pick_level") {
-        setGuardFail(true);
-        setPicking(false);
-        pickedRef.current = false;
-        return;
-      }
-      const verse   = rndVerse();
-      const options = buildOptions(verse);
-      await B44.update("GameSession", game.id, {
-        status:          "waiting_for_answer",
-        current_turn:    role === "challenger" ? game.answerer_id : game.challenger_id,
-        pending_pts:     lv.pts,
-        pending_icon:    lv.icon,
-        pending_name:    lv.name,
-        pending_verse:   verse,
-        pending_options: options,
-      });
-      // Notify opponent
-      const oppId = role === "challenger" ? game.answerer_id : game.challenger_id;
-      const oppProfile = await B44.list("PlayerProfile", { id: oppId }).then(r=>r[0]).catch(()=>null);
-      if (oppProfile?.phone && oppProfile?.sms_enabled) {
-        await sendSMS(oppProfile.phone, `📖 ${myName} sent you a ${lv.name} challenge! Answer the verse.`, game.id);
-      }
-      onPick(lv, verse, options);
-    } catch (e) {
-      alert("Error picking level: " + e.message);
-      pickedRef.current = false;
-      setPicking(false);
-    }
-  }
-
-  // Not your turn — show waiting state instead of pick UI
-  if (guardFail || !isMyTurn) {
-    return (
-      <div className="c-screen">
-        <Bg char={CHAR_KNIGHT}/>
-        <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
-        <div style={{position:"absolute",inset:0,zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 24px"}}>
-          <div className="c-card" style={{textAlign:"center",width:"100%",maxWidth:400}}>
-            <div className="c-curl"/>
-            <div style={{fontSize:36,marginBottom:12}}>⏳</div>
-            <h1 className="c-h1" style={{fontSize:17}}>Not Your Turn</h1>
-            <p className="c-sub">Waiting for {oppName} to pick a level.</p>
-            <button className="c-btn-c" style={{marginTop:20}} onClick={()=>window.location.href="/challenge"}>← Back to Lobby</button>
+          {/* Back button */}
+          <div style={{marginTop:10}}>
+            <button type="button" className="c-btn-c" onClick={()=>window.location.href="/"}>← Back to Home</button>
           </div>
         </div>
       </div>
-    );
-  }
-
-  return (
-    <div className="c-screen">
-      <Bg char={CHAR_KNIGHT}/>
-      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
-      <div className="c-scroll"><div className="c-pad">
-        <div className="c-card">
-          <div className="c-curl"/>
-          <div style={{textAlign:"center",marginBottom:20}}>
-            <div style={{fontSize:28,marginBottom:6}}>📜</div>
-            <h1 className="c-h1">Choose Your Challenge</h1>
-            <p className="c-sub">vs {oppName} · Round {(game?.round||0)+1}/{TOTAL_ROUNDS}</p>
-            <p style={{fontSize:10,color:"rgba(245,200,66,0.45)",letterSpacing:1.5,margin:"6px 0 0"}}>ALL LEVELS OPEN · ANY RANK</p>
-          </div>
-          {LEVELS.map(lv=>(
-            <div key={lv.pts} className="c-lv"
-              style={{
-                borderColor:"rgba(245,200,66,0.18)",
-                background:"rgba(13,31,53,0.40)",
-                opacity: picking ? 0.5 : 1,
-                pointerEvents: picking ? "none" : "auto",
-                transition:"all 0.18s",
-              }}
-              onMouseEnter={e=>{if(!picking){e.currentTarget.style.borderColor=lv.color;e.currentTarget.style.background=`${lv.color}22`;}}}
-              onMouseLeave={e=>{e.currentTarget.style.borderColor="rgba(245,200,66,0.18)";e.currentTarget.style.background="rgba(13,31,53,0.40)";}}
-              onClick={()=>pick(lv)}>
-              <div className="c-lv-icon">{lv.icon}</div>
-              <div>
-                <div className="c-lv-name">{lv.name}</div>
-                <div className="c-lv-sub">{lv.sub}</div>
-              </div>
-              <div className="c-lv-pts">{lv.pts}pt</div>
-            </div>
-          ))}
-          {picking && <div style={{textAlign:"center",fontSize:12,color:C.goldDim,letterSpacing:1.5,marginTop:12}}>Sending challenge…</div>}
-        </div>
-      </div></div>
     </div>
   );
 }
+
 
 // ══════════════════════════════════════════════════════════════
 // WAITING SCREEN — cinematic underlay + scroll panel
