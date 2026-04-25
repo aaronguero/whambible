@@ -1665,7 +1665,7 @@ function Auth({ onIn }) {
   // EXPANDED = panel top at 28% → full form visible incl. SMS checkbox
   // PEEK     = panel top at 74% → handle + title visible, chevron ▲ to re-open
   const AUTH_SNAP_DOWN = 0.74;   // peek: only handle + title above fold
-  const AUTH_SNAP_UP   = 0.28;   // expanded: full form visible
+  const AUTH_SNAP_UP   = 0.24;   // expanded: full form + SMS checkbox visible
   const AUTH_LIMIT_TOP = 0.18;   // hard ceiling (don't go above title)
   const AUTH_LIMIT_BOT = 0.84;   // hard floor
   const AUTH_RUBBER    = 0.28;
@@ -1675,7 +1675,10 @@ function Auth({ onIn }) {
   const [authBgScale,  setAuthBgScale]  = useState(1.0);
   const authDragRef   = useRef(null);
   const authScrollRef = useRef(null);  // ref to inner scroll container
-  const authWinH = typeof window !== "undefined" ? window.innerHeight : 812;
+  // Use visualViewport.height so panel respects keyboard-reduced space
+  const authWinH = typeof window !== "undefined"
+    ? (window.visualViewport ? window.visualViewport.height : window.innerHeight)
+    : 812;
 
   // Derived display top with rubber-band
   const authDisplayTop = (() => {
@@ -1758,27 +1761,9 @@ function Auth({ onIn }) {
     return () => { window.removeEventListener("mousemove", onMM); window.removeEventListener("mouseup", onMU); };
   }, [authDragging, authRawTop]);
 
-  // Pull-scroll: overscroll on inner content nudges the panel up/down
-  function onAuthContentScroll(e) {
-    const el = e.target;
-    const overTop    = el.scrollTop;                             // > 0 = normal scroll; at 0 = can pull down
-    const overBottom = el.scrollHeight - el.scrollTop - el.clientHeight; // 0 = at bottom
-
-    if (overTop <= 0 && authSnap === "up") {
-      // User pulling down at top → nudge panel down toward peek
-      const pullFrac = Math.abs(el.scrollTop) / authWinH;
-      if (pullFrac > 0.02) {
-        setAuthRawTop(Math.min(AUTH_LIMIT_BOT, authRawTop + pullFrac * 0.6));
-      }
-    }
-    if (overBottom <= 0 && authSnap === "down") {
-      // User pulling up at bottom → nudge panel up toward expanded
-      const pullFrac = (el.scrollTop - (el.scrollHeight - el.clientHeight)) / authWinH;
-      if (pullFrac > 0.02) {
-        setAuthRawTop(Math.max(AUTH_LIMIT_TOP, authRawTop - pullFrac * 0.6));
-      }
-    }
-  }
+  // Pull-scroll disabled — keyboard/autofill events caused erratic panel jumps
+  // Panel position is controlled only by drag gesture and chevron tap
+  function onAuthContentScroll(_e) { /* intentionally empty */ }
 
   function toggleAuthSnap() {
     const target = authSnap === "down" ? AUTH_SNAP_UP : AUTH_SNAP_DOWN;
@@ -1986,7 +1971,19 @@ function Auth({ onIn }) {
               value={pass} onChange={e=>{setPass(e.target.value);setErr("");}} disabled={busy}/>
             <label className="c-lbl">Phone (optional · for challenge alerts)</label>
             <input className="c-inp" type="tel" autoComplete="tel" placeholder="+1 555 000 0000"
-              value={phone} onChange={e=>{setPhone(e.target.value);setErr("");}} disabled={busy}/>
+              value={phone}
+              onChange={e=>{
+                setPhone(e.target.value);
+                setErr("");
+                // Scroll consent checkbox into view after a tick
+                if (e.target.value.trim()) {
+                  setTimeout(()=>{
+                    const el = authScrollRef.current;
+                    if (el) el.scrollTo({ top: el.scrollHeight, behavior:"smooth" });
+                  }, 80);
+                }
+              }}
+              disabled={busy}/>
             {phone.trim() && (
               <div style={{marginTop:6,marginBottom:4}}>
                 <label style={{
