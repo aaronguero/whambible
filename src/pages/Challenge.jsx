@@ -1966,16 +1966,16 @@ function Auth({ onIn }) {
           </div>
           <form onSubmit={doCreate} autoComplete="on">
             <label className="c-lbl">Warrior Name</label>
-            <input className="c-inp" type="text" autoComplete="name" placeholder="Your display name"
+            <input className="c-inp" type="text" autoComplete="name" autoCapitalize="off" autoCorrect="off" spellCheck="false" placeholder="Your display name"
               value={name} onChange={e=>{setName(e.target.value);setErr("");}} disabled={busy}/>
             <label className="c-lbl">Email</label>
-            <input className="c-inp" type="email" autoComplete="email" placeholder="you@example.com"
+            <input className="c-inp" type="email" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck="false" placeholder="you@example.com"
               value={email} onChange={e=>{setEmail(e.target.value);setErr("");}} disabled={busy}/>
             <label className="c-lbl">Password</label>
-            <input className="c-inp" type="password" autoComplete="new-password" placeholder="6+ characters"
+            <input className="c-inp" type="password" autoComplete="new-password" autoCapitalize="none" autoCorrect="off" spellCheck="false" placeholder="6+ characters"
               value={pass} onChange={e=>{setPass(e.target.value);setErr("");}} disabled={busy}/>
             <label className="c-lbl">Phone (optional · for challenge alerts)</label>
-            <input className="c-inp" type="tel" autoComplete="tel" placeholder="+1 555 000 0000"
+            <input className="c-inp" type="tel" autoComplete="tel" autoCapitalize="none" autoCorrect="off" spellCheck="false" placeholder="+1 555 000 0000"
               value={phone}
               onChange={e=>{
                 setPhone(e.target.value);
@@ -2025,10 +2025,10 @@ function Auth({ onIn }) {
           </div>
           <form onSubmit={doSignIn} autoComplete="on">
             <label className="c-lbl">Email</label>
-            <input className="c-inp" type="email" autoComplete="email" placeholder="you@example.com"
+            <input className="c-inp" type="email" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck="false" placeholder="you@example.com"
               value={email} onChange={e=>{setEmail(e.target.value);setErr("");}} disabled={busy}/>
             <label className="c-lbl">Password</label>
-            <input className="c-inp" type="password" autoComplete="current-password" placeholder="••••••••"
+            <input className="c-inp" type="password" autoComplete="current-password" autoCapitalize="none" autoCorrect="off" spellCheck="false" placeholder="••••••••"
               value={pass} onChange={e=>{setPass(e.target.value);setErr("");}} disabled={busy}/>
             {err ? <div className="c-err">⚠️ {err}</div> : <div style={{height:18}}/>}
             <button className="c-btn-a" type="submit" disabled={busy}>{busy?"Signing In…":"🔐 Enter the Arena"}</button>
@@ -2472,7 +2472,7 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
             {/* Search bar */}
             <div style={{position:"relative",marginBottom:10}}>
               <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",fontSize:13,opacity:0.45}}>🔍</span>
-              <input type="text" value={search}
+              <input type="text" autoCapitalize="none" autoCorrect="off" spellCheck="false" value={search}
                 onChange={e=>setSearch(e.target.value)}
                 placeholder="Search warriors by name…"
                 style={{
