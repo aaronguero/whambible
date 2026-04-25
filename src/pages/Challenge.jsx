@@ -3750,6 +3750,141 @@ function GameOver({ user, profile, game, role, onHome, onOut, onSmsToggle }) {
 }
 
 // ══════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════════
+// SelectLevel — Challenger picks the difficulty level
+// Props: user, profile, game, role, onPick(lv, verse, options), onOut, onSmsToggle
+// ══════════════════════════════════════════════════════════════════
+function SelectLevel({ user, profile, game, role, onPick, onOut, onSmsToggle }) {
+  const [loading, setLoading] = React.useState(false);
+  const oppName = role === "challenger" ? game?.answerer_name : game?.challenger_name;
+
+  async function pickLevel(lv) {
+    if (loading) return;
+    setLoading(true);
+    const verse   = rndVerse();
+    const options = buildOptions(verse);
+    try {
+      // Persist the chosen level + verse to B44 and flip to waiting_for_answer
+      await B44.update("GameSession", game.id, {
+        status:          "waiting_for_answer",
+        current_turn:    game.answerer_id,   // now answerer's turn
+        pending_pts:     lv.pts,
+        pending_icon:    lv.icon,
+        pending_name:    lv.name,
+        pending_verse:   verse,
+        pending_options: options,
+      });
+      // Let parent update local state and navigate to Waiting
+      onPick(lv, verse, options);
+    } catch(e) {
+      alert("Could not set level: " + e.message);
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="c-screen">
+      {/* ── 4-layer cinematic underlay ── */}
+      <div style={{position:"fixed",inset:0,zIndex:0,backgroundImage:`url(${LANDSCAPE_VIVID})`,backgroundSize:"cover",backgroundPosition:"center top",opacity:0.55}}/>
+      <div style={{position:"fixed",inset:0,zIndex:1,backgroundImage:`url(${CHAR_KNIGHT})`,backgroundSize:"contain",backgroundPosition:"center 12%",backgroundRepeat:"no-repeat",opacity:0.30}}/>
+      <div style={{position:"fixed",inset:0,zIndex:2,background:`linear-gradient(180deg,${C.cobaltDark}cc 0%,${C.cobaltDark}44 36%,rgba(232,213,160,0.72) 100%)`}}/>
+      <div style={{position:"fixed",top:0,left:0,right:0,height:3,zIndex:3,background:`linear-gradient(90deg,transparent,${C.gold},transparent)`}}/>
+
+      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
+
+      {/* Hero space */}
+      <div style={{height:"38vh",minHeight:200}}/>
+
+      {/* ── Scroll panel ── */}
+      <div style={{
+        position:"relative",zIndex:10,
+        borderRadius:"22px 22px 0 0",
+        background:"rgba(13,31,53,0.94)",
+        borderTop:`2px solid rgba(245,200,66,0.22)`,
+        boxShadow:"0 -8px 40px rgba(0,0,0,0.55)",
+        padding:"24px 18px 48px",
+        minHeight:"56vh",
+      }}>
+        {/* Handle pill */}
+        <div style={{width:42,height:5,borderRadius:3,background:"rgba(245,200,66,0.28)",margin:"0 auto 20px"}}/>
+
+        <div style={{textAlign:"center",marginBottom:22}}>
+          <div style={{fontFamily:"'Cinzel',serif",fontSize:11,letterSpacing:3,color:C.gold,textTransform:"uppercase",opacity:0.7,marginBottom:6}}>
+            Choose Your Weapon
+          </div>
+          <div style={{fontFamily:"'Cinzel',serif",fontSize:19,color:C.offWhite,fontWeight:700}}>
+            Select Difficulty
+          </div>
+          {oppName && (
+            <div style={{fontSize:13,color:"rgba(244,240,232,0.55)",marginTop:6}}>
+              ⚔️ Challenging <span style={{color:C.goldLight,fontWeight:600}}>{oppName}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Level cards — vertical stack, Squire top → Champion bottom */}
+        <div style={{display:"flex",flexDirection:"column",gap:12,maxWidth:420,margin:"0 auto"}}>
+          {LEVELS.map(lv => (
+            <button
+              key={lv.name}
+              type="button"
+              disabled={loading}
+              onClick={() => pickLevel(lv)}
+              style={{
+                display:"flex",alignItems:"center",gap:14,
+                padding:"14px 18px",
+                borderRadius:12,
+                background:`linear-gradient(135deg,${lv.color}22 0%,rgba(13,31,53,0.85) 100%)`,
+                border:`1.5px solid ${lv.color}55`,
+                cursor: loading ? "not-allowed" : "pointer",
+                opacity: loading ? 0.55 : 1,
+                transition:"transform 0.12s,box-shadow 0.12s",
+                boxShadow:`0 2px 18px ${lv.color}18`,
+                textAlign:"left",
+                width:"100%",
+              }}
+              onTouchStart={e => { e.currentTarget.style.transform="scale(0.97)"; e.currentTarget.style.boxShadow=`0 0 22px ${lv.color}44`; }}
+              onTouchEnd={e   => { e.currentTarget.style.transform="scale(1)"; e.currentTarget.style.boxShadow=`0 2px 18px ${lv.color}18`; }}
+            >
+              {/* Icon */}
+              <div style={{fontSize:28,lineHeight:1,minWidth:36,textAlign:"center"}}>
+                {lv.icon}
+              </div>
+              {/* Text */}
+              <div style={{flex:1}}>
+                <div style={{fontFamily:"'Cinzel',serif",fontSize:15,fontWeight:700,color:C.offWhite}}>
+                  {lv.name}
+                </div>
+                <div style={{fontSize:12,color:"rgba(244,240,232,0.55)",marginTop:2}}>
+                  {lv.sub}
+                </div>
+              </div>
+              {/* Points badge */}
+              <div style={{
+                fontFamily:"'Cinzel',serif",fontSize:13,fontWeight:700,
+                color:lv.color,
+                background:`${lv.color}18`,
+                border:`1px solid ${lv.color}44`,
+                borderRadius:8,padding:"4px 10px",whiteSpace:"nowrap",
+              }}>
+                +{lv.pts} pts
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {loading && (
+          <div style={{textAlign:"center",marginTop:20,fontFamily:"'Cinzel',serif",fontSize:13,color:C.gold,opacity:0.7,letterSpacing:2}}>
+            Setting battle…
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+
 // ROOT CONTROLLER
 // ══════════════════════════════════════════════════════════════
 export default function Challenge() {
