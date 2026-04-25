@@ -2081,7 +2081,7 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
   return (
     <div className="c-screen">
       <Bg char={CHAR_KNIGHT}/>
-      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle} onChallenge={onChallengePlayer}/>
+      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle} onChallenge={challenge}/>
       <div className="c-scroll"><div className="c-pad">
 
         {/* Profile card */}
@@ -2234,7 +2234,7 @@ function SelectLevel({ user, profile, game, role, onPick, onOut, onSmsToggle }) 
     return (
       <div className="c-screen">
         <Bg char={CHAR_KNIGHT}/>
-        <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle} onChallenge={onChallengePlayer}/>
+        <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
         <div style={{position:"absolute",inset:0,zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 24px"}}>
           <div className="c-card" style={{textAlign:"center",width:"100%",maxWidth:400}}>
             <div className="c-curl"/>
@@ -2251,7 +2251,7 @@ function SelectLevel({ user, profile, game, role, onPick, onOut, onSmsToggle }) 
   return (
     <div className="c-screen">
       <Bg char={CHAR_KNIGHT}/>
-      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle} onChallenge={onChallengePlayer}/>
+      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
       <div className="c-scroll"><div className="c-pad">
         <div className="c-card">
           <div className="c-curl"/>
@@ -2357,7 +2357,7 @@ function Waiting({ user, profile, game, role, onUpdate, onOut, onSmsToggle }) {
       <div style={{position:"fixed",inset:0,zIndex:2,background:`linear-gradient(180deg,${C.cobaltDark}cc 0%,${C.cobaltDark}44 38%,rgba(232,213,160,0.72) 100%)`}}/>
       <div style={{position:"fixed",top:0,left:0,right:0,height:3,zIndex:3,background:`linear-gradient(90deg,transparent,${C.gold},transparent)`}}/>
 
-      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle} onChallenge={onChallengePlayer}/>
+      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
 
       {/* ── Hero space — character breathes here ── */}
       <div style={{height:"44vh",minHeight:220}}/>
@@ -3084,7 +3084,7 @@ function RoundResult({ user, profile, game, role, correct, pts, onNext, onOut, o
   return (
     <div className="c-screen">
       <Bg char={correct ? CHAR_MP : CHAR_KNIGHT}/>
-      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle} onChallenge={onChallengePlayer}/>
+      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
       <div className="c-scroll"><div className="c-pad" style={{paddingTop:80}}>
 
         {/* Result badge */}
@@ -3287,7 +3287,7 @@ function GameOver({ user, profile, game, role, onHome, onOut, onSmsToggle }) {
           : `linear-gradient(90deg,transparent,${C.tealLight},transparent)`,
       }}/>
 
-      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle} onChallenge={onChallengePlayer}/>
+      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
 
       {/* ── Hero space ── */}
       <div style={{height:"42vh",minHeight:210}}/>
