@@ -1232,7 +1232,7 @@ function TutorialOverlay({ onClose }) {
 
 
 
-function Hdr({ user, profile, onOut, onSmsToggle }) {
+function Hdr({ user, profile, onOut, onSmsToggle, onChallenge }) {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState(null); // "profile"|"leader"|"players"|"scores"|"verses"|"language"|"tutorial"
   const init = user ? (user.displayName || user.email || "W")[0].toUpperCase() : null;
@@ -1347,7 +1347,7 @@ function Hdr({ user, profile, onOut, onSmsToggle }) {
       {/* Menu Overlays — all 7 tabs */}
       {activeTab==="profile"  && <ProfileOverlay   user={user} profile={profile} rank={rank} onClose={()=>setActiveTab(null)} onSmsToggle={onSmsToggle}/>}
       {activeTab==="leader"   && <LeaderboardOverlay profile={profile} onClose={()=>setActiveTab(null)}/>}
-      {activeTab==="players"  && <PlayerListOverlay  user={user} profile={profile} onClose={()=>setActiveTab(null)} onChallenge={()=>{}}/>}
+      {activeTab==="players"  && <PlayerListOverlay  user={user} profile={profile} onClose={()=>setActiveTab(null)} onChallenge={(p)=>{ setActiveTab(null); onChallenge && onChallenge(p); }}/>}
       {activeTab==="scores"   && <MyScoresOverlay    user={user} profile={profile} onClose={()=>setActiveTab(null)}/>}
       {activeTab==="verses"   && <CustomVersePackOverlay onClose={()=>setActiveTab(null)}/>}
       {activeTab==="language" && <LanguageOverlay    onClose={()=>setActiveTab(null)}/>}
@@ -2018,7 +2018,11 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
     setLoading(true);
     try {
       const all = await B44.list("PlayerProfile");
-      setPlayers(all.filter(p => p.email !== user.email));
+      setPlayers(all.filter(p => {
+        const myEmail = user?.email;
+        const myId    = profile?.id;
+        return p.email !== myEmail && p.id !== myId;
+      }));
     } catch {}
     setLoading(false);
   }
@@ -2074,7 +2078,7 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
   return (
     <div className="c-screen">
       <Bg char={CHAR_KNIGHT}/>
-      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
+      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle} onChallenge={onChallengePlayer}/>
       <div className="c-scroll"><div className="c-pad">
 
         {/* Profile card */}
@@ -2227,7 +2231,7 @@ function SelectLevel({ user, profile, game, role, onPick, onOut, onSmsToggle }) 
     return (
       <div className="c-screen">
         <Bg char={CHAR_KNIGHT}/>
-        <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
+        <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle} onChallenge={onChallengePlayer}/>
         <div style={{position:"absolute",inset:0,zIndex:10,display:"flex",alignItems:"center",justifyContent:"center",padding:"0 24px"}}>
           <div className="c-card" style={{textAlign:"center",width:"100%",maxWidth:400}}>
             <div className="c-curl"/>
@@ -2244,7 +2248,7 @@ function SelectLevel({ user, profile, game, role, onPick, onOut, onSmsToggle }) 
   return (
     <div className="c-screen">
       <Bg char={CHAR_KNIGHT}/>
-      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
+      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle} onChallenge={onChallengePlayer}/>
       <div className="c-scroll"><div className="c-pad">
         <div className="c-card">
           <div className="c-curl"/>
@@ -2350,7 +2354,7 @@ function Waiting({ user, profile, game, role, onUpdate, onOut, onSmsToggle }) {
       <div style={{position:"fixed",inset:0,zIndex:2,background:`linear-gradient(180deg,${C.cobaltDark}cc 0%,${C.cobaltDark}44 38%,rgba(232,213,160,0.72) 100%)`}}/>
       <div style={{position:"fixed",top:0,left:0,right:0,height:3,zIndex:3,background:`linear-gradient(90deg,transparent,${C.gold},transparent)`}}/>
 
-      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
+      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle} onChallenge={onChallengePlayer}/>
 
       {/* ── Hero space — character breathes here ── */}
       <div style={{height:"44vh",minHeight:220}}/>
@@ -3077,7 +3081,7 @@ function RoundResult({ user, profile, game, role, correct, pts, onNext, onOut, o
   return (
     <div className="c-screen">
       <Bg char={correct ? CHAR_MP : CHAR_KNIGHT}/>
-      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
+      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle} onChallenge={onChallengePlayer}/>
       <div className="c-scroll"><div className="c-pad" style={{paddingTop:80}}>
 
         {/* Result badge */}
@@ -3280,7 +3284,7 @@ function GameOver({ user, profile, game, role, onHome, onOut, onSmsToggle }) {
           : `linear-gradient(90deg,transparent,${C.tealLight},transparent)`,
       }}/>
 
-      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
+      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle} onChallenge={onChallengePlayer}/>
 
       {/* ── Hero space ── */}
       <div style={{height:"42vh",minHeight:210}}/>
@@ -3524,6 +3528,38 @@ export default function Challenge() {
     setGame(g); setRole(r);
     // Challenger just created — it's their turn to pick level
     setScreen("level");
+  }
+
+  // Called when user picks a player from PlayerListOverlay (via Hdr menu)
+  async function onChallengePlayer(opponent) {
+    if (!profile) return;
+    const myName = profile.display_name || user?.email?.split("@")[0];
+    const verse   = rndVerse();
+    const options = buildOptions(verse);
+    try {
+      const game = await B44.create("GameSession", {
+        challenger_id:    profile.id || user.email,
+        challenger_name:  myName,
+        answerer_id:      opponent.id || opponent.email,
+        answerer_name:    opponent.display_name,
+        status:           "pick_level",
+        current_turn:     profile.id || user.email,
+        round:            0,
+        challenger_score: 0,
+        answerer_score:   0,
+        pending_verse:    verse,
+        pending_options:  options,
+        progress:         [],
+      });
+      if (opponent.phone && opponent.sms_enabled) {
+        await sendSMS(opponent.phone,
+          `⚔️ ${myName} challenged you to a WhamBible verse battle! Open the app to play.`,
+          game.id);
+      }
+      onChallenge(game, "challenger");
+    } catch (e) {
+      alert("Could not start challenge: " + e.message);
+    }
   }
 
   function onResumeGame(g, r) {
