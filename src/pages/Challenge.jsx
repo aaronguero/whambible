@@ -321,7 +321,7 @@ html,body,#root{height:100%;margin:0;padding:0;overflow:hidden;}
 `;
 
 // ── Background ──
-function Bg({ char, charPos = "center 28%", charOpacity = 0.72, bgScale = 1.0 }) {
+function Bg({ char, charPos = "center 18%", charOpacity = 0.82, bgScale = 1.0 }) {
   return (
     <div style={{
       position:"fixed",inset:0,zIndex:0,
@@ -329,12 +329,12 @@ function Bg({ char, charPos = "center 28%", charOpacity = 0.72, bgScale = 1.0 })
       transformOrigin:"center center",
       transition: bgScale !== 1.0 ? "none" : "transform 0.36s cubic-bezier(.34,1.56,.64,1)",
     }}>
-      {/* Layer 1: Landscape */}
-      <div style={{position:"fixed",inset:0,backgroundImage:`url(${LANDSCAPE_BG})`,backgroundSize:"cover",backgroundPosition:"center top",opacity:1}}/>
-      {/* Layer 2: Character — positioned in open sky zone */}
+      {/* Layer 1: Landscape atmosphere — behind character */}
+      <div style={{position:"fixed",inset:0,backgroundImage:`url(${LANDSCAPE_BG})`,backgroundSize:"cover",backgroundPosition:"center top",opacity:0.38}}/>
+      {/* Layer 2: Character — PRIMARY underlay, front and center */}
       {char && <div style={{position:"fixed",inset:0,backgroundImage:`url(${char})`,backgroundSize:"contain",backgroundPosition:charPos,backgroundRepeat:"no-repeat",opacity:charOpacity}}/>}
-      {/* Layer 3: Tone gradient — light at top, darkens toward panel */}
-      <div style={{position:"fixed",inset:0,background:`linear-gradient(180deg,${C.cobaltDark}bb 0%,${C.cobaltDark}33 35%,rgba(13,31,53,0.05) 60%,rgba(13,31,53,0.55) 100%)`}}/>
+      {/* Layer 3: Tone gradient — cobalt atmosphere, fades to warm sand at base */}
+      <div style={{position:"fixed",inset:0,background:`linear-gradient(180deg,${C.cobaltDark}cc 0%,${C.cobaltDark}22 32%,rgba(13,31,53,0.04) 56%,rgba(13,31,53,0.62) 100%)`}}/>
     </div>
   );
 }
@@ -2155,7 +2155,7 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
   useEffect(() => {
     setPanelRaw(SNAP_UP); setPanelSnap("up");
     if (tab === "new") { if (!loadedRef.current.new) loadPlayers(); }
-    else               { loadedRef.current.active = false; loadGames(); }
+    else { loadedRef.current.active = false; loadGames(); }
   }, [tab]);
 
   // search filter — client-side filter on cached players
@@ -2260,29 +2260,9 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
     else               { loadedRef.current.active = false; loadGames(); }
   }
 
-  async function challenge(opponent) {
-    const verse   = rndVerse();
-    const options = buildOptions(verse);
-    try {
-      const game = await B44.create("GameSession", {
-        challenger_id:    profile?.id || user.email,
-        challenger_name:  myName,
-        answerer_id:      opponent.id || opponent.email,
-        answerer_name:    opponent.display_name,
-        status:           "pick_level",
-        current_turn:     profile?.id || user.email,
-        round:            0,
-        challenger_score: 0,
-        answerer_score:   0,
-        pending_verse:    verse,
-        pending_options:  options,
-        progress:         [],
-      });
-      if (opponent.phone && opponent.sms_enabled) {
-        await sendSMS(opponent.phone, `⚔️ ${myName} challenged you to a WhamBible verse battle! Your move.`, game.id);
-      }
-      onChallenge(game, "challenger");
-    } catch(e) { alert("Could not create game: " + e.message); }
+  function challenge(opponent) {
+    // Store opponent locally — SelectLevel → VersePick will create the session
+    onChallenge(null, "challenger", opponent);
   }
 
   async function declineGame(g) {
@@ -2458,6 +2438,24 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
               }}>
               📬 My Battles
             </button>
+            {/* 📩 Challenges tab */}
+            <button type="button"
+              onMouseDown={e=>e.stopPropagation()} onTouchStart={e=>e.stopPropagation()}
+              onClick={()=>setTab("challenges")}
+              style={{
+                flex:1, padding:"9px 0",
+                borderRadius:10,
+                border:`1.5px solid ${tab==="challenges"?"rgba(245,200,66,0.55)":"rgba(245,200,66,0.14)"}`,
+                background:tab==="challenges"
+                  ?"linear-gradient(135deg,rgba(212,146,26,0.28),rgba(30,122,140,0.18))"
+                  :"rgba(13,31,53,0.60)",
+                color:tab==="challenges"?"#F5C842":"rgba(245,200,66,0.42)",
+                fontFamily:"'Cinzel',serif",fontSize:11,fontWeight:700,
+                letterSpacing:0.8,cursor:"pointer",
+                transition:"all 0.18s",
+              }}>
+              📩 Challenges
+            </button>
             {/* Refresh */}
             <button type="button"
               onMouseDown={e=>e.stopPropagation()} onTouchStart={e=>e.stopPropagation()}
@@ -2593,7 +2591,64 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
             })}
           </>)}
 
-          {/* Back button */}
+          
+          {/* ══ CHALLENGES TAB — pending sessions for answerer ══ */}
+          {!loading && tab === "challenges" && (<>
+            {Array.from({ length: LOBBY_SLOTS }, (_, i) => {
+              // Filter pending sessions where I'm the answerer
+              const pendingGames = games.filter(g => {
+                const myId2 = profile?.id || user?.email;
+                return g.answerer_id === myId2 && g.status === "pending";
+              });
+              const g = pendingGames[i] || null;
+              if (!g) return (
+                <div key={`ec-${i}`} style={sRow}>
+                  <div style={{width:30,height:30,borderRadius:"50%",border:"1px dashed rgba(245,200,66,0.15)",flexShrink:0}}/>
+                  <div style={{fontSize:11,color:"rgba(245,200,66,0.18)",fontFamily:"'Cinzel',serif",letterSpacing:1,fontStyle:"italic"}}>—</div>
+                </div>
+              );
+              const lv = LEVELS.find(l => l.pts === (g.pending_pts||5)) || LEVELS[0];
+              return (
+                <div key={g.id} style={sRowFilled}>
+                  <div style={{width:30,height:30,borderRadius:"50%",background:`linear-gradient(135deg,${C.cobalt},${C.teal})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:"#fff",flexShrink:0}}>
+                    {(g.challenger_name||"?")[0].toUpperCase()}
+                  </div>
+                  <div style={{flex:1,minWidth:0}}>
+                    <div style={{fontSize:12,fontWeight:700,color:C.goldLight,fontFamily:"'Cinzel',serif",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                      {g.challenger_name}
+                    </div>
+                    <div style={{fontSize:9,color:C.goldDim,letterSpacing:1,display:"flex",alignItems:"center",gap:5,marginTop:1}}>
+                      <span style={{color:lv.color}}>{lv.icon} {lv.name}</span>
+                      <span>· Challenge</span>
+                    </div>
+                  </div>
+                  <button type="button" style={btnBattle}
+                    onClick={async ()=>{
+                      try {
+                        const updated = await B44.update("GameSession", g.id, {
+                          status: "waiting_for_answer",
+                          current_turn: g.answerer_id,
+                        });
+                        onResumeGame(updated, "answerer");
+                      } catch(e){ alert("Could not accept: " + e.message); }
+                    }}>
+                    ⚔️ Battle
+                  </button>
+                  <button type="button" style={btnDecline}
+                    onClick={async ()=>{
+                      try {
+                        await B44.update("GameSession", g.id, { status: "cancelled" });
+                        setGames(prev => prev.filter(x => x.id !== g.id));
+                      } catch(e){ alert("Could not decline: " + e.message); }
+                    }}>
+                    ✗
+                  </button>
+                </div>
+              );
+            })}
+          </>)}
+
+{/* Back button */}
           <div style={{marginTop:12}}>
             <button type="button" onClick={()=>window.location.href="/"}
               style={{
@@ -2679,11 +2734,7 @@ function Waiting({ user, profile, game, role, onUpdate, onOut, onSmsToggle }) {
 
   return (
     <div className="c-screen">
-      {/* ── 4-layer cinematic underlay ── */}
-      <div style={{position:"fixed",inset:0,zIndex:0,backgroundImage:`url(${LANDSCAPE_VIVID})`,backgroundSize:"cover",backgroundPosition:"center top",opacity:0.55}}/>
-      <div style={{position:"fixed",inset:0,zIndex:1,backgroundImage:`url(${CHAR_WAITING})`,backgroundSize:"contain",backgroundPosition:"center 18%",backgroundRepeat:"no-repeat",opacity:0.28}}/>
-      <div style={{position:"fixed",inset:0,zIndex:2,background:`linear-gradient(180deg,${C.cobaltDark}cc 0%,${C.cobaltDark}44 38%,rgba(232,213,160,0.72) 100%)`}}/>
-      <div style={{position:"fixed",top:0,left:0,right:0,height:3,zIndex:3,background:`linear-gradient(90deg,transparent,${C.gold},transparent)`}}/>
+      <Bg char={CHAR_WAITING} charPos="center 16%" charOpacity={0.78}/>
 
       <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
 
@@ -3755,41 +3806,18 @@ function GameOver({ user, profile, game, role, onHome, onOut, onSmsToggle }) {
 // SelectLevel — Challenger picks the difficulty level
 // Props: user, profile, game, role, onPick(lv, verse, options), onOut, onSmsToggle
 // ══════════════════════════════════════════════════════════════════
-function SelectLevel({ user, profile, game, role, onPick, onOut, onSmsToggle }) {
-  const [loading, setLoading] = React.useState(false);
-  const oppName = role === "challenger" ? game?.answerer_name : game?.challenger_name;
+function SelectLevel({ user, profile, game, role, pendingOpponent, onPick, onOut, onSmsToggle }) {
+  // oppName: for new challenge = pendingOpponent.display_name; for round 2+ = game field
+  const oppName = pendingOpponent?.display_name || (role === "challenger" ? game?.answerer_name : game?.challenger_name);
 
-  async function pickLevel(lv) {
-    if (loading) return;
-    setLoading(true);
-    const verse   = rndVerse();
-    const options = buildOptions(verse);
-    try {
-      // Persist the chosen level + verse to B44 and flip to waiting_for_answer
-      await B44.update("GameSession", game.id, {
-        status:          "waiting_for_answer",
-        current_turn:    game.answerer_id,   // now answerer's turn
-        pending_pts:     lv.pts,
-        pending_icon:    lv.icon,
-        pending_name:    lv.name,
-        pending_verse:   verse,
-        pending_options: options,
-      });
-      // Let parent update local state and navigate to Waiting
-      onPick(lv, verse, options);
-    } catch(e) {
-      alert("Could not set level: " + e.message);
-      setLoading(false);
-    }
+  function pickLevel(lv) {
+    // Just bubble up the level — VersePick will finalize creation/update
+    onPick(lv);
   }
 
   return (
     <div className="c-screen">
-      {/* ── 4-layer cinematic underlay ── */}
-      <div style={{position:"fixed",inset:0,zIndex:0,backgroundImage:`url(${LANDSCAPE_VIVID})`,backgroundSize:"cover",backgroundPosition:"center top",opacity:0.55}}/>
-      <div style={{position:"fixed",inset:0,zIndex:1,backgroundImage:`url(${CHAR_KNIGHT})`,backgroundSize:"contain",backgroundPosition:"center 12%",backgroundRepeat:"no-repeat",opacity:0.30}}/>
-      <div style={{position:"fixed",inset:0,zIndex:2,background:`linear-gradient(180deg,${C.cobaltDark}cc 0%,${C.cobaltDark}44 36%,rgba(232,213,160,0.72) 100%)`}}/>
-      <div style={{position:"fixed",top:0,left:0,right:0,height:3,zIndex:3,background:`linear-gradient(90deg,transparent,${C.gold},transparent)`}}/>
+      <Bg char={CHAR_KNIGHT} charPos="center 14%" charOpacity={0.80}/>
 
       <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
 
@@ -3887,6 +3915,626 @@ function SelectLevel({ user, profile, game, role, onPick, onOut, onSmsToggle }) 
 
 // ROOT CONTROLLER
 // ══════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════
+// BATTLE SENT SCREEN — confirmation after challenge is created
+// ══════════════════════════════════════════════════════════════
+function BattleSent({ user, profile, opponentName, game, onProceed, onLobby, onOut, onSmsToggle }) {
+  const [glow, setGlow] = useState(false);
+  useEffect(() => { const t = setTimeout(() => setGlow(true), 120); return () => clearTimeout(t); }, []);
+
+  return (
+    <div className="c-screen">
+      <Bg char={CHAR_MP}/>
+      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
+      <div className="c-scroll"><div className="c-pad" style={{paddingTop:100,textAlign:"center"}}>
+
+        {/* Flash icon */}
+        <div style={{
+          fontSize:64, marginBottom:16,
+          filter: glow ? "drop-shadow(0 0 28px #F5C84299) drop-shadow(0 0 56px #D4921A66)" : "none",
+          transition:"filter 0.55s ease",
+        }}>⚔️</div>
+
+        {/* Headline */}
+        <h1 className="c-h1" style={{fontSize:22, marginBottom:8, color:C.goldLight}}>
+          Battle Sent!
+        </h1>
+        <p className="c-sub" style={{marginBottom:4}}>
+          You challenged
+        </p>
+        <p style={{
+          fontFamily:"'Cinzel',serif", fontWeight:900, fontSize:18,
+          color:C.offWhite, letterSpacing:1, marginBottom:20,
+        }}>
+          {opponentName}
+        </p>
+
+        {/* Info card */}
+        <div className="c-card" style={{textAlign:"left", marginBottom:24}}>
+          <div className="c-curl"/>
+          <div style={{fontSize:12, color:C.goldDim, lineHeight:1.8}}>
+            {[
+              "📲  Your opponent has been notified by text.",
+              "📖  5 rounds · The Word is your weapon.",
+              "⚔️  Enter Active Battles to track your game.",
+            ].map((line, i) => (
+              <div key={i} style={{
+                padding:"6px 0",
+                borderBottom: i < 2 ? "1px solid rgba(245,200,66,0.07)" : "none",
+                fontFamily:"'Cinzel',serif", fontSize:11, letterSpacing:0.5,
+              }}>{line}</div>
+            ))}
+          </div>
+        </div>
+
+        {/* Buttons */}
+        <button type="button"
+          onClick={onProceed}
+          style={{
+            width:"100%", padding:"15px 0", marginBottom:10,
+            borderRadius:12,
+            background:"linear-gradient(135deg,rgba(212,146,26,0.38),rgba(30,122,140,0.28))",
+            border:"1.5px solid rgba(245,200,66,0.55)",
+            color:C.goldLight,
+            fontFamily:"'Cinzel',serif", fontSize:13, fontWeight:700,
+            letterSpacing:1.2, cursor:"pointer",
+          }}>
+          ⚔️ View Active Battles
+        </button>
+
+        <button type="button"
+          onClick={onLobby}
+          style={{
+            width:"100%", padding:"13px 0",
+            borderRadius:12,
+            background:"rgba(13,31,53,0.70)",
+            border:"1.5px solid rgba(245,200,66,0.22)",
+            color:"rgba(245,200,66,0.60)",
+            fontFamily:"'Cinzel',serif", fontSize:11, fontWeight:700,
+            letterSpacing:1.2, cursor:"pointer",
+          }}>
+          ← Back to Lobby
+        </button>
+
+      </div></div>
+    </div>
+  );
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// VERSE PICK SCREEN — challenger selects 1 of 10 random verses
+// Character: CHAR_KNIGHT (battle-ready stance)
+// Standard: Bg component, c-screen/c-scroll/c-pad, Hdr, c-card
+// CRITICAL: verse tap = GameSession.create() + SMS fires
+// ══════════════════════════════════════════════════════════════
+function VersePick({ user, profile, pendingOpponent, pendingLevel, onDone, onOut, onSmsToggle }) {
+  const [verses,  setVerses]  = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [chosen,  setChosen]  = useState(null);
+
+  const myName = profile?.display_name || user?.email?.split("@")[0] || "Warrior";
+
+  // Build 10 random non-duplicate verses on mount
+  useEffect(() => {
+    const pool = [...VERSES];
+    const picked = [];
+    const used = new Set();
+    // shuffle pool then take first 10 unique
+    const shuffled = pool.sort(() => Math.random() - 0.5);
+    for (const v of shuffled) {
+      const key = `${v.book}${v.chapter}${v.verse}`;
+      if (!used.has(key)) { used.add(key); picked.push(v); }
+      if (picked.length >= 10) break;
+    }
+    setVerses(picked);
+  }, []);
+
+  async function commitVerse(verse) {
+    if (loading || chosen) return;
+    setChosen(verse);
+    setLoading(true);
+    const options = buildOptions(verse);
+    const myId = profile?.id || user?.email;
+    try {
+      const game = await B44.create("GameSession", {
+        challenger_id:    myId,
+        challenger_name:  myName,
+        answerer_id:      pendingOpponent.id || pendingOpponent.email,
+        answerer_name:    pendingOpponent.display_name,
+        status:           "pending",          // awaiting opponent accept
+        current_turn:     myId,
+        round:            0,
+        challenger_score: 0,
+        answerer_score:   0,
+        pending_pts:      pendingLevel.pts,
+        pending_icon:     pendingLevel.icon,
+        pending_name:     pendingLevel.name,
+        pending_verse:    verse,
+        pending_options:  options,
+        progress:         [],
+      });
+      // SMS fires HERE — verse is locked, session is real
+      if (pendingOpponent.phone && pendingOpponent.sms_enabled) {
+        await sendSMS(
+          pendingOpponent.phone,
+          `⚔️ ${myName} challenged you to a WhamBible verse battle! Open the app to accept.`,
+          game.id
+        );
+      }
+      onDone(game, pendingOpponent.display_name);
+    } catch(e) {
+      setChosen(null);
+      setLoading(false);
+      alert("Could not send challenge: " + e.message);
+    }
+  }
+
+  const lv = pendingLevel || LEVELS[0];
+
+  return (
+    <div className="c-screen">
+      <Bg char={CHAR_KNIGHT} charPos="center 12%" charOpacity={0.82}/>
+      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
+
+      <div className="c-scroll"><div className="c-pad" style={{paddingTop:88}}>
+
+        {/* Header */}
+        <div style={{textAlign:"center",marginBottom:16}}>
+          <div style={{
+            display:"inline-flex",alignItems:"center",gap:6,
+            padding:"5px 14px",borderRadius:20,
+            background:"rgba(13,31,53,0.75)",
+            border:`1.5px solid ${lv.color}55`,
+            marginBottom:10,
+          }}>
+            <span style={{fontSize:15}}>{lv.icon}</span>
+            <span style={{fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,color:lv.color,letterSpacing:1.5}}>
+              {lv.name.toUpperCase()}
+            </span>
+          </div>
+          <h1 className="c-h1" style={{fontSize:19,marginBottom:4}}>Pick Your Verse</h1>
+          <p className="c-sub" style={{fontSize:11}}>
+            Choose the verse to send to{" "}
+            <span style={{color:"#F5C842",fontWeight:700}}>{pendingOpponent?.display_name}</span>
+          </p>
+        </div>
+
+        {/* Verse cards — 10 slots */}
+        {verses.map((v, i) => {
+          const isChosen = chosen && chosen.book === v.book && chosen.chapter === v.chapter && chosen.verse === v.verse;
+          return (
+            <button
+              key={i}
+              type="button"
+              disabled={loading}
+              onClick={() => commitVerse(v)}
+              style={{
+                width:"100%",
+                textAlign:"left",
+                marginBottom:8,
+                padding:"11px 14px",
+                borderRadius:12,
+                background: isChosen
+                  ? "linear-gradient(135deg,rgba(212,146,26,0.45),rgba(30,122,140,0.35))"
+                  : "rgba(13,31,53,0.80)",
+                border: isChosen
+                  ? "1.5px solid rgba(245,200,66,0.75)"
+                  : "1.5px solid rgba(245,200,66,0.18)",
+                cursor: loading ? "default" : "pointer",
+                transition:"border 0.18s,background 0.18s",
+                opacity: loading && !isChosen ? 0.45 : 1,
+              }}
+            >
+              {/* Book / Ch:Vs ref */}
+              <div style={{
+                fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,
+                color: isChosen ? "#F5C842" : "rgba(245,200,66,0.55)",
+                letterSpacing:1.2,marginBottom:4,
+              }}>
+                {v.book} {v.chapter}:{v.verse}
+              </div>
+              {/* Verse preview — first 80 chars */}
+              <div style={{
+                fontSize:11,color:"rgba(244,240,232,0.80)",lineHeight:1.55,
+                fontStyle:"italic",
+              }}>
+                "{v.text.length > 82 ? v.text.slice(0,82) + "…" : v.text}"
+              </div>
+              {isChosen && loading && (
+                <div style={{marginTop:6,fontSize:10,color:"#F5C842",fontFamily:"'Cinzel',serif",letterSpacing:1}}>
+                  ⚔️ Sending challenge…
+                </div>
+              )}
+            </button>
+          );
+        })}
+
+        {/* Back */}
+        <button type="button" onClick={()=>onOut("level")}
+          style={{
+            width:"100%",padding:"12px 0",marginTop:4,borderRadius:12,
+            background:"rgba(13,31,53,0.70)",
+            border:"1.5px solid rgba(245,200,66,0.20)",
+            color:"rgba(245,200,66,0.55)",
+            fontFamily:"'Cinzel',serif",fontSize:11,fontWeight:700,
+            letterSpacing:1.2,cursor:"pointer",
+          }}>
+          ← Change Level
+        </button>
+
+      </div></div>
+    </div>
+  );
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// CHALLENGES SCREEN — answerer inbox
+// Shows all pending sessions where answerer_id === me
+// Character: CHAR_WAITING (watchful, expectant)
+// Standard: Bg component, c-screen/c-scroll/c-pad, Hdr, c-card
+// ══════════════════════════════════════════════════════════════
+function Challenges({ user, profile, onAccept, onDecline, onOut, onSmsToggle }) {
+  const [challenges, setChallenges] = useState([]);
+  const [loading,    setLoading]    = useState(true);
+
+  const myId = profile?.id || user?.email;
+
+  useEffect(() => {
+    loadChallenges();
+  }, []);
+
+  async function loadChallenges() {
+    setLoading(true);
+    try {
+      const pending = await B44.list("GameSession", { answerer_id: myId, status: "pending" });
+      const arr = Array.isArray(pending) ? pending : [];
+      setChallenges(arr.sort((a,b) => new Date(b.updated_date||0) - new Date(a.updated_date||0)));
+    } catch(e) {
+      console.warn("[Challenges] load:", e.message);
+      setChallenges([]);
+    }
+    setLoading(false);
+  }
+
+  async function acceptChallenge(g) {
+    try {
+      // Activate session — challenger picks first level, so it stays current_turn = challenger
+      const updated = await B44.update("GameSession", g.id, {
+        status: "waiting_for_answer",
+        current_turn: g.answerer_id,   // answerer answers the pre-set verse
+      });
+      // Remove from local list immediately (non-blocking UX)
+      setChallenges(p => p.filter(c => c.id !== g.id));
+      onAccept(updated);
+    } catch(e) {
+      alert("Could not accept challenge: " + e.message);
+    }
+  }
+
+  async function declineChallenge(g) {
+    try {
+      await B44.update("GameSession", g.id, { status: "cancelled" });
+      setChallenges(p => p.filter(c => c.id !== g.id));
+      if (onDecline) onDecline(g);
+    } catch(e) {
+      alert("Could not decline: " + e.message);
+    }
+  }
+
+  return (
+    <div className="c-screen">
+      <Bg char={CHAR_WAITING} charPos="center 14%" charOpacity={0.78}/>
+      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
+
+      <div className="c-scroll"><div className="c-pad" style={{paddingTop:88}}>
+
+        {/* Header */}
+        <div style={{textAlign:"center",marginBottom:20}}>
+          <h1 className="c-h1" style={{fontSize:20,marginBottom:4}}>⚔️ Challenges</h1>
+          <p className="c-sub" style={{fontSize:11}}>
+            Warriors who have issued a call to battle
+          </p>
+        </div>
+
+        {loading && (
+          <div style={{textAlign:"center",padding:"24px 0",color:"rgba(245,200,66,0.50)",fontFamily:"'Cinzel',serif",fontSize:11,letterSpacing:1}}>
+            Loading…
+          </div>
+        )}
+
+        {!loading && challenges.length === 0 && (
+          <div className="c-card" style={{textAlign:"center",padding:"28px 16px"}}>
+            <div className="c-curl"/>
+            <div style={{fontSize:28,marginBottom:8}}>🛡️</div>
+            <div style={{fontFamily:"'Cinzel',serif",fontSize:12,color:"rgba(245,200,66,0.60)",letterSpacing:1}}>
+              No pending challenges
+            </div>
+            <div style={{fontSize:10,color:"rgba(244,240,232,0.40)",marginTop:6,fontStyle:"italic"}}>
+              When a warrior challenges you, it appears here.
+            </div>
+          </div>
+        )}
+
+        {/* Challenge cards */}
+        {challenges.map(g => {
+          const lv = LEVELS.find(l => l.pts === (g.pending_pts||5)) || LEVELS[0];
+          const rb = rankBadge(0); // challenger's rank — use total_score if stored later
+          return (
+            <div key={g.id} className="c-card" style={{marginBottom:10,padding:"14px 14px 12px"}}>
+              <div className="c-curl"/>
+
+              {/* Challenger name + level badge */}
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:8}}>
+                <div style={{
+                  width:38,height:38,borderRadius:"50%",flexShrink:0,
+                  background:`linear-gradient(135deg,${C.cobalt},${C.teal})`,
+                  display:"flex",alignItems:"center",justifyContent:"center",
+                  fontSize:16,fontWeight:700,color:"#fff",
+                }}>
+                  {(g.challenger_name||"?")[0].toUpperCase()}
+                </div>
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{fontFamily:"'Cinzel',serif",fontSize:13,fontWeight:700,color:C.offWhite,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                    {g.challenger_name}
+                  </div>
+                  <div style={{fontSize:9,color:C.goldDim,letterSpacing:1,marginTop:1}}>
+                    issued a challenge
+                  </div>
+                </div>
+                {/* Difficulty badge */}
+                <div style={{
+                  padding:"3px 9px",borderRadius:8,flexShrink:0,
+                  background:`${lv.color}22`,
+                  border:`1px solid ${lv.color}66`,
+                }}>
+                  <span style={{fontSize:12}}>{lv.icon}</span>
+                  <span style={{
+                    fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,
+                    color:lv.color,letterSpacing:1,marginLeft:4,
+                  }}>{lv.name}</span>
+                </div>
+              </div>
+
+              {/* Verse preview */}
+              {g.pending_verse && (
+                <div style={{
+                  padding:"8px 10px",borderRadius:8,marginBottom:10,
+                  background:"rgba(13,31,53,0.60)",
+                  border:"1px solid rgba(245,200,66,0.10)",
+                }}>
+                  <div style={{fontFamily:"'Cinzel',serif",fontSize:9,color:"rgba(245,200,66,0.45)",letterSpacing:1,marginBottom:3}}>
+                    {g.pending_verse.book} {g.pending_verse.chapter}:{g.pending_verse.verse}
+                  </div>
+                  <div style={{fontSize:10,color:"rgba(244,240,232,0.65)",fontStyle:"italic",lineHeight:1.5}}>
+                    "{(g.pending_verse.text||"").slice(0,90)}{(g.pending_verse.text||"").length>90?"…":""}"
+                  </div>
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div style={{display:"flex",gap:8}}>
+                <button type="button"
+                  onClick={() => acceptChallenge(g)}
+                  style={{
+                    flex:1,padding:"11px 0",borderRadius:12,
+                    background:"linear-gradient(135deg,rgba(212,146,26,0.40),rgba(30,122,140,0.30))",
+                    border:"1.5px solid rgba(245,200,66,0.55)",
+                    color:"#F5C842",
+                    fontFamily:"'Cinzel',serif",fontSize:11,fontWeight:700,
+                    letterSpacing:1,cursor:"pointer",
+                  }}>
+                  ⚔️ Battle
+                </button>
+                <button type="button"
+                  onClick={() => declineChallenge(g)}
+                  style={{
+                    width:72,padding:"11px 0",borderRadius:12,
+                    background:"rgba(13,31,53,0.70)",
+                    border:"1.5px solid rgba(192,90,42,0.50)",
+                    color:"rgba(192,90,42,0.85)",
+                    fontFamily:"'Cinzel',serif",fontSize:11,fontWeight:700,
+                    letterSpacing:1,cursor:"pointer",
+                  }}>
+                  ✗
+                </button>
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Refresh + Back */}
+        <div style={{display:"flex",gap:8,marginTop:12}}>
+          <button type="button" onClick={loadChallenges}
+            style={{
+              flex:1,padding:"12px 0",borderRadius:12,
+              background:"rgba(26,58,92,0.70)",
+              border:"1.5px solid rgba(245,200,66,0.25)",
+              color:"rgba(245,200,66,0.65)",
+              fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,
+              letterSpacing:1.2,cursor:"pointer",
+            }}>
+            ↺ Refresh
+          </button>
+          <button type="button" onClick={() => onOut("lobby")}
+            style={{
+              flex:1,padding:"12px 0",borderRadius:12,
+              background:"rgba(13,31,53,0.70)",
+              border:"1.5px solid rgba(245,200,66,0.18)",
+              color:"rgba(245,200,66,0.45)",
+              fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,
+              letterSpacing:1.2,cursor:"pointer",
+            }}>
+            ← Lobby
+          </button>
+        </div>
+
+      </div></div>
+    </div>
+  );
+}
+
+
+// ══════════════════════════════════════════════════════════════
+// ACTIVE BATTLES SCREEN — hub between turns
+// Shows all ongoing sessions for this player
+// Character: CHAR_MP (battle ready — both players engaged)
+// Standard: Bg component, c-screen/c-scroll/c-pad, Hdr, c-card
+// After each turn: both players land here
+// ══════════════════════════════════════════════════════════════
+function ActiveBattles({ user, profile, onEnter, onOut, onSmsToggle }) {
+  const [games,   setGames]   = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  const myId = profile?.id || user?.email;
+
+  useEffect(() => {
+    loadGames();
+  }, []);
+
+  async function loadGames() {
+    setLoading(true);
+    try {
+      const [r1, r2] = await Promise.all([
+        B44.list("GameSession", { challenger_id: myId }),
+        B44.list("GameSession", { answerer_id:   myId }),
+      ]);
+      const all = [...(Array.isArray(r1)?r1:[]), ...(Array.isArray(r2)?r2:[])]
+        .filter(g => g.status !== "cancelled" && g.status !== "pending")
+        .sort((a,b) => new Date(b.updated_date||0) - new Date(a.updated_date||0));
+      setGames(all);
+    } catch(e) {
+      console.warn("[ActiveBattles] load:", e.message);
+    }
+    setLoading(false);
+  }
+
+  return (
+    <div className="c-screen">
+      <Bg char={CHAR_MP} charPos="center 12%" charOpacity={0.80}/>
+      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
+
+      <div className="c-scroll"><div className="c-pad" style={{paddingTop:88}}>
+
+        <div style={{textAlign:"center",marginBottom:20}}>
+          <h1 className="c-h1" style={{fontSize:20,marginBottom:4}}>Active Battles</h1>
+          <p className="c-sub" style={{fontSize:11}}>Your ongoing verse battles</p>
+        </div>
+
+        {loading && (
+          <div style={{textAlign:"center",padding:"24px 0",color:"rgba(245,200,66,0.50)",fontFamily:"'Cinzel',serif",fontSize:11,letterSpacing:1}}>
+            Loading…
+          </div>
+        )}
+
+        {!loading && games.length === 0 && (
+          <div className="c-card" style={{textAlign:"center",padding:"28px 16px"}}>
+            <div className="c-curl"/>
+            <div style={{fontSize:28,marginBottom:8}}>⚔️</div>
+            <div style={{fontFamily:"'Cinzel',serif",fontSize:12,color:"rgba(245,200,66,0.60)",letterSpacing:1}}>
+              No active battles
+            </div>
+            <div style={{fontSize:10,color:"rgba(244,240,232,0.40)",marginTop:6,fontStyle:"italic"}}>
+              Challenge a warrior from the Lobby to begin.
+            </div>
+          </div>
+        )}
+
+        {games.map(g => {
+          const isChallenger = g.challenger_id === myId;
+          const oppName  = isChallenger ? g.answerer_name : g.challenger_name;
+          const myScore  = isChallenger ? (g.challenger_score||0) : (g.answerer_score||0);
+          const oppScore = isChallenger ? (g.answerer_score||0)   : (g.challenger_score||0);
+          const isMyTurn = g.current_turn === myId;
+          const lv = LEVELS.find(l => l.pts === (g.pending_pts||5)) || LEVELS[0];
+          const isComplete = g.status === "complete";
+
+          return (
+            <button key={g.id} type="button"
+              onClick={() => onEnter(g, isChallenger ? "challenger" : "answerer")}
+              style={{
+                width:"100%",marginBottom:8,
+                padding:"12px 14px",borderRadius:12,
+                background: isMyTurn
+                  ? "linear-gradient(135deg,rgba(212,146,26,0.28),rgba(26,58,92,0.85))"
+                  : "rgba(13,31,53,0.80)",
+                border: isMyTurn
+                  ? "1.5px solid rgba(245,200,66,0.55)"
+                  : "1.5px solid rgba(245,200,66,0.18)",
+                cursor:"pointer",
+                textAlign:"left",
+                transition:"border 0.18s,background 0.18s",
+              }}>
+              <div style={{display:"flex",alignItems:"center",gap:10}}>
+                {/* Opponent avatar */}
+                <div style={{
+                  width:36,height:36,borderRadius:"50%",flexShrink:0,
+                  background:`linear-gradient(135deg,${C.cobalt},${C.teal})`,
+                  display:"flex",alignItems:"center",justifyContent:"center",
+                  fontSize:14,fontWeight:700,color:"#fff",
+                }}>
+                  {(oppName||"?")[0].toUpperCase()}
+                </div>
+                {/* Battle info */}
+                <div style={{flex:1,minWidth:0}}>
+                  <div style={{
+                    fontFamily:"'Cinzel',serif",fontSize:12,fontWeight:700,
+                    color: isMyTurn ? C.goldLight : C.offWhite,
+                    overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
+                    marginBottom:2,
+                  }}>
+                    vs {oppName}
+                  </div>
+                  <div style={{fontSize:9,color:C.goldDim,letterSpacing:0.8}}>
+                    Rnd {Math.min((g.round||0)+1,5)}/{TOTAL_ROUNDS} · {myScore}–{oppScore}
+                    {isComplete ? " · COMPLETE" : isMyTurn ? " · YOUR TURN ▶" : " · WAITING"}
+                  </div>
+                </div>
+                {/* Level badge */}
+                <div style={{
+                  padding:"3px 8px",borderRadius:8,flexShrink:0,
+                  background:`${lv.color}22`,border:`1px solid ${lv.color}55`,
+                }}>
+                  <span style={{fontSize:11}}>{lv.icon}</span>
+                </div>
+              </div>
+            </button>
+          );
+        })}
+
+        {/* Lobby CTA */}
+        <div style={{marginTop:14,display:"flex",gap:8}}>
+          <button type="button" onClick={loadGames}
+            style={{
+              flex:1,padding:"12px 0",borderRadius:12,
+              background:"rgba(26,58,92,0.70)",
+              border:"1.5px solid rgba(245,200,66,0.25)",
+              color:"rgba(245,200,66,0.65)",
+              fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,
+              letterSpacing:1.2,cursor:"pointer",
+            }}>
+            ↺ Refresh
+          </button>
+          <button type="button" onClick={() => onOut("lobby")}
+            style={{
+              flex:1,padding:"12px 0",borderRadius:12,
+              background:"rgba(13,31,53,0.70)",
+              border:"1.5px solid rgba(245,200,66,0.20)",
+              color:"rgba(245,200,66,0.50)",
+              fontFamily:"'Cinzel',serif",fontSize:10,fontWeight:700,
+              letterSpacing:1.2,cursor:"pointer",
+            }}>
+            ⚔️ Lobby
+          </button>
+        </div>
+
+      </div></div>
+    </div>
+  );
+}
+
 export default function Challenge() {
   // Check for existing session immediately — skip auth screen if already logged in
   // Read from localStorage directly — this survives React re-mounts and page switches
@@ -3904,6 +4552,9 @@ export default function Challenge() {
   const [game,    setGame]    = useState(null);
   const [role,    setRole]    = useState(null);   // "challenger" | "answerer"
   const [lastResult, setLastResult] = useState(null);
+  const [sentOpponent,   setSentOpponent]   = useState(null);  // display name of opponent just challenged
+  const [pendingOpponent, setPendingOpponent] = useState(null); // full PlayerProfile of opponent (before session created)
+  const [pendingLevel,    setPendingLevel]    = useState(null); // selected level (before session created)
 
   // Background B44 profile sync for returning users
   useEffect(() => {
@@ -3984,48 +4635,38 @@ export default function Challenge() {
     setUser(u); setProfile(p); setScreen("lobby");
   }
 
-  function onOut() {
+  function onOut(dest) {
+    // If dest is a screen name, navigate there (back-nav from child screens)
+    if (dest && typeof dest === "string" && !["signout","logout"].includes(dest)) {
+      setScreen(dest);
+      return;
+    }
     LocalAuth.signOut();
     try { sessionStorage.removeItem("wb_profile_cache"); } catch {}
     setUser(null); setProfile(null); setGame(null); setRole(null); setScreen("auth");
   }
 
-  function onChallenge(g, r) {
-    setGame(g); setRole(r);
-    // Challenger just created — it's their turn to pick level
-    setScreen("level");
+  function onChallenge(g, r, opponentOrName) {
+    setRole(r);
+    if (g === null && opponentOrName && typeof opponentOrName === "object") {
+      // New challenge flow: no session yet — store opponent, go to SelectLevel first
+      setPendingOpponent(opponentOrName);
+      setSentOpponent(opponentOrName.display_name);
+      setGame(null);
+      setScreen("level");
+    } else if (g) {
+      // Resuming or continuing existing session
+      setGame(g);
+      if (typeof opponentOrName === "string") setSentOpponent(opponentOrName);
+      routeGame(g, r);
+    }
   }
 
   // Called when user picks a player from PlayerListOverlay (via Hdr menu)
-  async function onChallengePlayer(opponent) {
+  function onChallengePlayer(opponent) {
     if (!profile) return;
-    const myName = profile.display_name || user?.email?.split("@")[0];
-    const verse   = rndVerse();
-    const options = buildOptions(verse);
-    try {
-      const game = await B44.create("GameSession", {
-        challenger_id:    profile.id || user.email,
-        challenger_name:  myName,
-        answerer_id:      opponent.id || opponent.email,
-        answerer_name:    opponent.display_name,
-        status:           "pick_level",
-        current_turn:     profile.id || user.email,
-        round:            0,
-        challenger_score: 0,
-        answerer_score:   0,
-        pending_verse:    verse,
-        pending_options:  options,
-        progress:         [],
-      });
-      if (opponent.phone && opponent.sms_enabled) {
-        await sendSMS(opponent.phone,
-          `⚔️ ${myName} challenged you to a WhamBible verse battle! Open the app to play.`,
-          game.id);
-      }
-      onChallenge(game, "challenger");
-    } catch (e) {
-      alert("Could not start challenge: " + e.message);
-    }
+    // Store opponent — SelectLevel → VersePick will create the session
+    onChallenge(null, "challenger", opponent);
   }
 
   function onResumeGame(g, r) {
@@ -4033,10 +4674,9 @@ export default function Challenge() {
     routeGame(g, r);
   }
 
-  function onLevelPicked(lv, verse, options) {
-    // After challenger picks level, go to waiting screen until opponent answers
-    setGame(g => ({...g, pending_pts:lv.pts, pending_icon:lv.icon, pending_name:lv.name, pending_verse:verse, pending_options:options, status:"waiting_for_answer"}));
-    setScreen("waiting");
+  function onLevelPicked(lv) {
+    setPendingLevel(lv);
+    setScreen("verse_pick");
   }
 
   function onWaitingUpdate(updated) {
@@ -4058,19 +4698,23 @@ export default function Challenge() {
   function onResultNext() {
     if (!game) return setScreen("lobby");
     if (game.status === "complete") return setScreen("gameover");
-    // Now it's the other player's turn — go to waiting
-    setScreen("waiting");
+    // Turn done — return to Active Battles hub (not Waiting)
+    setScreen("active");
   }
 
   return (
     <>
-      {screen==="auth"    && <Auth onIn={onIn}/>}
-      {screen==="lobby"   && <Lobby user={user} profile={profile} onChallenge={onChallenge} onResumeGame={onResumeGame} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
-      {screen==="level"   && <SelectLevel user={user} profile={profile} game={game} role={role} onPick={onLevelPicked} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
-      {screen==="waiting" && <Waiting user={user} profile={profile} game={game} role={role} onUpdate={onWaitingUpdate} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
-      {screen==="answer"  && <Answer user={user} game={game} role={role} onDone={onAnswered} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
-      {screen==="result"  && <RoundResult user={user} profile={profile} game={game} role={role} correct={lastResult?.correct} pts={lastResult?.pts} onNext={onResultNext} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
-      {screen==="gameover"&& <GameOver user={user} profile={profile} game={game} role={role} onHome={()=>setScreen("lobby")} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
+      {screen==="auth"       && <Auth onIn={onIn}/>}
+      {screen==="lobby"      && <Lobby user={user} profile={profile} onChallenge={onChallenge} onResumeGame={onResumeGame} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
+      {screen==="level"      && <SelectLevel user={user} profile={profile} game={game} role={role} pendingOpponent={pendingOpponent} onPick={onLevelPicked} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
+      {screen==="verse_pick" && <VersePick user={user} profile={profile} pendingOpponent={pendingOpponent} pendingLevel={pendingLevel} onDone={(g, oppName)=>{ setGame(g); setSentOpponent(oppName); setScreen("sent"); }} onOut={(dest)=>setScreen(dest||"level")} onSmsToggle={handleSmsToggle}/>}
+      {screen==="sent"       && <BattleSent user={user} profile={profile} opponentName={sentOpponent} game={game} onProceed={()=>setScreen("active")} onLobby={()=>setScreen("lobby")} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
+      {screen==="challenges" && <Challenges user={user} profile={profile} onAccept={(g)=>{ setGame(g); setRole("answerer"); routeGame(g,"answerer"); }} onDecline={()=>{}} onOut={(dest)=>setScreen(dest||"lobby")} onSmsToggle={handleSmsToggle}/>}
+      {screen==="active"     && <ActiveBattles user={user} profile={profile} onEnter={(g,r)=>{ setGame(g); setRole(r); routeGame(g,r); }} onOut={(dest)=>setScreen(dest||"lobby")} onSmsToggle={handleSmsToggle}/>}
+      {screen==="waiting"    && <Waiting user={user} profile={profile} game={game} role={role} onUpdate={onWaitingUpdate} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
+      {screen==="answer"     && <Answer user={user} game={game} role={role} onDone={onAnswered} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
+      {screen==="result"     && <RoundResult user={user} profile={profile} game={game} role={role} correct={lastResult?.correct} pts={lastResult?.pts} onNext={onResultNext} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
+      {screen==="gameover"   && <GameOver user={user} profile={profile} game={game} role={role} onHome={()=>setScreen("active")} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
     </>
   );
 }
