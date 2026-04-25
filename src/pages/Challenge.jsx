@@ -321,16 +321,21 @@ html,body,#root{height:100%;margin:0;padding:0;overflow:hidden;}
 `;
 
 // ── Background ──
-function Bg({ char }) {
+function Bg({ char, charPos = "center 28%", charOpacity = 0.72, bgScale = 1.0 }) {
   return (
-    <>
-      {/* Layer 1: Landscape — full vibrancy */}
-      <div style={{position:"fixed",inset:0,zIndex:0,backgroundImage:`url(${LANDSCAPE_BG})`,backgroundSize:"cover",backgroundPosition:"center top",opacity:1}}/>
-      {/* Layer 2: Character — vivid, bottom-anchored */}
-      {char && <div style={{position:"fixed",inset:0,zIndex:1,backgroundImage:`url(${char})`,backgroundSize:"contain",backgroundPosition:"center bottom",backgroundRepeat:"no-repeat",opacity:0.55}}/>}
-      {/* Layer 3: Tone — lighter cobalt gradient, preserves landscape colour */}
-      <div style={{position:"fixed",inset:0,zIndex:2,background:`linear-gradient(180deg,${C.cobaltDark}cc 0%,${C.cobaltDark}44 40%,rgba(13,31,53,0.15) 100%)`}}/>
-    </>
+    <div style={{
+      position:"fixed",inset:0,zIndex:0,
+      transform:`scale(${bgScale})`,
+      transformOrigin:"center center",
+      transition: bgScale !== 1.0 ? "none" : "transform 0.36s cubic-bezier(.34,1.56,.64,1)",
+    }}>
+      {/* Layer 1: Landscape */}
+      <div style={{position:"fixed",inset:0,backgroundImage:`url(${LANDSCAPE_BG})`,backgroundSize:"cover",backgroundPosition:"center top",opacity:1}}/>
+      {/* Layer 2: Character — positioned in open sky zone */}
+      {char && <div style={{position:"fixed",inset:0,backgroundImage:`url(${char})`,backgroundSize:"contain",backgroundPosition:charPos,backgroundRepeat:"no-repeat",opacity:charOpacity}}/>}
+      {/* Layer 3: Tone gradient — light at top, darkens toward panel */}
+      <div style={{position:"fixed",inset:0,background:`linear-gradient(180deg,${C.cobaltDark}bb 0%,${C.cobaltDark}33 35%,rgba(13,31,53,0.05) 60%,rgba(13,31,53,0.55) 100%)`}}/>
+    </div>
   );
 }
 
@@ -2051,7 +2056,7 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
   const [games,      setGames]      = useState([]);      // visible 10
   const [loading,    setLoading]    = useState(false);
   const [panelSnap,  setPanelSnap]  = useState("up");    // "up" | "down"
-  const [panelRaw,   setPanelRaw]   = useState(0.52);    // fraction from top
+  const [panelRaw,   setPanelRaw]   = useState(0.46);    // fraction from top
   const [panelDrag,  setPanelDrag]  = useState(false);
   const [panelBgSc,  setPanelBgSc]  = useState(1.0);
   const panelDragRef  = useRef(null);
@@ -2060,9 +2065,9 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
   const loadedRef     = useRef({ new: false, active: false });
 
   // ── Panel constants (per screen handling standards) ──
-  const SNAP_UP   = 0.52;   // expanded  — character visible above panel
-  const SNAP_DOWN = 0.82;   // peeked    — tabs row + pill only
-  const LIM_TOP   = 0.34;   // hard ceiling
+  const SNAP_UP   = 0.46;   // expanded  — character mid-visible, search + slots show
+  const SNAP_DOWN = 0.80;   // peeked    — tabs row + pill only
+  const LIM_TOP   = 0.32;   // hard ceiling
   const LIM_BOT   = 0.86;   // hard floor
   const RUBBER    = 0.28;
 
@@ -2073,7 +2078,7 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
     return panelRaw;
   })();
   const panelTopPx  = Math.round(panelDisplay * panelWinH);
-  const panelMaxH   = Math.round(0.58 * panelWinH);
+  const panelMaxH   = Math.round(0.65 * panelWinH);
   const panelH      = Math.min(panelWinH - panelTopPx - 16, panelMaxH);
 
   // Margin squeeze
@@ -2263,18 +2268,22 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
   // ── Slot row styles ──
   const sRow = {
     display:"flex", alignItems:"center", gap:10,
-    minHeight:56, padding:"8px 12px",
-    borderRadius:12,
-    border:"1px solid rgba(245,200,66,0.10)",
-    background:"rgba(13,31,53,0.28)",
-    marginBottom:7,
+    minHeight:54, padding:"8px 12px",
+    borderRadius:11,
+    border:"1px dashed rgba(245,200,66,0.10)",
+    background:"rgba(13,31,53,0.16)",
+    marginBottom:6,
     boxSizing:"border-box",
-    transition:"background 0.15s",
   };
   const sRowFilled = {
-    ...sRow,
-    background:"rgba(26,58,92,0.50)",
-    border:"1px solid rgba(245,200,66,0.24)",
+    display:"flex", alignItems:"center", gap:10,
+    minHeight:54, padding:"8px 12px",
+    borderRadius:11,
+    border:"1px solid rgba(245,200,66,0.28)",
+    background:"rgba(20,46,78,0.72)",
+    marginBottom:6,
+    boxSizing:"border-box",
+    transition:"background 0.15s",
   };
   const btnBattle = {
     flexShrink:0,
@@ -2308,7 +2317,7 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
 
   return (
     <div className="c-screen">
-      <Bg char={CHAR_KNIGHT} bgScale={panelBgSc}/>
+      <Bg char={CHAR_KNIGHT} bgScale={panelBgSc} charPos="center 22%" charOpacity={0.85}/>
       <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle} onChallenge={challenge}/>
 
       {/* ── Profile card — fixed below Hdr ── */}
@@ -2354,11 +2363,12 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
         top: panelTopPx,
         height: panelH,
         zIndex:10,
-        borderRadius:18,
+        borderRadius:"18px 18px 18px 18px",
         overflow:"hidden",
-        boxShadow:"0 8px 40px rgba(0,0,0,0.60), 0 0 0 1px rgba(245,200,66,0.20)",
+        boxShadow:"0 -2px 24px rgba(0,0,0,0.45), 0 8px 40px rgba(0,0,0,0.60), 0 0 0 1px rgba(245,200,66,0.22)",
         display:"flex", flexDirection:"column",
         transition: panelTransition,
+        background:"transparent",
       }}>
 
         {/* ── Handle bar: drag pill + tabs + chevron all in one row ── */}
@@ -2367,18 +2377,19 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
           onMouseDown={onMouseDown}
           style={{
             flexShrink:0,
-            background:"rgba(10,24,44,0.96)",
-            borderBottom:"1px solid rgba(245,200,66,0.18)",
+            background:"rgba(10,22,42,0.97)",
+            borderTop:"2px solid rgba(245,200,66,0.55)",
+            borderBottom:"1px solid rgba(245,200,66,0.15)",
             cursor:"grab", userSelect:"none", touchAction:"none",
           }}>
 
           {/* Drag pill row */}
-          <div style={{display:"flex",justifyContent:"center",paddingTop:8,paddingBottom:4}}>
-            <div style={{width:36,height:4,borderRadius:2,background:"rgba(245,200,66,0.40)"}}/>
+          <div style={{display:"flex",justifyContent:"center",paddingTop:7,paddingBottom:3}}>
+            <div style={{width:38,height:4,borderRadius:2,background:"rgba(245,200,66,0.50)"}}/>
           </div>
 
           {/* Tab row */}
-          <div style={{display:"flex",gap:6,padding:"0 10px 10px",alignItems:"center"}}>
+          <div style={{display:"flex",gap:6,padding:"2px 10px 9px",alignItems:"center"}}>
             {/* ⚔️ Challenge tab */}
             <button type="button"
               onMouseDown={e=>e.stopPropagation()} onTouchStart={e=>e.stopPropagation()}
@@ -2448,10 +2459,10 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
         {/* Scrollable content */}
         <div ref={panelScrollRef} style={{
           flex:1, overflowY:"auto",
-          background:"rgba(13,31,53,0.72)",
-          backdropFilter:"blur(14px)", WebkitBackdropFilter:"blur(14px)",
+          background:"rgba(10,22,42,0.88)",
+          backdropFilter:"blur(16px)", WebkitBackdropFilter:"blur(16px)",
           WebkitOverflowScrolling:"touch",
-          padding:"10px 12px 16px",
+          padding:"10px 12px 20px",
         }}>
 
           {loading && <div style={{textAlign:"center",padding:24}}><div className="c-spin"/></div>}
@@ -2548,8 +2559,20 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
           </>)}
 
           {/* Back button */}
-          <div style={{marginTop:10}}>
-            <button type="button" className="c-btn-c" onClick={()=>window.location.href="/"}>← Back to Home</button>
+          <div style={{marginTop:12}}>
+            <button type="button" onClick={()=>window.location.href="/"}
+              style={{
+                width:"100%", padding:"13px 0",
+                borderRadius:12,
+                border:"1.5px solid rgba(245,200,66,0.40)",
+                background:"linear-gradient(135deg,rgba(13,31,53,0.85),rgba(26,58,92,0.85))",
+                color:"rgba(245,200,66,0.80)",
+                fontFamily:"'Cinzel',serif", fontSize:12, fontWeight:700,
+                letterSpacing:1.5, cursor:"pointer",
+                backdropFilter:"blur(8px)",
+              }}>
+              ← Back to Home
+            </button>
           </div>
         </div>
       </div>
