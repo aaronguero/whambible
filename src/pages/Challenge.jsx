@@ -1824,12 +1824,15 @@ function Auth({ onIn }) {
         phone: phone.trim() || "", sms_enabled: !!(phone.trim() && smsConsent),
         total_score: 0, games_played: 0, games_won: 0,
       };
-      // Let user in immediately
-      onIn(user, localProfile);
-      // Sync to B44 in background — 403 or failure won't block the user
-      B44.create("PlayerProfile", localProfile).catch(e =>
-        console.warn("[B44] Profile create failed (will retry later):", e.message)
-      );
+      // AWAIT B44 profile creation so .id is available immediately (fixes self-filter bug)
+      let b44Profile = null;
+      try {
+        b44Profile = await B44.create("PlayerProfile", localProfile);
+      } catch (be) {
+        console.warn("[B44] Profile create failed, using local stub:", be.message);
+      }
+      // Use real profile with .id if we got it, fallback to local stub
+      onIn(user, b44Profile || localProfile);
     } catch (e2) {
       // Only show error if LOCAL auth failed (e.g. account already exists)
       setErr(parseError(e2));
@@ -2231,7 +2234,13 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
       const all    = Array.isArray(raw) ? raw : (raw?.records || []);
       const myEmail = user?.email || profile?.email || "";
       const myId    = profile?.id || "";
-      const others = all.filter(p => p.email !== myEmail && (myId ? p.id !== myId : true));
+      const myName  = profile?.display_name || "";
+      // Triple-filter: by email (primary), by B44 id (if available), by display_name (safety net)
+      const others = all.filter(p =>
+        p.email !== myEmail &&
+        (myId   ? p.id           !== myId   : true) &&
+        (myName ? p.display_name !== myName : true)
+      );
       setAllPlayers(others);
       loadedRef.current.new = true;
     } catch(e) { console.warn("[Lobby] loadPlayers:", e.message); }
@@ -2261,6 +2270,16 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
   }
 
   function challenge(opponent) {
+    // Self-challenge guard — should never happen but belt-and-suspenders
+    const myEmail = user?.email || profile?.email || "";
+    const myId    = profile?.id || "";
+    if (
+      (myEmail && opponent.email === myEmail) ||
+      (myId    && opponent.id    === myId)
+    ) {
+      console.warn("[Lobby] Blocked self-challenge attempt");
+      return;
+    }
     // Store opponent locally — SelectLevel → VersePick will create the session
     onChallenge(null, "challenger", opponent);
   }
