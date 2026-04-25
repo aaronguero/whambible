@@ -363,8 +363,8 @@ function MenuOverlay({ charKey, title, onClose, children }) {
   const RUBBER      = 0.28; // resistance factor beyond limits (0=none, 1=full)
 
   // ── State ─────────────────────────────────────────────────
-  const [snapPos,   setSnapPos]   = useState("down"); // "up" | "down"
-  const [rawTop,    setRawTop]    = useState(SNAP_DOWN);
+  const [snapPos,   setSnapPos]   = useState("up");   // "up" | "down"
+  const [rawTop,    setRawTop]    = useState(SNAP_UP);
   const [dragging,  setDragging]  = useState(false);
   const [bgScale,   setBgScale]   = useState(1.0);
   const dragRef = useRef(null);
@@ -1666,8 +1666,8 @@ function Auth({ onIn }) {
   const AUTH_LIMIT_TOP = 0.08;
   const AUTH_LIMIT_BOT = 0.72;
   const AUTH_RUBBER    = 0.28;
-  const [authSnap,     setAuthSnap]     = useState("down");
-  const [authRawTop,   setAuthRawTop]   = useState(AUTH_SNAP_DOWN);
+  const [authSnap,     setAuthSnap]     = useState("up");
+  const [authRawTop,   setAuthRawTop]   = useState(AUTH_SNAP_UP);
   const [authDragging, setAuthDragging] = useState(false);
   const [authBgScale,  setAuthBgScale]  = useState(1.0);
   const authDragRef = useRef(null);
