@@ -1673,12 +1673,12 @@ function Auth({ onIn }) {
   const [authRawTop,   setAuthRawTop]   = useState(AUTH_SNAP_UP);  // 28%
   const [authDragging, setAuthDragging] = useState(false);
   const [authBgScale,  setAuthBgScale]  = useState(1.0);
-  const authDragRef   = useRef(null);
-  const authScrollRef = useRef(null);  // ref to inner scroll container
-  // Use visualViewport.height so panel respects keyboard-reduced space
-  const authWinH = typeof window !== "undefined"
-    ? (window.visualViewport ? window.visualViewport.height : window.innerHeight)
-    : 812;
+  const authDragRef    = useRef(null);
+  const authScrollRef  = useRef(null);  // ref to inner scroll container
+  const authWinHRef    = useRef(typeof window !== "undefined" ? window.innerHeight : 812);
+  // LOCKED on mount — never re-read during keyboard open/close
+  // This prevents panel height jumping as virtual keyboard changes viewport size
+  const authWinH = authWinHRef.current;
 
   // Derived display top with rubber-band
   const authDisplayTop = (() => {
@@ -1691,7 +1691,7 @@ function Auth({ onIn }) {
     return authRawTop;
   })();
   const authTopPx  = Math.round(authDisplayTop * authWinH);
-  const authMaxH   = Math.round(0.70 * authWinH);  // 70% max — enough for full create form
+  const authMaxH   = Math.round(0.78 * authWinH);  // 78% max — room for full create form + SMS consent
   const authPanelH = Math.min(authWinH - authTopPx - 16, authMaxH);
 
   // Margin squeeze — as panel approaches limits, side margins compress 16px → 4px
