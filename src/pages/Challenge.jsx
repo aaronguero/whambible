@@ -2055,6 +2055,7 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
   const [search,     setSearch]     = useState("");
   const [games,      setGames]      = useState([]);      // visible 10
   const [loading,    setLoading]    = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [panelSnap,  setPanelSnap]  = useState("up");    // "up" | "down"
   const [panelRaw,   setPanelRaw]   = useState(0.46);    // fraction from top
   const [panelDrag,  setPanelDrag]  = useState(false);
@@ -2157,15 +2158,43 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
     else               { loadedRef.current.active = false; loadGames(); }
   }, [tab]);
 
-  // search filter
+  // search filter — client-side filter on cached players
   const filteredPlayers = !search.trim() ? allPlayers
     : allPlayers.filter(p =>
         (p.display_name||"").toLowerCase().includes(search.toLowerCase()) ||
         (p.email||"").toLowerCase().includes(search.toLowerCase())
       );
 
+  // live B44 search when typing (debounced 400ms)
+  const [liveResults, setLiveResults] = useState([]);
+  useEffect(() => {
+    const q = search.trim();
+    if (q.length < 2) { setLiveResults([]); return; }
+    const tid = setTimeout(async () => {
+      try {
+        setSearchLoading(true);
+        const raw = await B44.list("PlayerProfile");
+        const all = Array.isArray(raw) ? raw : (raw?.records || []);
+        const lq  = q.toLowerCase();
+        const res = all.filter(p =>
+          p.email !== (user?.email||"") && p.id !== profile?.id &&
+          ((p.display_name||"").toLowerCase().includes(lq) ||
+           (p.email||"").toLowerCase().includes(lq))
+        );
+        setLiveResults(res);
+      } catch(e) { /* silent */ }
+      finally { setSearchLoading(false); }
+    }, 400);
+    return () => clearTimeout(tid);
+  }, [search]);
+
+  // merge: if search active use live results, else cached
+  const displayPlayers = search.trim().length >= 2
+    ? liveResults
+    : filteredPlayers;
+
   // Build 10 fixed slots for players
-  const playerSlots = Array.from({ length: LOBBY_SLOTS }, (_, i) => filteredPlayers[i] || null);
+  const playerSlots = Array.from({ length: LOBBY_SLOTS }, (_, i) => displayPlayers[i] || null);
 
   // Build 10 fixed slots for games; overflow → localStorage
   function buildGameSlots(allGames) {
@@ -2482,6 +2511,9 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
                   background:"rgba(13,31,53,0.75)", color:C.offWhite,
                   fontFamily:"'Cinzel',serif", fontSize:11, outline:"none",
                 }}/>
+              {searchLoading && (
+                <span style={{position:"absolute",right:search.length>0?32:10,top:"50%",transform:"translateY(-50%)",fontSize:10,color:C.goldLight,opacity:0.7}}>⏳</span>
+              )}
               {search.length > 0 && (
                 <span onClick={()=>setSearch("")}
                   style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",
