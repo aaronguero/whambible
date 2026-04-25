@@ -1673,7 +1673,8 @@ function Auth({ onIn }) {
   const [authRawTop,   setAuthRawTop]   = useState(AUTH_SNAP_UP);  // 28%
   const [authDragging, setAuthDragging] = useState(false);
   const [authBgScale,  setAuthBgScale]  = useState(1.0);
-  const authDragRef = useRef(null);
+  const authDragRef   = useRef(null);
+  const authScrollRef = useRef(null);  // ref to inner scroll container
   const authWinH = typeof window !== "undefined" ? window.innerHeight : 812;
 
   // Derived display top with rubber-band
@@ -1689,6 +1690,15 @@ function Auth({ onIn }) {
   const authTopPx  = Math.round(authDisplayTop * authWinH);
   const authMaxH   = Math.round(0.70 * authWinH);  // 70% max — enough for full create form
   const authPanelH = Math.min(authWinH - authTopPx - 16, authMaxH);
+
+  // Margin squeeze — as panel approaches limits, side margins compress 16px → 4px
+  const authMargin = (() => {
+    const distTop = authDisplayTop - AUTH_LIMIT_TOP;   // 0 at ceiling
+    const distBot = AUTH_LIMIT_BOT - authDisplayTop;   // 0 at floor
+    const closest = Math.min(distTop, distBot);
+    const t = Math.max(0, Math.min(1, closest / 0.10)); // 0→1 over 10% range
+    return Math.round(4 + t * 12); // 4px at limit → 16px nominal
+  })();
 
   function authApplyRubberBg(frac) {
     if (frac < AUTH_LIMIT_TOP) {
@@ -1747,6 +1757,28 @@ function Auth({ onIn }) {
     window.addEventListener("mouseup",   onMU);
     return () => { window.removeEventListener("mousemove", onMM); window.removeEventListener("mouseup", onMU); };
   }, [authDragging, authRawTop]);
+
+  // Pull-scroll: overscroll on inner content nudges the panel up/down
+  function onAuthContentScroll(e) {
+    const el = e.target;
+    const overTop    = el.scrollTop;                             // > 0 = normal scroll; at 0 = can pull down
+    const overBottom = el.scrollHeight - el.scrollTop - el.clientHeight; // 0 = at bottom
+
+    if (overTop <= 0 && authSnap === "up") {
+      // User pulling down at top → nudge panel down toward peek
+      const pullFrac = Math.abs(el.scrollTop) / authWinH;
+      if (pullFrac > 0.02) {
+        setAuthRawTop(Math.min(AUTH_LIMIT_BOT, authRawTop + pullFrac * 0.6));
+      }
+    }
+    if (overBottom <= 0 && authSnap === "down") {
+      // User pulling up at bottom → nudge panel up toward expanded
+      const pullFrac = (el.scrollTop - (el.scrollHeight - el.clientHeight)) / authWinH;
+      if (pullFrac > 0.02) {
+        setAuthRawTop(Math.max(AUTH_LIMIT_TOP, authRawTop - pullFrac * 0.6));
+      }
+    }
+  }
 
   function toggleAuthSnap() {
     const target = authSnap === "down" ? AUTH_SNAP_UP : AUTH_SNAP_DOWN;
@@ -1854,7 +1886,7 @@ function Auth({ onIn }) {
       {/* ── Floating draggable panel ── */}
       <div style={{
         position:"fixed",
-        left:16, right:16,
+        left:authMargin, right:authMargin,
         top: authTopPx,
         height: authPanelH,
         zIndex:10,
@@ -1912,12 +1944,16 @@ function Auth({ onIn }) {
         </div>
 
         {/* ── Scrollable content ── */}
-        <div style={{
+        <div
+          ref={authScrollRef}
+          onScroll={onAuthContentScroll}
+          style={{
           flex:1,
           overflowY:"auto",
           background:"rgba(13,31,53,0.60)",
           backdropFilter:"blur(12px)",
           WebkitBackdropFilter:"blur(12px)",
+          WebkitOverflowScrolling:"touch",
         }}>
           <div style={{maxWidth:440,margin:"0 auto",padding:"20px 16px 12px"}}>
 
