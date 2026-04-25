@@ -1888,6 +1888,7 @@ function Auth({ onIn }) {
           <div style={{width:40,height:4,borderRadius:2,background:"rgba(245,200,66,0.50)"}}/>
           {/* Chevron expand/collapse */}
           <button
+            type="button"
             onClick={e=>{ e.stopPropagation(); toggleAuthSnap(); }}
             onMouseDown={e=>e.stopPropagation()}
             onTouchStart={e=>e.stopPropagation()}
