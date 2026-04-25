@@ -3828,6 +3828,7 @@ function GameOver({ user, profile, game, role, onHome, onOut, onSmsToggle }) {
 function SelectLevel({ user, profile, game, role, pendingOpponent, onPick, onOut, onSmsToggle }) {
   // oppName: for new challenge = pendingOpponent.display_name; for round 2+ = game field
   const oppName = pendingOpponent?.display_name || (role === "challenger" ? game?.answerer_name : game?.challenger_name);
+  const [loading, setLoading] = React.useState(false);
 
   function pickLevel(lv) {
     // Just bubble up the level — VersePick will finalize creation/update
