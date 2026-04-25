@@ -2424,7 +2424,7 @@ function Waiting({ user, profile, game, role, onUpdate, onOut, onSmsToggle }) {
                 VERSE CHALLENGED
               </div>
               <div style={{fontSize:13,fontStyle:"italic",color:"rgba(244,240,232,0.8)",lineHeight:1.6,textAlign:"center"}}>
-                "{g.pending_verse.text}"
+                "{g.pending_verse?.text || ""}"
               </div>
             </div>
           )}
@@ -3039,6 +3039,15 @@ function RoundResult({ user, profile, game, role, correct, pts, onNext, onOut, o
   const oppName  = role === "challenger" ? game?.answerer_name       : game?.challenger_name;
 
   const verse = game?.pending_verse;
+  const [txVerseRR, setTxVerseRR] = useState(verse?.text || "");
+  useEffect(() => {
+    const base = verse?.text || "";
+    setTxVerseRR(base);
+    const lang = getActiveLang();
+    if (lang !== "en" && verse?.book) {
+      fetchVerse(verse.book, verse.ch, verse.vs, lang, base).then(r => setTxVerseRR(r.text));
+    }
+  }, []);
   const lv    = LEVELS.find(l => l.pts === (game?.pending_pts || pts)) || LEVELS[0];
   const ref   = verse ? `${verse.book} ${verse.ch}:${verse.vs}` : null;
 
@@ -3105,7 +3114,7 @@ function RoundResult({ user, profile, game, role, correct, pts, onNext, onOut, o
                 fontSize:15,fontStyle:"italic",color:C.offWhite,lineHeight:1.7,
                 textAlign:"center",marginBottom:14,padding:"0 4px",
               }}>
-                "{verse.text}"
+                "{txVerseRR}"
               </div>
               <div style={{
                 textAlign:"center",padding:"10px 16px",
