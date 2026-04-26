@@ -2591,11 +2591,11 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
                 </div>
               )}
               {!loading && games.map(g => {
-                const isChallenger = g.challenger_id === (profile?.id || user.email);
+                const isChallenger = g.challenger_id === (profile?.id || "");
                 const oppName  = isChallenger ? g.answerer_name : g.challenger_name;
                 const myScore  = isChallenger ? (g.challenger_score||0) : (g.answerer_score||0);
                 const oppScore = isChallenger ? (g.answerer_score||0)   : (g.challenger_score||0);
-                const isMyTurn = g.current_turn === (profile?.id || user.email);
+                const isMyTurn = g.current_turn === (profile?.id || "");
                 return (
                   <ColRow key={g.id}
                     initial={(oppName||"?")[0].toUpperCase()}
@@ -3636,8 +3636,9 @@ function GameOver({ user, profile, game, role, onHome, onOut, onSmsToggle }) {
   useEffect(() => {
     async function updateStats() {
       try {
-        const profiles = await B44.list("PlayerProfile", { email: user.email });
-        const p = profiles[0];
+        const allProfiles = await B44.list("PlayerProfile");
+        const arr = Array.isArray(allProfiles) ? allProfiles : (allProfiles?.records || []);
+        const p = arr.find(x => x.email === user.email) || (profile?.id ? arr.find(x => x.id === profile.id) : null);
         if (p) {
           await B44.update("PlayerProfile", p.id, {
             total_score:  (p.total_score  || 0) + myScore,
@@ -4470,18 +4471,19 @@ function ActiveBattles({ user, profile, onEnter, onOut, onSmsToggle }) {
   const [games,   setGames]   = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const myId = profile?.id || user?.email;
+  const myId = profile?.id || "";
 
   useEffect(() => {
-    loadGames();
-  }, []);
+    if (myId) loadGames();
+  }, [myId]);
 
   async function loadGames() {
     setLoading(true);
+    const id = profile?.id || "";
     try {
       const [r1, r2] = await Promise.all([
-        B44.list("GameSession", {}).then(all => (Array.isArray(all)?all:[]).filter(s=>s.challenger_id===myId)),
-        B44.list("GameSession", {}).then(all => (Array.isArray(all)?all:[]).filter(s=>s.answerer_id===myId)),
+        B44.list("GameSession", {}).then(all => (Array.isArray(all)?all:[]).filter(s=>s.challenger_id===id)),
+        B44.list("GameSession", {}).then(all => (Array.isArray(all)?all:[]).filter(s=>s.answerer_id===id)),
       ]);
       const all = [...(Array.isArray(r1)?r1:[]), ...(Array.isArray(r2)?r2:[])]
         .filter(g => g.status !== "cancelled" && g.status !== "pending" && g.status !== "complete")
@@ -4698,7 +4700,7 @@ export default function Challenge() {
   async function resumeGameById(gid) {
     try {
       const g = await B44.get("GameSession", gid);
-      const isChallenger = g.challenger_id === (profile?.id || user?.email);
+      const isChallenger = g.challenger_id === (profile?.id || "");
       setGame(g);
       setRole(isChallenger ? "challenger" : "answerer");
       routeGame(g, isChallenger ? "challenger" : "answerer");
@@ -4709,7 +4711,7 @@ export default function Challenge() {
     if (!g) return setScreen("lobby");
     if (g.status === "complete")             return setScreen("gameover");
     if (g.status === "cancelled")            return setScreen("active");
-    const myId = profile?.id || user?.email;
+    const myId = profile?.id || "";
     const isMyTurn = g.current_turn === myId;
     // Only go to level select if status is explicitly pick_level AND it is this player's turn
     if (g.status === "pick_level"          && isMyTurn) return setScreen("level");
@@ -4772,7 +4774,7 @@ export default function Challenge() {
 
   function onWaitingUpdate(updated) {
     setGame(updated);
-    const myId = profile?.id || user?.email;
+    const myId = profile?.id || "";
     if (updated.status === "complete") { setScreen("gameover"); return; }
     if (updated.current_turn === myId) {
       if (updated.status === "pick_level")         setScreen("level");
@@ -4792,7 +4794,7 @@ export default function Challenge() {
     let fresh = game;
     try { fresh = await B44.get("GameSession", game.id); } catch {}
     if (!fresh || fresh.status === "complete") return setScreen("gameover");
-    const myId = profile?.id || user?.email;
+    const myId = profile?.id || "";
     const isMyTurn = fresh.current_turn === myId;
     if (isMyTurn && fresh.status === "pick_level") return setScreen("level");
     if (isMyTurn && fresh.status === "waiting_for_answer") return setScreen("answer");
