@@ -3338,12 +3338,16 @@ function Answer({ user, game, role, onDone, onOut, onSmsToggle }) {
     }
 
     try {
-      const updated = await B44.update("GameSession", game.id, updateData);
+      await B44.update("GameSession", game.id, updateData);
+      // Re-fetch session so we always have the latest status/turn (update returns partial on some envs)
+      const updated = await B44.get("GameSession", game.id).catch(() => ({ ...game, ...updateData }));
       // SMS the OTHER player it's their turn
       if (!isGameOver) {
-        const myName    = user?.displayName || user?.email?.split("@")[0];
-        const oppId     = role === "challenger" ? game.answerer_id : game.challenger_id;
-        const oppProfile = await B44.list("PlayerProfile", { id: oppId }).then(r=>r[0]).catch(()=>null);
+        const myName = user?.displayName || user?.email?.split("@")[0];
+        const oppId  = role === "challenger" ? game.answerer_id : game.challenger_id;
+        // Filter in JS — B44 SDK does not support server-side field filters
+        const allProfiles = await B44.list("PlayerProfile", {}).catch(() => []);
+        const oppProfile  = allProfiles.find(p => p.id === oppId) || null;
         if (oppProfile?.phone && oppProfile?.sms_enabled) {
           await sendSMS(oppProfile.phone, `⚔️ ${myName} answered! Your turn to pick a verse.`, game.id);
         }
@@ -3351,7 +3355,8 @@ function Answer({ user, game, role, onDone, onOut, onSmsToggle }) {
       onDone({ correct, pts: earnedPts, game: updated });
     } catch (e) {
       console.error("commitResult error:", e);
-      onDone({ correct, pts: earnedPts, game });
+      // Still pass updateData merged so routing works even if fetch failed
+      onDone({ correct, pts: earnedPts, game: { ...game, ...updateData } });
     }
   }
 
@@ -4716,10 +4721,18 @@ export default function Challenge() {
     setScreen("result");
   }
 
-  function onResultNext() {
+  async function onResultNext() {
     if (!game) return setScreen("lobby");
-    if (game.status === "complete") return setScreen("gameover");
-    // Turn done — return to Active Battles hub (not Waiting)
+    // Re-fetch fresh game state — React state may be stale
+    let fresh = game;
+    try { fresh = await B44.get("GameSession", game.id); } catch {}
+    if (!fresh || fresh.status === "complete") return setScreen("gameover");
+    const myId = profile?.id || user?.email;
+    const isMyTurn = fresh.current_turn === myId;
+    if (isMyTurn && fresh.status === "pick_level") return setScreen("level");
+    if (isMyTurn && fresh.status === "waiting_for_answer") return setScreen("answer");
+    // Not my turn — go to active battles hub
+    setGame(fresh);
     setScreen("active");
   }
 
