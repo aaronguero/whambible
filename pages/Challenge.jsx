@@ -900,8 +900,8 @@ function MyScoresOverlay({ user, profile, onClose }) {
   useEffect(() => {
     const email = user?.email || "";
     Promise.all([
-      B44.list("GameSession", { challenger_id: email }),
-      B44.list("GameSession", { answerer_id:   email }),
+      B44.list("GameSession", {}).then(all => (Array.isArray(all)?all:[]).filter(s=>s.challenger_id===email)),
+      B44.list("GameSession", {}).then(all => (Array.isArray(all)?all:[]).filter(s=>s.answerer_id===email)),
     ])
       .then(([asC, asA]) => {
         const all = [...asC, ...asA]
@@ -2252,8 +2252,8 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
     setLoading(true);
     try {
       const [r1, r2] = await Promise.all([
-        B44.list("GameSession", { challenger_id: profile.id }),
-        B44.list("GameSession", { answerer_id:   profile.id }),
+        B44.list("GameSession", {}).then(all => (Array.isArray(all)?all:[]).filter(s=>s.challenger_id===profile.id)),
+        B44.list("GameSession", {}).then(all => (Array.isArray(all)?all:[]).filter(s=>s.answerer_id===profile.id)),
       ]);
       const all = [...(Array.isArray(r1)?r1:[]), ...(Array.isArray(r2)?r2:[])]
         .filter(g => g.status !== "complete" && g.status !== "cancelled")
@@ -4210,8 +4210,8 @@ function Challenges({ user, profile, onAccept, onDecline, onOut, onSmsToggle }) 
   async function loadChallenges() {
     setLoading(true);
     try {
-      const pending = await B44.list("GameSession", { answerer_id: myId, status: "pending" });
-      const arr = Array.isArray(pending) ? pending : [];
+      const all = await B44.list("GameSession", {});
+      const arr = (Array.isArray(all) ? all : []).filter(s => s.answerer_id === myId && s.status === "pending");
       setChallenges(arr.sort((a,b) => new Date(b.updated_date||0) - new Date(a.updated_date||0)));
     } catch(e) {
       console.warn("[Challenges] load:", e.message);
@@ -4419,8 +4419,8 @@ function ActiveBattles({ user, profile, onEnter, onOut, onSmsToggle }) {
     setLoading(true);
     try {
       const [r1, r2] = await Promise.all([
-        B44.list("GameSession", { challenger_id: myId }),
-        B44.list("GameSession", { answerer_id:   myId }),
+        B44.list("GameSession", {}).then(all => (Array.isArray(all)?all:[]).filter(s=>s.challenger_id===myId)),
+        B44.list("GameSession", {}).then(all => (Array.isArray(all)?all:[]).filter(s=>s.answerer_id===myId)),
       ]);
       const all = [...(Array.isArray(r1)?r1:[]), ...(Array.isArray(r2)?r2:[])]
         .filter(g => g.status !== "cancelled" && g.status !== "pending")
