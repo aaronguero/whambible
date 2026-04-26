@@ -297,11 +297,11 @@ html,body,#root{height:100%;margin:0;padding:0;overflow:hidden;}
 .c-vcard{background:rgba(26,58,92,0.38);border:1px solid rgba(245,200,66,0.13);border-radius:14px;padding:18px 16px;margin-bottom:16px;text-align:center;}
 .c-vtxt{font-size:14px;color:#F4F0E8;line-height:1.65;font-style:italic;margin-bottom:8px;}
 .c-vq{font-size:11px;color:rgba(212,146,26,0.65);letter-spacing:2px;}
-.c-opts{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;}
-.c-opt{padding:14px 16px;background:rgba(255,255,255,0.04);border:1px solid rgba(245,200,66,0.13);border-radius:12px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:all .15s;}
-.c-opt:hover{background:rgba(245,200,66,0.08);border-color:rgba(245,200,66,0.3);}
+.c-opts{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;position:relative;z-index:5;}
+.c-opt{padding:14px 16px;background:rgba(10,22,42,0.88);border:1px solid rgba(245,200,66,0.28);border-radius:12px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:all .15s;backdrop-filter:blur(4px);}
+.c-opt:hover{background:rgba(26,58,92,0.95);border-color:rgba(245,200,66,0.55);}
 .c-opt-ltr{width:28px;height:28px;border-radius:50%;background:rgba(212,146,26,0.18);display:flex;align-items:center;justify-content:center;font-size:11px;color:#F5C842;font-weight:700;flex-shrink:0;}
-.c-opt-txt{font-size:12px;color:#F4F0E8;line-height:1.4;}
+.c-opt-txt{font-size:13px;color:#F4F0E8;font-family:'Cinzel',serif;font-weight:600;line-height:1.4;letter-spacing:0.5px;}
 .c-opt.correct{background:rgba(26,122,74,0.22);border-color:rgba(26,200,100,0.45);}
 .c-opt.wrong{background:rgba(192,58,43,0.18);border-color:rgba(192,58,43,0.4);}
 .c-lv{padding:18px 16px;border-radius:14px;cursor:pointer;margin-bottom:10px;border:2px solid rgba(245,200,66,0.12);display:flex;align-items:center;gap:14px;transition:all .18s;background:rgba(13,31,53,0.4);}
@@ -3369,7 +3369,7 @@ function Answer({ user, game, role, onDone, onOut, onSmsToggle }) {
 
   return (
     <div className="c-screen">
-      <Bg/>
+      <Bg char={CHAR_MP} charPos="center 8%" charOpacity={0.55}/>
       <Hdr user={user} onOut={onOut} onSmsToggle={onSmsToggle}/>
       {streakFlash && <StreakFlash onDone={handleStreakFlashDone}/>}
       <Slam active={slam} pts={pts} onDone={()=>{
@@ -3381,7 +3381,7 @@ function Answer({ user, game, role, onDone, onOut, onSmsToggle }) {
       {recovery && (
         <MPRecovery verse={v} lv={lv} onDone={onRecoveryDone}/>
       )}
-      <div className="c-scroll"><div className="c-pad">
+      <div className="c-scroll" style={{background:"linear-gradient(to bottom,transparent 0%,rgba(8,16,32,0.72) 18%,rgba(8,16,32,0.82) 100%)"}}><div className="c-pad">
         <div className="c-score-row">
           <div className="c-score-box"><div className="c-score-val">{myScore}</div><div className="c-score-lbl">You</div></div>
           <div style={{textAlign:"center"}}>
@@ -3449,11 +3449,13 @@ function RoundResult({ user, profile, game, role, correct, pts, onNext, onOut, o
     setTxVerseRR(base);
     const lang = getActiveLang();
     if (lang !== "en" && verse?.book) {
-      fetchVerse(verse.book, verse.ch, verse.vs, lang, base).then(r => setTxVerseRR(r.text));
+      const ch = verse.chapter || verse.ch;
+      const vs = verse.verse || verse.vs;
+      fetchVerse(verse.book, ch, vs, lang, base).then(r => setTxVerseRR(r.text));
     }
   }, []);
   const lv    = LEVELS.find(l => l.pts === (game?.pending_pts || pts)) || LEVELS[0];
-  const ref   = verse ? `${verse.book} ${verse.ch}:${verse.vs}` : null;
+  const ref   = verse ? `${verse.book} ${verse.chapter||verse.ch}:${verse.verse||verse.vs}` : null;
 
   const isGameOver = game?.status === "complete";
 
