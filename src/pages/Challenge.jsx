@@ -3807,6 +3807,7 @@ function GameOver({ user, profile, game, role, onHome, onOut, onSmsToggle }) {
 // Props: user, profile, game, role, onPick(lv, verse, options), onOut, onSmsToggle
 // ══════════════════════════════════════════════════════════════════
 function SelectLevel({ user, profile, game, role, pendingOpponent, onPick, onOut, onSmsToggle }) {
+  const [loading, setLoading] = useState(false);
   // oppName: for new challenge = pendingOpponent.display_name; for round 2+ = game field
   const oppName = pendingOpponent?.display_name || (role === "challenger" ? game?.answerer_name : game?.challenger_name);
 
