@@ -4639,11 +4639,15 @@ export default function Challenge() {
   const [pendingLevel,    setPendingLevel]    = useState(null); // selected level (before session created)
 
   // Background B44 profile sync for returning users
+  // NOTE: B44 .list() ignores field filters on prod — fetch all, filter client-side
   useEffect(() => {
     if (!_existingUser) return;
-    B44.list("PlayerProfile", { email: _existingUser.email })
-      .then(profiles => {
-        if (profiles[0]) setProfile(p => ({ ...p, ...profiles[0] }));
+    const targetEmail = _existingUser.email;
+    B44.list("PlayerProfile")
+      .then(all => {
+        const arr = Array.isArray(all) ? all : (all?.records || []);
+        const match = arr.find(p => p.email === targetEmail);
+        if (match) setProfile(p => ({ ...p, ...match }));
       })
       .catch(() => {}); // silent — local profile is fine
   }, []);
