@@ -3242,7 +3242,6 @@ function Answer({ user, game, role, onDone, onOut, onSmsToggle }) {
   const [locked,   setLocked]   = useState(false);
   const [slam,        setSlam]        = useState(false);
   const [recovery,    setRecovery]    = useState(false);
-  const [committing,  setCommitting]  = useState(false); // true while saving result to DB
   const [streakCount, setStreakCount] = useState(0);
   const [streakFlash, setStreakFlash] = useState(false);
   const doneRef = useRef(false);
@@ -3300,11 +3299,10 @@ function Answer({ user, game, role, onDone, onOut, onSmsToggle }) {
   }
 
   // Called after MPRecovery resolves (correct recovery = 5pts, wrong = 0pts)
-  async function onRecoveryDone(recovered) {
+  function onRecoveryDone(recovered) {
     setRecovery(false);
-    setCommitting(true);   // show spinner — keeps screen alive while DB saves
-    await commitResult(recovered, recovered ? MP_RECOVERY_PTS : 0);
-    setCommitting(false);
+    commitResult(recovered, recovered ? MP_RECOVERY_PTS : 0);
+    // onDone fires immediately inside commitResult — no spinner needed
   }
 
   function handleStreakFlashDone() {
@@ -3316,56 +3314,41 @@ function Answer({ user, game, role, onDone, onOut, onSmsToggle }) {
     const newRound = (game.round || 0) + 1;
     const isGameOver = newRound >= TOTAL_ROUNDS;
 
-    // Update my score
+    // Build optimistic update locally
     const myNewScore = myScore + earnedPts;
     const updateData = {
-      round:        newRound,
-      last_correct: correct,
+      round:            newRound,
+      last_correct:     correct,
       last_pts_awarded: earnedPts,
-      progress:     [...(game.progress||[]), { round: game.round, correct, pts: earnedPts }],
+      progress:         [...(game.progress||[]), { round: game.round, correct, pts: earnedPts }],
     };
-
     if (role === "challenger") {
       updateData.challenger_score = myNewScore;
     } else {
       updateData.answerer_score = myNewScore;
     }
-
     if (isGameOver) {
       const challengerFinal = role === "challenger" ? myNewScore : (game.challenger_score||0);
       const answererFinal   = role === "answerer"   ? myNewScore : (game.answerer_score||0);
-      updateData.status     = "complete";
-      updateData.winner_id  = challengerFinal >= answererFinal ? game.challenger_id : game.answerer_id;
+      updateData.status      = "complete";
+      updateData.winner_id   = challengerFinal >= answererFinal ? game.challenger_id : game.answerer_id;
       updateData.winner_name = challengerFinal >= answererFinal ? game.challenger_name : game.answerer_name;
     } else {
-      // Alternate who picks next level
+      // Next it's the CHALLENGER's turn to pick a level — no SMS here.
+      // SMS fires in VersePick when the verse is actually submitted.
       const nextPicker = role === "challenger" ? game.answerer_id : game.challenger_id;
       updateData.status       = "pick_level";
       updateData.current_turn = nextPicker;
     }
 
-    try {
-      await B44.update("GameSession", game.id, updateData);
-      // Re-fetch session so we always have the latest status/turn (update returns partial on some envs)
-      const updated = await B44.get("GameSession", game.id).catch(() => ({ ...game, ...updateData }));
-      // Navigate immediately — don't block on SMS
-      onDone({ correct, pts: earnedPts, game: updated });
-      // SMS the OTHER player it's their turn — fire-and-forget
-      if (!isGameOver) {
-        const myName = user?.displayName || user?.email?.split("@")[0];
-        const oppId  = role === "challenger" ? game.answerer_id : game.challenger_id;
-        B44.list("PlayerProfile", {}).catch(() => []).then(allProfiles => {
-          const oppProfile = (Array.isArray(allProfiles) ? allProfiles : []).find(p => p.id === oppId) || null;
-          if (oppProfile?.phone && oppProfile?.sms_enabled) {
-            sendSMS(oppProfile.phone, `⚔️ ${myName} answered! Your turn to pick a verse.`, game.id);
-          }
-        });
-      }
-    } catch (e) {
-      console.error("commitResult error:", e);
-      // Still pass updateData merged so routing works even if fetch failed
-      onDone({ correct, pts: earnedPts, game: { ...game, ...updateData } });
-    }
+    // ── Navigate immediately with optimistic data — don't make user wait for DB ──
+    const optimisticGame = { ...game, ...updateData };
+    onDone({ correct, pts: earnedPts, game: optimisticGame });
+
+    // ── Save to DB in background ──
+    B44.update("GameSession", game.id, updateData).catch(e => {
+      console.error("commitResult background save failed:", e);
+    });
   }
 
   const pct = tLeft / TIME_LIMIT * 100;
@@ -3385,26 +3368,7 @@ function Answer({ user, game, role, onDone, onOut, onSmsToggle }) {
       {recovery && (
         <MPRecovery verse={v} lv={lv} onDone={onRecoveryDone}/>
       )}
-      {/* Committing overlay — shown while saving result to DB after recovery */}
-      {committing && (
-        <div style={{
-          position:"fixed",inset:0,zIndex:600,
-          background:"rgba(8,16,32,0.82)",
-          display:"flex",flexDirection:"column",
-          alignItems:"center",justifyContent:"center",
-          gap:14,
-        }}>
-          <div style={{
-            width:44,height:44,borderRadius:"50%",
-            border:`3px solid ${C.teal}`,
-            borderTopColor:"transparent",
-            animation:"spin 0.8s linear infinite",
-          }}/>
-          <div style={{fontFamily:"'Cinzel',serif",fontSize:11,color:C.goldLight,letterSpacing:2}}>
-            Saving…
-          </div>
-        </div>
-      )}
+
       <div className="c-scroll" style={{background:"linear-gradient(to bottom,transparent 0%,rgba(8,16,32,0.72) 18%,rgba(8,16,32,0.82) 100%)"}}><div className="c-pad">
         <div className="c-score-row">
           <div className="c-score-box"><div className="c-score-val">{myScore}</div><div className="c-score-lbl">You</div></div>
