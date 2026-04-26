@@ -2204,8 +2204,6 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
     ? liveResults
     : filteredPlayers;
 
-  // Build 10 fixed slots for players
-  const playerSlots = Array.from({ length: LOBBY_SLOTS }, (_, i) => displayPlayers[i] || null);
 
   // Build 10 fixed slots for games; overflow → localStorage
   function buildGameSlots(allGames) {
@@ -2531,8 +2529,14 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
               )}
             </div>
 
-            {/* 10 fixed slots */}
-            {playerSlots.map((p, i) => p ? (
+            {/* Players — only real rows, no empty padding */}
+            {displayPlayers.length === 0 && (
+              <div style={{textAlign:"center",padding:"28px 0 12px",color:"rgba(245,200,66,0.35)",
+                fontSize:11,fontFamily:"'Cinzel',serif",letterSpacing:1,lineHeight:1.9}}>
+                {search.trim().length >= 2 ? "No warriors found — try a different name" : "No warriors yet — invite friends!"}
+              </div>
+            )}
+            {displayPlayers.map(p => (
               <div key={p.id} style={sRowFilled}>
                 <div style={{width:30,height:30,borderRadius:"50%",background:`linear-gradient(135deg,${C.teal},${C.gold})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:"#fff",flexShrink:0}}>
                   {(p.display_name||"W")[0].toUpperCase()}
@@ -2544,31 +2548,18 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
                 <button type="button" style={btnBattle} onClick={()=>challenge(p)}>⚔️ Battle</button>
                 <button type="button" style={btnDecline} onClick={()=>removePlayer(p)}>✕</button>
               </div>
-            ) : (
-              <div key={`empty-${i}`} style={sRow}>
-                <div style={{width:30,height:30,borderRadius:"50%",border:"1px dashed rgba(245,200,66,0.15)",flexShrink:0}}/>
-                <div style={{fontSize:11,color:"rgba(245,200,66,0.18)",fontFamily:"'Cinzel',serif",letterSpacing:1,fontStyle:"italic"}}>
-                  {i === 0 && allPlayers.length === 0 ? "No warriors yet — invite friends!" : "—"}
-                </div>
-              </div>
             ))}
           </>)}
 
           {/* ══ ACTIVE BATTLES ══ */}
           {!loading && tab === "active" && (<>
             {games.length === 0 && (
-              <div style={{textAlign:"center",padding:"20px 0",color:"rgba(245,200,66,0.35)",fontSize:11,fontFamily:"'Cinzel',serif",letterSpacing:1}}>No active battles.<br/>Challenge a warrior!</div>
+              <div style={{textAlign:"center",padding:"28px 0 12px",color:"rgba(245,200,66,0.35)",
+                fontSize:11,fontFamily:"'Cinzel',serif",letterSpacing:1,lineHeight:1.9}}>
+                No active battles yet<br/>Challenge a warrior to begin!
+              </div>
             )}
-
-            {/* 10 fixed slots */}
-            {Array.from({ length: LOBBY_SLOTS }, (_, i) => {
-              const g = games[i] || null;
-              if (!g) return (
-                <div key={`eg-${i}`} style={sRow}>
-                  <div style={{width:30,height:30,borderRadius:"50%",border:"1px dashed rgba(245,200,66,0.15)",flexShrink:0}}/>
-                  <div style={{fontSize:11,color:"rgba(245,200,66,0.18)",fontFamily:"'Cinzel',serif",letterSpacing:1,fontStyle:"italic"}}>—</div>
-                </div>
-              );
+            {games.map(g => {
               const isChallenger = g.challenger_id === (profile?.id || user.email);
               const oppName  = isChallenger ? g.answerer_name : g.challenger_name;
               const myScore  = isChallenger ? (g.challenger_score||0) : (g.answerer_score||0);
@@ -2603,58 +2594,56 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
           
           {/* ══ CHALLENGES TAB — pending sessions for answerer ══ */}
           {!loading && tab === "challenges" && (<>
-            {Array.from({ length: LOBBY_SLOTS }, (_, i) => {
-              // Filter pending sessions where I'm the answerer
-              const pendingGames = games.filter(g => {
-                const myId2 = profile?.id || user?.email;
-                return g.answerer_id === myId2 && g.status === "pending";
+            {(()=>{
+              const myId2 = profile?.id || user?.email;
+              const pendingGames = games.filter(g => g.answerer_id === myId2 && g.status === "pending");
+              if (pendingGames.length === 0) return (
+                <div style={{textAlign:"center",padding:"28px 0 12px",color:"rgba(245,200,66,0.35)",
+                  fontSize:11,fontFamily:"'Cinzel',serif",letterSpacing:1,lineHeight:1.9}}>
+                  No challenges yet<br/>Your inbox is empty — go challenge someone!
+                </div>
+              );
+              return pendingGames.map(g => {
+                const lv = LEVELS.find(l => l.pts === (g.pending_pts||5)) || LEVELS[0];
+                return (
+                  <div key={g.id} style={sRowFilled}>
+                    <div style={{width:30,height:30,borderRadius:"50%",background:`linear-gradient(135deg,${C.cobalt},${C.teal})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:"#fff",flexShrink:0}}>
+                      {(g.challenger_name||"?")[0].toUpperCase()}
+                    </div>
+                    <div style={{flex:1,minWidth:0}}>
+                      <div style={{fontSize:12,fontWeight:700,color:C.goldLight,fontFamily:"'Cinzel',serif",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                        {g.challenger_name}
+                      </div>
+                      <div style={{fontSize:9,color:C.goldDim,letterSpacing:1,display:"flex",alignItems:"center",gap:5,marginTop:1}}>
+                        <span style={{color:lv.color}}>{lv.icon} {lv.name}</span>
+                        <span>· Challenge</span>
+                      </div>
+                    </div>
+                    <button type="button" style={btnBattle}
+                      onClick={async ()=>{
+                        try {
+                          const updated = await B44.update("GameSession", g.id, {
+                            status: "waiting_for_answer",
+                            current_turn: g.answerer_id,
+                          });
+                          onResumeGame(updated, "answerer");
+                        } catch(e){ alert("Could not accept: " + e.message); }
+                      }}>
+                      ⚔️ Battle
+                    </button>
+                    <button type="button" style={btnDecline}
+                      onClick={async ()=>{
+                        try {
+                          await B44.update("GameSession", g.id, { status: "cancelled" });
+                          setGames(prev => prev.filter(x => x.id !== g.id));
+                        } catch(e){ alert("Could not decline: " + e.message); }
+                      }}>
+                      ✗
+                    </button>
+                  </div>
+                );
               });
-              const g = pendingGames[i] || null;
-              if (!g) return (
-                <div key={`ec-${i}`} style={sRow}>
-                  <div style={{width:30,height:30,borderRadius:"50%",border:"1px dashed rgba(245,200,66,0.15)",flexShrink:0}}/>
-                  <div style={{fontSize:11,color:"rgba(245,200,66,0.18)",fontFamily:"'Cinzel',serif",letterSpacing:1,fontStyle:"italic"}}>—</div>
-                </div>
-              );
-              const lv = LEVELS.find(l => l.pts === (g.pending_pts||5)) || LEVELS[0];
-              return (
-                <div key={g.id} style={sRowFilled}>
-                  <div style={{width:30,height:30,borderRadius:"50%",background:`linear-gradient(135deg,${C.cobalt},${C.teal})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:"#fff",flexShrink:0}}>
-                    {(g.challenger_name||"?")[0].toUpperCase()}
-                  </div>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:12,fontWeight:700,color:C.goldLight,fontFamily:"'Cinzel',serif",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-                      {g.challenger_name}
-                    </div>
-                    <div style={{fontSize:9,color:C.goldDim,letterSpacing:1,display:"flex",alignItems:"center",gap:5,marginTop:1}}>
-                      <span style={{color:lv.color}}>{lv.icon} {lv.name}</span>
-                      <span>· Challenge</span>
-                    </div>
-                  </div>
-                  <button type="button" style={btnBattle}
-                    onClick={async ()=>{
-                      try {
-                        const updated = await B44.update("GameSession", g.id, {
-                          status: "waiting_for_answer",
-                          current_turn: g.answerer_id,
-                        });
-                        onResumeGame(updated, "answerer");
-                      } catch(e){ alert("Could not accept: " + e.message); }
-                    }}>
-                    ⚔️ Battle
-                  </button>
-                  <button type="button" style={btnDecline}
-                    onClick={async ()=>{
-                      try {
-                        await B44.update("GameSession", g.id, { status: "cancelled" });
-                        setGames(prev => prev.filter(x => x.id !== g.id));
-                      } catch(e){ alert("Could not decline: " + e.message); }
-                    }}>
-                    ✗
-                  </button>
-                </div>
-              );
-            })}
+            })()}
           </>)}
 
 {/* Back button */}
