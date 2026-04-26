@@ -3242,6 +3242,7 @@ function Answer({ user, game, role, onDone, onOut, onSmsToggle }) {
   const [locked,   setLocked]   = useState(false);
   const [slam,        setSlam]        = useState(false);
   const [recovery,    setRecovery]    = useState(false);
+  const [committing,  setCommitting]  = useState(false); // true while saving result to DB
   const [streakCount, setStreakCount] = useState(0);
   const [streakFlash, setStreakFlash] = useState(false);
   const doneRef = useRef(false);
@@ -3301,7 +3302,9 @@ function Answer({ user, game, role, onDone, onOut, onSmsToggle }) {
   // Called after MPRecovery resolves (correct recovery = 5pts, wrong = 0pts)
   async function onRecoveryDone(recovered) {
     setRecovery(false);
+    setCommitting(true);   // show spinner — keeps screen alive while DB saves
     await commitResult(recovered, recovered ? MP_RECOVERY_PTS : 0);
+    setCommitting(false);
   }
 
   function handleStreakFlashDone() {
@@ -3345,18 +3348,19 @@ function Answer({ user, game, role, onDone, onOut, onSmsToggle }) {
       await B44.update("GameSession", game.id, updateData);
       // Re-fetch session so we always have the latest status/turn (update returns partial on some envs)
       const updated = await B44.get("GameSession", game.id).catch(() => ({ ...game, ...updateData }));
-      // SMS the OTHER player it's their turn
+      // Navigate immediately — don't block on SMS
+      onDone({ correct, pts: earnedPts, game: updated });
+      // SMS the OTHER player it's their turn — fire-and-forget
       if (!isGameOver) {
         const myName = user?.displayName || user?.email?.split("@")[0];
         const oppId  = role === "challenger" ? game.answerer_id : game.challenger_id;
-        // Filter in JS — B44 SDK does not support server-side field filters
-        const allProfiles = await B44.list("PlayerProfile", {}).catch(() => []);
-        const oppProfile  = allProfiles.find(p => p.id === oppId) || null;
-        if (oppProfile?.phone && oppProfile?.sms_enabled) {
-          await sendSMS(oppProfile.phone, `⚔️ ${myName} answered! Your turn to pick a verse.`, game.id);
-        }
+        B44.list("PlayerProfile", {}).catch(() => []).then(allProfiles => {
+          const oppProfile = (Array.isArray(allProfiles) ? allProfiles : []).find(p => p.id === oppId) || null;
+          if (oppProfile?.phone && oppProfile?.sms_enabled) {
+            sendSMS(oppProfile.phone, `⚔️ ${myName} answered! Your turn to pick a verse.`, game.id);
+          }
+        });
       }
-      onDone({ correct, pts: earnedPts, game: updated });
     } catch (e) {
       console.error("commitResult error:", e);
       // Still pass updateData merged so routing works even if fetch failed
@@ -3380,6 +3384,26 @@ function Answer({ user, game, role, onDone, onOut, onSmsToggle }) {
       {/* MPRecovery overlay — mounts over everything when wrong answer tapped */}
       {recovery && (
         <MPRecovery verse={v} lv={lv} onDone={onRecoveryDone}/>
+      )}
+      {/* Committing overlay — shown while saving result to DB after recovery */}
+      {committing && (
+        <div style={{
+          position:"fixed",inset:0,zIndex:600,
+          background:"rgba(8,16,32,0.82)",
+          display:"flex",flexDirection:"column",
+          alignItems:"center",justifyContent:"center",
+          gap:14,
+        }}>
+          <div style={{
+            width:44,height:44,borderRadius:"50%",
+            border:`3px solid ${C.teal}`,
+            borderTopColor:"transparent",
+            animation:"spin 0.8s linear infinite",
+          }}/>
+          <div style={{fontFamily:"'Cinzel',serif",fontSize:11,color:C.goldLight,letterSpacing:2}}>
+            Saving…
+          </div>
+        </div>
       )}
       <div className="c-scroll" style={{background:"linear-gradient(to bottom,transparent 0%,rgba(8,16,32,0.72) 18%,rgba(8,16,32,0.82) 100%)"}}><div className="c-pad">
         <div className="c-score-row">
