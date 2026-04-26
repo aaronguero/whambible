@@ -1786,8 +1786,15 @@ function Auth({ onIn }) {
     let realProfile = null;
     try {
       let profiles = await B44.list("PlayerProfile", { email: u.email });
-      if (profiles[0]) {
-        realProfile = profiles[0];
+      // Guard: dedupe — use the newest profile (last created), ignore extras
+      if (profiles && profiles.length > 0) {
+        realProfile = profiles[profiles.length - 1];
+        // If somehow multiple exist, clean up silently (keep newest, delete older ones)
+        if (profiles.length > 1) {
+          profiles.slice(0, profiles.length - 1).forEach(p =>
+            B44.delete("PlayerProfile", p.id).catch(() => {})
+          );
+        }
       } else {
         // Create profile in B44 — get back real id
         realProfile = await B44.create("PlayerProfile", {
@@ -1826,10 +1833,15 @@ function Auth({ onIn }) {
       };
       // Let user in immediately
       onIn(user, localProfile);
-      // Sync to B44 in background — 403 or failure won't block the user
-      B44.create("PlayerProfile", localProfile).catch(e =>
-        console.warn("[B44] Profile create failed (will retry later):", e.message)
-      );
+      // Sync to B44 in background — check for existing profile first to prevent duplicates
+      B44.list("PlayerProfile", { email: user.email }).then(existing => {
+        if (existing && existing.length > 0) {
+          // Profile already exists — update it instead
+          return B44.update("PlayerProfile", existing[0].id, localProfile);
+        } else {
+          return B44.create("PlayerProfile", localProfile);
+        }
+      }).catch(e => console.warn("[B44] Profile sync failed (will retry later):", e.message));
     } catch (e2) {
       // Only show error if LOCAL auth failed (e.g. account already exists)
       setErr(parseError(e2));
