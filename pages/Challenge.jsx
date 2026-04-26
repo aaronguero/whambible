@@ -4049,12 +4049,15 @@ function VersePick({ user, profile, pendingOpponent, pendingLevel, onDone, onOut
     setChosen(verse);
     setLoading(true);
     const options = buildOptions(verse);
-    const myId = profile?.id || user?.email;
+    const myId = profile?.id;
+    if (!myId) { alert("Profile not ready — please try again."); setChosen(null); setLoading(false); return; }
+    const oppId = pendingOpponent?.id;
+    if (!oppId) { alert("Opponent profile not found."); setChosen(null); setLoading(false); return; }
     try {
       const game = await B44.create("GameSession", {
         challenger_id:    myId,
         challenger_name:  myName,
-        answerer_id:      pendingOpponent.id || pendingOpponent.email,
+        answerer_id:      oppId,
         answerer_name:    pendingOpponent.display_name,
         status:           "pending",          // awaiting opponent accept
         current_turn:     myId,
@@ -4193,10 +4196,10 @@ function Challenges({ user, profile, onAccept, onDecline, onOut, onSmsToggle }) 
   const [challenges, setChallenges] = useState([]);
   const [loading,    setLoading]    = useState(true);
 
-  const myId = profile?.id || user?.email;
+  const myId = profile?.id;
 
   useEffect(() => {
-    loadChallenges();
+    if (myId) loadChallenges();
   }, []);
 
   async function loadChallenges() {
