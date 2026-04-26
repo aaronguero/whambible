@@ -314,6 +314,7 @@ html,body,#root{height:100%;margin:0;padding:0;overflow:hidden;}
 .c-wait-icon{font-size:48px;margin-bottom:12px;animation:pulse 2s ease-in-out infinite;}
 @keyframes rr-lock-drain{from{width:100%}to{width:0%}}
 @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.6;transform:scale(0.92)}}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
 .c-pl-row{display:flex;align-items:center;gap:12px;padding:12px 14px;background:rgba(26,58,92,0.3);border:1px solid rgba(245,200,66,0.1);border-radius:12px;margin-bottom:8px;cursor:pointer;transition:all .15s;}
 .c-pl-row:hover{background:rgba(30,122,140,0.2);border-color:rgba(245,200,66,0.3);}
 .c-pl-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#1E7A8C,#D4921A);display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0;}
@@ -2053,13 +2054,74 @@ function Auth({ onIn }) {
 }
 
 // ══════════════════════════════════════════════════════════════
+// ColRow — shared row for the 3-column lobby layout
+// Tap to expand ⚔️ Battle + ✕. Tap again to collapse.
+// ══════════════════════════════════════════════════════════════
+function ColRow({ initial, initColor, line1, line2, line2Gold, onBattle, onDecline }) {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <div style={{marginBottom:5}}>
+      <div onClick={()=>setOpen(o=>!o)} style={{
+        display:"flex",alignItems:"center",gap:6,
+        padding:"7px 5px",borderRadius:9,cursor:"pointer",
+        background: open ? "rgba(212,146,26,0.12)" : "rgba(20,46,78,0.55)",
+        border:`1px solid ${open?"rgba(245,200,66,0.38)":"rgba(245,200,66,0.14)"}`,
+        transition:"background 0.15s,border 0.15s",
+      }}>
+        <div style={{
+          width:24,height:24,borderRadius:"50%",flexShrink:0,
+          background:initColor,
+          display:"flex",alignItems:"center",justifyContent:"center",
+          fontSize:11,fontWeight:900,color:"#fff",
+        }}>{initial}</div>
+        <div style={{flex:1,minWidth:0}}>
+          <div style={{
+            fontSize:10,fontWeight:700,fontFamily:"'Cinzel',serif",
+            color:"#f4f0e8",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
+            lineHeight:1.2,
+          }}>{line1}</div>
+          <div style={{
+            fontSize:8,letterSpacing:0.6,marginTop:1,
+            color: line2Gold ? "rgba(245,200,66,0.80)" : "rgba(245,200,66,0.45)",
+            fontFamily:"'Cinzel',serif",
+          }}>{line2}</div>
+        </div>
+        <div style={{fontSize:8,color:"rgba(245,200,66,0.35)",flexShrink:0}}>
+          {open ? "▲" : "▼"}
+        </div>
+      </div>
+      {open && (
+        <div style={{
+          display:"flex",gap:5,padding:"5px 4px 3px",
+          animation:"fadeIn 0.12s ease",
+        }}>
+          <button type="button" onClick={e=>{e.stopPropagation();onBattle();}} style={{
+            flex:1,padding:"8px 4px",borderRadius:8,
+            border:"1.5px solid rgba(245,200,66,0.55)",
+            background:"linear-gradient(135deg,rgba(212,146,26,0.32),rgba(30,122,140,0.20))",
+            color:"#F5C842",fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,
+            letterSpacing:0.8,cursor:"pointer",
+          }}>⚔️ Battle</button>
+          <button type="button" onClick={e=>{e.stopPropagation();setOpen(false);onDecline();}} style={{
+            width:32,padding:"8px 0",borderRadius:8,flexShrink:0,
+            border:"1.5px solid rgba(192,58,43,0.45)",
+            background:"rgba(192,58,43,0.14)",
+            color:"rgba(248,113,113,0.85)",fontFamily:"'Cinzel',serif",fontSize:11,
+            cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",
+          }}>✕</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
 // LOBBY — start new game OR see active games
 // ══════════════════════════════════════════════════════════════
 const LOBBY_SLOTS   = 10;   // fixed visible slots in each panel
 const LOBBY_LS_KEY  = "wb_overflow_games"; // localStorage key for >10 active games
 
 function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle }) {
-  const [tab,        setTab]        = useState("new");
   const [allPlayers, setAllPlayers] = useState([]);
   const [search,     setSearch]     = useState("");
   const [games,      setGames]      = useState([]);      // visible 10
@@ -2160,12 +2222,12 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
   const rank   = rankBadge(profile?.total_score || 0);
   const myName = profile?.display_name || user?.email?.split("@")[0];
 
-  // Reset snap when tab changes
+  // Load all data on mount — columns are always visible simultaneously
   useEffect(() => {
     setPanelRaw(SNAP_UP); setPanelSnap("up");
-    if (tab === "new") { if (!loadedRef.current.new) loadPlayers(); }
-    else { loadedRef.current.active = false; loadGames(); }
-  }, [tab]);
+    if (!loadedRef.current.new) loadPlayers();
+    loadGames();
+  }, []);
 
   // search filter — client-side filter on cached players
   const filteredPlayers = !search.trim() ? allPlayers
@@ -2263,8 +2325,10 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
   }
 
   function refresh() {
-    if (tab === "new") { loadedRef.current.new = false; loadPlayers(); }
-    else               { loadedRef.current.active = false; loadGames(); }
+    loadedRef.current.new = false;
+    loadedRef.current.active = false;
+    loadPlayers();
+    loadGames();
   }
 
   function challenge(opponent) {
@@ -2390,7 +2454,7 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
         background:"transparent",
       }}>
 
-        {/* ── Handle bar: drag pill + tabs + chevron all in one row ── */}
+        {/* ── Handle bar: drag pill + refresh + chevron (no tabs — columns always visible) ── */}
         <div
           onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
           onMouseDown={onMouseDown}
@@ -2401,79 +2465,22 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
             borderBottom:"1px solid rgba(245,200,66,0.15)",
             cursor:"grab", userSelect:"none", touchAction:"none",
           }}>
-
-          {/* Drag pill row */}
-          <div style={{display:"flex",justifyContent:"center",paddingTop:7,paddingBottom:3}}>
-            <div style={{width:38,height:4,borderRadius:2,background:"rgba(245,200,66,0.50)"}}/>
-          </div>
-
-          {/* Tab row */}
-          <div style={{display:"flex",gap:6,padding:"2px 10px 9px",alignItems:"center"}}>
-            {/* ⚔️ Challenge tab */}
-            <button type="button"
-              onMouseDown={e=>e.stopPropagation()} onTouchStart={e=>e.stopPropagation()}
-              onClick={()=>setTab("new")}
-              style={{
-                flex:1, padding:"9px 0",
-                borderRadius:10,
-                border:`1.5px solid ${tab==="new"?"rgba(245,200,66,0.55)":"rgba(245,200,66,0.14)"}`,
-                background:tab==="new"
-                  ?"linear-gradient(135deg,rgba(212,146,26,0.28),rgba(30,122,140,0.18))"
-                  :"rgba(13,31,53,0.60)",
-                color:tab==="new"?"#F5C842":"rgba(245,200,66,0.42)",
-                fontFamily:"'Cinzel',serif",fontSize:11,fontWeight:700,
-                letterSpacing:0.8,cursor:"pointer",
-                transition:"all 0.18s",
-              }}>
-              ⚔️ Challenge
-            </button>
-            {/* 📬 My Battles tab */}
-            <button type="button"
-              onMouseDown={e=>e.stopPropagation()} onTouchStart={e=>e.stopPropagation()}
-              onClick={()=>setTab("active")}
-              style={{
-                flex:1, padding:"9px 0",
-                borderRadius:10,
-                border:`1.5px solid ${tab==="active"?"rgba(245,200,66,0.55)":"rgba(245,200,66,0.14)"}`,
-                background:tab==="active"
-                  ?"linear-gradient(135deg,rgba(212,146,26,0.28),rgba(30,122,140,0.18))"
-                  :"rgba(13,31,53,0.60)",
-                color:tab==="active"?"#F5C842":"rgba(245,200,66,0.42)",
-                fontFamily:"'Cinzel',serif",fontSize:11,fontWeight:700,
-                letterSpacing:0.8,cursor:"pointer",
-                transition:"all 0.18s",
-              }}>
-              📬 My Battles
-            </button>
-            {/* 📩 Challenges tab */}
-            <button type="button"
-              onMouseDown={e=>e.stopPropagation()} onTouchStart={e=>e.stopPropagation()}
-              onClick={()=>setTab("challenges")}
-              style={{
-                flex:1, padding:"9px 0",
-                borderRadius:10,
-                border:`1.5px solid ${tab==="challenges"?"rgba(245,200,66,0.55)":"rgba(245,200,66,0.14)"}`,
-                background:tab==="challenges"
-                  ?"linear-gradient(135deg,rgba(212,146,26,0.28),rgba(30,122,140,0.18))"
-                  :"rgba(13,31,53,0.60)",
-                color:tab==="challenges"?"#F5C842":"rgba(245,200,66,0.42)",
-                fontFamily:"'Cinzel',serif",fontSize:11,fontWeight:700,
-                letterSpacing:0.8,cursor:"pointer",
-                transition:"all 0.18s",
-              }}>
-              📩 Challenges
-            </button>
+          <div style={{display:"flex",alignItems:"center",padding:"8px 10px 8px"}}>
+            {/* Drag pill — centered, grows to fill */}
+            <div style={{flex:1,display:"flex",justifyContent:"center"}}>
+              <div style={{width:38,height:4,borderRadius:2,background:"rgba(245,200,66,0.50)"}}/>
+            </div>
             {/* Refresh */}
             <button type="button"
               onMouseDown={e=>e.stopPropagation()} onTouchStart={e=>e.stopPropagation()}
               onClick={refresh} disabled={loading}
               style={{
-                flexShrink:0,width:36,height:36,borderRadius:10,
+                width:32,height:32,borderRadius:9,flexShrink:0,
                 border:"1.5px solid rgba(245,200,66,0.20)",
                 background:"rgba(13,31,53,0.70)",
                 color:loading?"rgba(245,200,66,0.22)":"rgba(245,200,66,0.65)",
-                fontSize:16,cursor:loading?"default":"pointer",
-                display:"flex",alignItems:"center",justifyContent:"center",
+                fontSize:15,cursor:loading?"default":"pointer",
+                display:"flex",alignItems:"center",justifyContent:"center",marginRight:6,
               }}>
               {loading?"…":"↺"}
             </button>
@@ -2482,10 +2489,10 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
               onMouseDown={e=>e.stopPropagation()} onTouchStart={e=>e.stopPropagation()}
               onClick={e=>{ e.stopPropagation(); toggleSnap(); }}
               style={{
-                flexShrink:0,width:36,height:36,borderRadius:10,
+                width:32,height:32,borderRadius:9,flexShrink:0,
                 border:"1px solid rgba(245,200,66,0.35)",
                 background:"rgba(212,146,26,0.18)",
-                color:"#F5C842",fontSize:14,cursor:"pointer",
+                color:"#F5C842",fontSize:13,cursor:"pointer",
                 display:"flex",alignItems:"center",justifyContent:"center",
               }}>
               {panelSnap==="down"?"▲":"▼"}
@@ -2493,134 +2500,162 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
           </div>
         </div>
 
-        {/* Scrollable content */}
-        <div ref={panelScrollRef} style={{
-          flex:1, overflowY:"auto",
+        {/* ── 3-Column layout — always visible simultaneously ── */}
+        <div style={{
+          flex:1, display:"flex", overflow:"hidden",
           background:"rgba(10,22,42,0.88)",
           backdropFilter:"blur(16px)", WebkitBackdropFilter:"blur(16px)",
-          WebkitOverflowScrolling:"touch",
-          padding:"10px 12px 20px",
         }}>
 
-          {loading && <div style={{textAlign:"center",padding:24}}><div className="c-spin"/></div>}
-
-          {/* ══ CHOOSE YOUR OPPONENT ══ */}
-          {!loading && tab === "new" && (<>
-            {/* Search bar */}
-            <div style={{position:"relative",marginBottom:10}}>
-              <span style={{position:"absolute",left:10,top:"50%",transform:"translateY(-50%)",fontSize:13,opacity:0.45}}>🔍</span>
-              <input type="text" autoCapitalize="none" autoCorrect="off" spellCheck="false" inputMode="search" value={search}
-                onChange={e=>setSearch(e.target.value.toLowerCase())}
-                placeholder="Search warriors by name…"
-                style={{
-                  width:"100%", boxSizing:"border-box",
-                  padding:"9px 30px 9px 30px",
-                  borderRadius:9, border:"1.5px solid rgba(245,200,66,0.22)",
-                  background:"rgba(13,31,53,0.75)", color:C.offWhite,
-                  fontFamily:"'Cinzel',serif", fontSize:11, outline:"none",
-                }}/>
-              {searchLoading && (
-                <span style={{position:"absolute",right:search.length>0?32:10,top:"50%",transform:"translateY(-50%)",fontSize:10,color:C.goldLight,opacity:0.7}}>⏳</span>
-              )}
-              {search.length > 0 && (
-                <span onClick={()=>setSearch("")}
-                  style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",
-                    fontSize:14,cursor:"pointer",opacity:0.5,color:C.goldLight}}>✕</span>
-              )}
+          {/* ══ COL 1: FIND WARRIORS ══ */}
+          <div style={{flex:1,display:"flex",flexDirection:"column",borderRight:"1px solid rgba(245,200,66,0.12)",minWidth:0}}>
+            {/* Column header */}
+            <div style={{
+              flexShrink:0,padding:"8px 6px 6px",
+              borderBottom:"1px solid rgba(245,200,66,0.14)",
+              background:"rgba(13,31,53,0.60)",
+            }}>
+              <div style={{fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,
+                color:"rgba(245,200,66,0.75)",letterSpacing:1.2,textAlign:"center",
+                textTransform:"uppercase",marginBottom:5}}>
+                ⚔️ Find
+              </div>
+              {/* Mini search */}
+              <div style={{position:"relative"}}>
+                <span style={{position:"absolute",left:6,top:"50%",transform:"translateY(-50%)",fontSize:10,opacity:0.4}}>🔍</span>
+                <input type="text" autoCapitalize="none" autoCorrect="off" spellCheck="false" inputMode="search"
+                  value={search} onChange={e=>setSearch(e.target.value.toLowerCase())}
+                  placeholder="name…"
+                  style={{
+                    width:"100%", boxSizing:"border-box",
+                    padding:"6px 20px 6px 20px",
+                    borderRadius:7, border:"1px solid rgba(245,200,66,0.18)",
+                    background:"rgba(13,31,53,0.80)", color:C.offWhite,
+                    fontFamily:"'Cinzel',serif", fontSize:9, outline:"none",
+                  }}/>
+                {search.length > 0 && (
+                  <span onClick={()=>setSearch("")}
+                    style={{position:"absolute",right:5,top:"50%",transform:"translateY(-50%)",
+                      fontSize:11,cursor:"pointer",opacity:0.45,color:C.goldLight}}>✕</span>
+                )}
+              </div>
             </div>
+            {/* Rows */}
+            <div ref={panelScrollRef} style={{flex:1,overflowY:"auto",padding:"6px 5px 12px",WebkitOverflowScrolling:"touch"}}>
+              {loading && <div style={{textAlign:"center",paddingTop:16}}><div className="c-spin"/></div>}
+              {!loading && displayPlayers.length === 0 && (
+                <div style={{textAlign:"center",padding:"20px 4px 8px",
+                  color:"rgba(245,200,66,0.30)",fontSize:9,fontFamily:"'Cinzel',serif",
+                  letterSpacing:0.8,lineHeight:1.8}}>
+                  {search.trim().length >= 2 ? "No warriors found" : "No warriors yet"}
+                </div>
+              )}
+              {!loading && displayPlayers.map(p => (
+                <ColRow key={p.id}
+                  initial={(p.display_name||"W")[0].toUpperCase()}
+                  initColor={`linear-gradient(135deg,${C.teal},${C.gold})`}
+                  line1={p.display_name}
+                  line2={`${rankBadge(p.total_score||0).icon} ${p.total_score||0}pts`}
+                  onBattle={()=>challenge(p)}
+                  onDecline={()=>removePlayer(p)}
+                />
+              ))}
+            </div>
+          </div>
 
-            {/* Players — only real rows, no empty padding */}
-            {displayPlayers.length === 0 && (
-              <div style={{textAlign:"center",padding:"28px 0 12px",color:"rgba(245,200,66,0.35)",
-                fontSize:11,fontFamily:"'Cinzel',serif",letterSpacing:1,lineHeight:1.9}}>
-                {search.trim().length >= 2 ? "No warriors found — try a different name" : "No warriors yet — invite friends!"}
+          {/* ══ COL 2: MY BATTLES ══ */}
+          <div style={{flex:1,display:"flex",flexDirection:"column",borderRight:"1px solid rgba(245,200,66,0.12)",minWidth:0}}>
+            <div style={{
+              flexShrink:0,padding:"8px 6px 6px",
+              borderBottom:"1px solid rgba(245,200,66,0.14)",
+              background:"rgba(13,31,53,0.60)",
+            }}>
+              <div style={{fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,
+                color:"rgba(245,200,66,0.75)",letterSpacing:1.2,textAlign:"center",
+                textTransform:"uppercase"}}>
+                📬 Battles
               </div>
-            )}
-            {displayPlayers.map(p => (
-              <div key={p.id} style={sRowFilled}>
-                <div style={{width:30,height:30,borderRadius:"50%",background:`linear-gradient(135deg,${C.teal},${C.gold})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:"#fff",flexShrink:0}}>
-                  {(p.display_name||"W")[0].toUpperCase()}
+            </div>
+            <div style={{flex:1,overflowY:"auto",padding:"6px 5px 12px",WebkitOverflowScrolling:"touch"}}>
+              {loading && <div style={{textAlign:"center",paddingTop:16}}><div className="c-spin"/></div>}
+              {!loading && games.length === 0 && (
+                <div style={{textAlign:"center",padding:"20px 4px 8px",
+                  color:"rgba(245,200,66,0.30)",fontSize:9,fontFamily:"'Cinzel',serif",
+                  letterSpacing:0.8,lineHeight:1.8}}>
+                  No active<br/>battles yet
                 </div>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{fontSize:12,fontWeight:700,color:C.offWhite,fontFamily:"'Cinzel',serif",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{p.display_name}</div>
-                  <div style={{fontSize:9,color:C.goldDim,letterSpacing:1}}>{rankBadge(p.total_score||0).label} · {p.total_score||0} pts</div>
-                </div>
-                <button type="button" style={btnBattle} onClick={()=>challenge(p)}>⚔️ Battle</button>
-                <button type="button" style={btnDecline} onClick={()=>removePlayer(p)}>✕</button>
-              </div>
-            ))}
-          </>)}
-
-          {/* ══ ACTIVE BATTLES ══ */}
-          {!loading && tab === "active" && (<>
-            {games.length === 0 && (
-              <div style={{textAlign:"center",padding:"28px 0 12px",color:"rgba(245,200,66,0.35)",
-                fontSize:11,fontFamily:"'Cinzel',serif",letterSpacing:1,lineHeight:1.9}}>
-                No active battles yet<br/>Challenge a warrior to begin!
-              </div>
-            )}
-            {games.map(g => {
-              const isChallenger = g.challenger_id === (profile?.id || user.email);
-              const oppName  = isChallenger ? g.answerer_name : g.challenger_name;
-              const myScore  = isChallenger ? (g.challenger_score||0) : (g.answerer_score||0);
-              const oppScore = isChallenger ? (g.answerer_score||0)   : (g.challenger_score||0);
-              const isMyTurn = g.current_turn === (profile?.id || user.email);
-              return (
-                <div key={g.id} style={sRowFilled}>
-                  <div style={{width:30,height:30,borderRadius:"50%",background:`linear-gradient(135deg,${C.cobalt},${C.teal})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:"#fff",flexShrink:0}}>
-                    {(oppName||"?")[0].toUpperCase()}
-                  </div>
-                  <div style={{flex:1,minWidth:0}}>
-                    <div style={{fontSize:12,fontWeight:700,color:isMyTurn?C.goldLight:C.offWhite,fontFamily:"'Cinzel',serif",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-                      vs {oppName}
-                    </div>
-                    <div style={{fontSize:9,color:C.goldDim,letterSpacing:1}}>
-                      Rnd {(g.round||0)+1}/{TOTAL_ROUNDS} · {myScore}–{oppScore} {isMyTurn ? "· YOUR TURN ▶" : ""}
-                    </div>
-                  </div>
-                  <button type="button" style={btnBattle}
-                    onClick={()=>onResumeGame(g, isChallenger?"challenger":"answerer")}>
-                    ⚔️ Battle
-                  </button>
-                  <button type="button" style={btnDecline}
-                    onClick={()=>declineGame(g)}>
-                    ✗
-                  </button>
-                </div>
-              );
-            })}
-          </>)}
-
-          
-          {/* ══ CHALLENGES TAB — pending sessions for answerer ══ */}
-          {!loading && tab === "challenges" && (<>
-            {(()=>{
-              const myId2 = profile?.id || user?.email;
-              const pendingGames = games.filter(g => g.answerer_id === myId2 && g.status === "pending");
-              if (pendingGames.length === 0) return (
-                <div style={{textAlign:"center",padding:"28px 0 12px",color:"rgba(245,200,66,0.35)",
-                  fontSize:11,fontFamily:"'Cinzel',serif",letterSpacing:1,lineHeight:1.9}}>
-                  No challenges yet<br/>Your inbox is empty — go challenge someone!
-                </div>
-              );
-              return pendingGames.map(g => {
-                const lv = LEVELS.find(l => l.pts === (g.pending_pts||5)) || LEVELS[0];
+              )}
+              {!loading && games.map(g => {
+                const isChallenger = g.challenger_id === (profile?.id || user.email);
+                const oppName  = isChallenger ? g.answerer_name : g.challenger_name;
+                const myScore  = isChallenger ? (g.challenger_score||0) : (g.answerer_score||0);
+                const oppScore = isChallenger ? (g.answerer_score||0)   : (g.challenger_score||0);
+                const isMyTurn = g.current_turn === (profile?.id || user.email);
                 return (
-                  <div key={g.id} style={sRowFilled}>
-                    <div style={{width:30,height:30,borderRadius:"50%",background:`linear-gradient(135deg,${C.cobalt},${C.teal})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:13,fontWeight:700,color:"#fff",flexShrink:0}}>
-                      {(g.challenger_name||"?")[0].toUpperCase()}
-                    </div>
-                    <div style={{flex:1,minWidth:0}}>
-                      <div style={{fontSize:12,fontWeight:700,color:C.goldLight,fontFamily:"'Cinzel',serif",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
-                        {g.challenger_name}
-                      </div>
-                      <div style={{fontSize:9,color:C.goldDim,letterSpacing:1,display:"flex",alignItems:"center",gap:5,marginTop:1}}>
-                        <span style={{color:lv.color}}>{lv.icon} {lv.name}</span>
-                        <span>· Challenge</span>
-                      </div>
-                    </div>
-                    <button type="button" style={btnBattle}
-                      onClick={async ()=>{
+                  <ColRow key={g.id}
+                    initial={(oppName||"?")[0].toUpperCase()}
+                    initColor={`linear-gradient(135deg,${C.cobalt},${C.teal})`}
+                    line1={`vs ${oppName}`}
+                    line2={`R${(g.round||0)+1} · ${myScore}-${oppScore}${isMyTurn?" ▶":""}`}
+                    line2Gold={isMyTurn}
+                    onBattle={()=>onResumeGame(g, isChallenger?"challenger":"answerer")}
+                    onDecline={()=>declineGame(g)}
+                  />
+                );
+              })}
+            </div>
+          </div>
+
+          {/* ══ COL 3: CHALLENGES INBOX ══ */}
+          <div style={{flex:1,display:"flex",flexDirection:"column",minWidth:0}}>
+            <div style={{
+              flexShrink:0,padding:"8px 6px 6px",
+              borderBottom:"1px solid rgba(245,200,66,0.14)",
+              background:"rgba(13,31,53,0.60)",
+            }}>
+              {(()=>{
+                const myId2 = profile?.id || user?.email;
+                const cnt = games.filter(g => g.answerer_id === myId2 && g.status === "pending").length;
+                return (
+                  <div style={{fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,
+                    color: cnt > 0 ? C.goldLight : "rgba(245,200,66,0.75)",
+                    letterSpacing:1.2,textAlign:"center",textTransform:"uppercase",
+                    display:"flex",alignItems:"center",justifyContent:"center",gap:4}}>
+                    📩 Inbox
+                    {cnt > 0 && (
+                      <span style={{
+                        background:C.gold,color:"#0d1f35",
+                        borderRadius:"50%",width:14,height:14,fontSize:8,fontWeight:900,
+                        display:"inline-flex",alignItems:"center",justifyContent:"center",
+                        animation:"pulse 1.4s ease-in-out infinite",
+                      }}>{cnt}</span>
+                    )}
+                  </div>
+                );
+              })()}
+            </div>
+            <div style={{flex:1,overflowY:"auto",padding:"6px 5px 12px",WebkitOverflowScrolling:"touch"}}>
+              {loading && <div style={{textAlign:"center",paddingTop:16}}><div className="c-spin"/></div>}
+              {(()=>{
+                const myId2 = profile?.id || user?.email;
+                const pendingGames = games.filter(g => g.answerer_id === myId2 && g.status === "pending");
+                if (!loading && pendingGames.length === 0) return (
+                  <div style={{textAlign:"center",padding:"20px 4px 8px",
+                    color:"rgba(245,200,66,0.30)",fontSize:9,fontFamily:"'Cinzel',serif",
+                    letterSpacing:0.8,lineHeight:1.8}}>
+                    Inbox<br/>empty
+                  </div>
+                );
+                return pendingGames.map(g => {
+                  const lv = LEVELS.find(l => l.pts === (g.pending_pts||5)) || LEVELS[0];
+                  return (
+                    <ColRow key={g.id}
+                      initial={(g.challenger_name||"?")[0].toUpperCase()}
+                      initColor={`linear-gradient(135deg,${C.cobalt},${C.teal})`}
+                      line1={g.challenger_name}
+                      line2={`${lv.icon} ${lv.name}`}
+                      line2Gold={true}
+                      onBattle={async ()=>{
                         try {
                           const updated = await B44.update("GameSession", g.id, {
                             status: "waiting_for_answer",
@@ -2628,40 +2663,20 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
                           });
                           onResumeGame(updated, "answerer");
                         } catch(e){ alert("Could not accept: " + e.message); }
-                      }}>
-                      ⚔️ Battle
-                    </button>
-                    <button type="button" style={btnDecline}
-                      onClick={async ()=>{
+                      }}
+                      onDecline={async ()=>{
                         try {
                           await B44.update("GameSession", g.id, { status: "cancelled" });
                           setGames(prev => prev.filter(x => x.id !== g.id));
                         } catch(e){ alert("Could not decline: " + e.message); }
-                      }}>
-                      ✗
-                    </button>
-                  </div>
-                );
-              });
-            })()}
-          </>)}
-
-{/* Back button */}
-          <div style={{marginTop:12}}>
-            <button type="button" onClick={()=>window.location.href="/"}
-              style={{
-                width:"100%", padding:"13px 0",
-                borderRadius:12,
-                border:"1.5px solid rgba(245,200,66,0.40)",
-                background:"linear-gradient(135deg,rgba(13,31,53,0.85),rgba(26,58,92,0.85))",
-                color:"rgba(245,200,66,0.80)",
-                fontFamily:"'Cinzel',serif", fontSize:12, fontWeight:700,
-                letterSpacing:1.5, cursor:"pointer",
-                backdropFilter:"blur(8px)",
-              }}>
-              ← Back to Home
-            </button>
+                      }}
+                    />
+                  );
+                });
+              })()}
+            </div>
           </div>
+
         </div>
       </div>
     </div>
