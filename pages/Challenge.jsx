@@ -98,6 +98,9 @@ const B44 = {
   async update(entity, id, data) {
     return this._call({ action: "update", entity, id, data });
   },
+  async delete(entity, id) {
+    return this._call({ action: "delete", entity, id });
+  },
 };
 
 // ── SMS via Twilio (Netlify function) ──
@@ -1263,7 +1266,7 @@ function Hdr({ user, profile, onOut, onSmsToggle, onChallenge }) {
     <>
       {/* Header bar */}
       <div className="c-hdr">
-        <div className="c-logo" onClick={()=>onOut && onOut()} style={{cursor:"pointer"}} title="Back">⚔️ WHAM</div>
+        <div className="c-logo" onClick={()=>onOut && onOut("lobby")} style={{cursor:"pointer"}} title="Back to Lobby">⚔️ WHAM</div>
         {user && (
           <div style={{display:"flex",alignItems:"center",gap:10}}>
             <div className="c-pill" style={{cursor:"default",pointerEvents:"none"}}>
@@ -1782,22 +1785,19 @@ function Auth({ onIn }) {
   // This prevents the double-onIn loop on every mount
 
   async function loadAndEnter(u, extraFields = {}) {
-    // Fetch or create real B44 profile BEFORE entering lobby — ensures profile.id is always set
+    // Fetch ALL profiles then filter by email in JS (B44 SDK does not support server-side field filtering)
     let realProfile = null;
     try {
-      let profiles = await B44.list("PlayerProfile", { email: u.email });
-      if (profiles && profiles.length > 0) {
-        // Use the OLDEST profile (first created) as canonical — it has the most history
-        realProfile = profiles[0];
-        // Silently delete any newer duplicates
-        if (profiles.length > 1) {
-          profiles.slice(1).forEach(p =>
-            B44.delete("PlayerProfile", p.id).catch(() => {})
-          );
-        }
-        // If extra fields provided (new registration), update the canonical profile
+      const all = await B44.list("PlayerProfile", {});
+      const mine = (all || []).filter(p => p.email === u.email)
+        .sort((a,b) => new Date(a.created_date) - new Date(b.created_date)); // oldest first = canonical
+      if (mine.length > 0) {
+        realProfile = mine[0];
+        // Delete all duplicates silently
+        mine.slice(1).forEach(p => B44.delete("PlayerProfile", p.id).catch(() => {}));
+        // Apply extra fields if registration
         if (Object.keys(extraFields).length > 0) {
-          B44.update("PlayerProfile", realProfile.id, extraFields).catch(() => {});
+          await B44.update("PlayerProfile", realProfile.id, extraFields).catch(() => {});
           realProfile = { ...realProfile, ...extraFields };
         }
       } else {
