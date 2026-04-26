@@ -1263,7 +1263,7 @@ function Hdr({ user, profile, onOut, onSmsToggle, onChallenge }) {
     <>
       {/* Header bar */}
       <div className="c-hdr">
-        <div className="c-logo">⚔️ WHAM</div>
+        <div className="c-logo" onClick={()=>onOut && onOut()} style={{cursor:"pointer"}} title="Back">⚔️ WHAM</div>
         {user && (
           <div style={{display:"flex",alignItems:"center",gap:10}}>
             <div className="c-pill" style={{cursor:"default",pointerEvents:"none"}}>
@@ -4103,16 +4103,6 @@ function VersePick({ user, profile, pendingOpponent, pendingLevel, onDone, onOut
       <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
 
       <div className="c-scroll"><div className="c-pad" style={{paddingTop:88}}>
-
-        {/* Back button */}
-        <div style={{marginBottom:8}}>
-          <button type="button" onClick={()=>onOut("level")} style={{
-            background:"rgba(13,31,53,0.75)",border:"1.5px solid #3ABDD455",
-            borderRadius:12,padding:"6px 16px",
-            fontFamily:"'Cinzel',serif",fontSize:11,fontWeight:700,
-            color:"#3ABDD4",letterSpacing:1,cursor:"pointer",
-          }}>← Back</button>
-        </div>
 
         {/* Header */}
         <div style={{textAlign:"center",marginBottom:16}}>
