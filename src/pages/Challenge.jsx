@@ -4049,8 +4049,16 @@ function VersePick({ user, profile, pendingOpponent, pendingLevel, onDone, onOut
     setChosen(verse);
     setLoading(true);
     const options = buildOptions(verse);
-    const myId = profile?.id;
-    if (!myId) { alert("Profile not ready — please try again."); setChosen(null); setLoading(false); return; }
+    // Ensure we have a real profile ID before creating session
+    let myId = profile?.id;
+    if (!myId) {
+      // Try one more fetch from B44 before giving up
+      try {
+        const profiles = await B44.list("PlayerProfile", { email: user?.email });
+        myId = profiles && profiles.length > 0 ? profiles[profiles.length - 1].id : null;
+      } catch(_) {}
+    }
+    if (!myId) { alert("Profile not ready — please sign out and back in."); setChosen(null); setLoading(false); return; }
     const oppId = pendingOpponent?.id;
     if (!oppId) { alert("Opponent profile not found."); setChosen(null); setLoading(false); return; }
     try {
@@ -4095,6 +4103,16 @@ function VersePick({ user, profile, pendingOpponent, pendingLevel, onDone, onOut
       <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
 
       <div className="c-scroll"><div className="c-pad" style={{paddingTop:88}}>
+
+        {/* Back button */}
+        <div style={{marginBottom:8}}>
+          <button type="button" onClick={()=>onOut("level")} style={{
+            background:"rgba(13,31,53,0.75)",border:"1.5px solid #3ABDD455",
+            borderRadius:12,padding:"6px 16px",
+            fontFamily:"'Cinzel',serif",fontSize:11,fontWeight:700,
+            color:"#3ABDD4",letterSpacing:1,cursor:"pointer",
+          }}>← Back</button>
+        </div>
 
         {/* Header */}
         <div style={{textAlign:"center",marginBottom:16}}>
