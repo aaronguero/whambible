@@ -4041,7 +4041,7 @@ function BattleSent({ user, profile, opponentName, game, onProceed, onLobby, onO
 // Standard: Bg component, c-screen/c-scroll/c-pad, Hdr, c-card
 // CRITICAL: verse tap = GameSession.create() + SMS fires
 // ══════════════════════════════════════════════════════════════
-function VersePick({ user, profile, pendingOpponent, pendingLevel, onDone, onOut, onSmsToggle }) {
+function VersePick({ user, profile, game: existingGame, pendingOpponent, pendingLevel, onDone, onOut, onSmsToggle }) {
   const [verses,  setVerses]  = useState([]);
   const [loading, setLoading] = useState(false);
   const [chosen,  setChosen]  = useState(null);
@@ -4068,45 +4068,80 @@ function VersePick({ user, profile, pendingOpponent, pendingLevel, onDone, onOut
     setChosen(verse);
     setLoading(true);
     const options = buildOptions(verse);
-    // Ensure we have a real profile ID before creating session
+
+    // Ensure we have a real profile ID
     let myId = profile?.id;
     if (!myId) {
-      // Try one more fetch from B44 before giving up
       try {
-        const profiles = await B44.list("PlayerProfile", { email: user?.email });
-        myId = profiles && profiles.length > 0 ? profiles[profiles.length - 1].id : null;
+        const all = await B44.list("PlayerProfile", {});
+        const found = (Array.isArray(all)?all:[]).find(p => p.email === user?.email);
+        myId = found?.id || null;
       } catch(_) {}
     }
     if (!myId) { alert("Profile not ready — please sign out and back in."); setChosen(null); setLoading(false); return; }
-    const oppId = pendingOpponent?.id;
-    if (!oppId) { alert("Opponent profile not found."); setChosen(null); setLoading(false); return; }
+
     try {
-      const game = await B44.create("GameSession", {
-        challenger_id:    myId,
-        challenger_name:  myName,
-        answerer_id:      oppId,
-        answerer_name:    pendingOpponent.display_name,
-        status:           "pending",          // awaiting opponent accept
-        current_turn:     myId,
-        round:            0,
-        challenger_score: 0,
-        answerer_score:   0,
-        pending_pts:      pendingLevel.pts,
-        pending_icon:     pendingLevel.icon,
-        pending_name:     pendingLevel.name,
-        pending_verse:    verse,
-        pending_options:  options,
-        progress:         [],
-      });
-      // SMS fires HERE — verse is locked, session is real
-      if (pendingOpponent.phone && pendingOpponent.sms_enabled) {
-        await sendSMS(
-          pendingOpponent.phone,
-          `⚔️ ${myName} challenged you to a WhamBible verse battle! Open the app to accept.`,
-          game.id
-        );
+      let resultGame;
+
+      if (existingGame) {
+        // ── Round 2+ : update the existing session with new verse/level ──
+        const oppId = existingGame.challenger_id === myId ? existingGame.answerer_id : existingGame.challenger_id;
+        await B44.update("GameSession", existingGame.id, {
+          status:          "waiting_for_answer",
+          current_turn:    oppId,              // answerer's turn to answer
+          pending_pts:     pendingLevel.pts,
+          pending_icon:    pendingLevel.icon,
+          pending_name:    pendingLevel.name,
+          pending_verse:   verse,
+          pending_options: options,
+        });
+        resultGame = await B44.get("GameSession", existingGame.id).catch(() => ({
+          ...existingGame,
+          status: "waiting_for_answer",
+          current_turn: oppId,
+          pending_pts: pendingLevel.pts,
+          pending_icon: pendingLevel.icon,
+          pending_name: pendingLevel.name,
+          pending_verse: verse,
+          pending_options: options,
+        }));
+        // SMS opponent it's their turn to answer
+        const allProfiles = await B44.list("PlayerProfile", {}).catch(() => []);
+        const oppProfile  = allProfiles.find(p => p.id === oppId) || null;
+        if (oppProfile?.phone && oppProfile?.sms_enabled) {
+          await sendSMS(oppProfile.phone, `⚔️ ${myName} picked a new verse! Your turn to answer.`, existingGame.id);
+        }
+        onDone(resultGame, oppProfile?.display_name || "Opponent");
+      } else {
+        // ── Round 1 : create a brand new session ──
+        const oppId = pendingOpponent?.id;
+        if (!oppId) { alert("Opponent profile not found."); setChosen(null); setLoading(false); return; }
+        resultGame = await B44.create("GameSession", {
+          challenger_id:    myId,
+          challenger_name:  myName,
+          answerer_id:      oppId,
+          answerer_name:    pendingOpponent.display_name,
+          status:           "pending",
+          current_turn:     myId,
+          round:            0,
+          challenger_score: 0,
+          answerer_score:   0,
+          pending_pts:      pendingLevel.pts,
+          pending_icon:     pendingLevel.icon,
+          pending_name:     pendingLevel.name,
+          pending_verse:    verse,
+          pending_options:  options,
+          progress:         [],
+        });
+        if (pendingOpponent.phone && pendingOpponent.sms_enabled) {
+          await sendSMS(
+            pendingOpponent.phone,
+            `⚔️ ${myName} challenged you to a WhamBible verse battle! Open the app to accept.`,
+            resultGame.id
+          );
+        }
+        onDone(resultGame, pendingOpponent.display_name);
       }
-      onDone(game, pendingOpponent.display_name);
     } catch(e) {
       setChosen(null);
       setLoading(false);
@@ -4763,7 +4798,7 @@ export default function Challenge() {
       {screen==="auth"       && <Auth onIn={onIn}/>}
       {screen==="lobby"      && <Lobby user={user} profile={profile} onChallenge={onChallenge} onResumeGame={onResumeGame} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
       {screen==="level"      && <SelectLevel user={user} profile={profile} game={game} role={role} pendingOpponent={pendingOpponent} onPick={onLevelPicked} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
-      {screen==="verse_pick" && <VersePick user={user} profile={profile} pendingOpponent={pendingOpponent} pendingLevel={pendingLevel} onDone={(g, oppName)=>{ setGame(g); setSentOpponent(oppName); setScreen("sent"); }} onOut={(dest)=>setScreen(dest||"level")} onSmsToggle={handleSmsToggle}/>}
+      {screen==="verse_pick" && <VersePick user={user} profile={profile} game={game} pendingOpponent={pendingOpponent} pendingLevel={pendingLevel} onDone={(g, oppName)=>{ setGame(g); setSentOpponent(oppName); setScreen("active"); }} onOut={(dest)=>setScreen(dest||"level")} onSmsToggle={handleSmsToggle}/>}
       {screen==="sent"       && <BattleSent user={user} profile={profile} opponentName={sentOpponent} game={game} onProceed={()=>setScreen("active")} onLobby={()=>setScreen("lobby")} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
       {screen==="challenges" && <Challenges user={user} profile={profile} onAccept={(g)=>{ setGame(g); setRole("answerer"); routeGame(g,"answerer"); }} onDecline={()=>{}} onOut={(dest)=>setScreen(dest||"lobby")} onSmsToggle={handleSmsToggle}/>}
       {screen==="active"     && <ActiveBattles user={user} profile={profile} onEnter={(g,r)=>{ setGame(g); setRole(r); routeGame(g,r); }} onOut={(dest)=>setScreen(dest||"lobby")} onSmsToggle={handleSmsToggle}/>}
