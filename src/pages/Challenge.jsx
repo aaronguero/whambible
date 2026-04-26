@@ -2058,7 +2058,7 @@ function Auth({ onIn }) {
 // Tap to expand ⚔️ Battle + ✕. Tap again to collapse.
 // ══════════════════════════════════════════════════════════════
 function ColRow({ initial, initColor, line1, line2, line2Gold, onBattle, onDecline }) {
-  const [open, setOpen] = React.useState(false);
+  const [open, setOpen] = useState(false);
   return (
     <div style={{marginBottom:5}}>
       <div onClick={()=>setOpen(o=>!o)} style={{
