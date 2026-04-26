@@ -2229,6 +2229,11 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
     loadGames();
   }, []);
 
+  // Re-run loadGames once profile becomes available (fixes inbox missing on first render)
+  useEffect(() => {
+    if (profile?.id && !loadedRef.current.active) loadGames();
+  }, [profile?.id]);
+
   // search filter — client-side filter on cached players
   const filteredPlayers = !search.trim() ? allPlayers
     : allPlayers.filter(p =>
@@ -2614,7 +2619,7 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
               background:"rgba(13,31,53,0.60)",
             }}>
               {(()=>{
-                const myId2 = profile?.id || user?.email;
+                const myId2 = profile?.id || "";
                 const cnt = games.filter(g => g.answerer_id === myId2 && g.status === "pending").length;
                 return (
                   <div style={{fontFamily:"'Cinzel',serif",fontSize:9,fontWeight:700,
@@ -2637,7 +2642,7 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
             <div style={{flex:1,overflowY:"auto",padding:"6px 5px 12px",WebkitOverflowScrolling:"touch"}}>
               {loading && <div style={{textAlign:"center",paddingTop:16}}><div className="c-spin"/></div>}
               {(()=>{
-                const myId2 = profile?.id || user?.email;
+                const myId2 = profile?.id || "";
                 const pendingGames = games.filter(g => g.answerer_id === myId2 && g.status === "pending");
                 if (!loading && pendingGames.length === 0) return (
                   <div style={{textAlign:"center",padding:"20px 4px 8px",
