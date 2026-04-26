@@ -1781,25 +1781,32 @@ function Auth({ onIn }) {
   // NOTE: session check is handled at Challenge() root level — do NOT re-check here
   // This prevents the double-onIn loop on every mount
 
-  async function loadAndEnter(u) {
-    // Try to get real B44 profile with real id BEFORE entering lobby
+  async function loadAndEnter(u, extraFields = {}) {
+    // Fetch or create real B44 profile BEFORE entering lobby — ensures profile.id is always set
     let realProfile = null;
     try {
       let profiles = await B44.list("PlayerProfile", { email: u.email });
-      // Guard: dedupe — use the newest profile (last created), ignore extras
       if (profiles && profiles.length > 0) {
-        realProfile = profiles[profiles.length - 1];
-        // If somehow multiple exist, clean up silently (keep newest, delete older ones)
+        // Use the OLDEST profile (first created) as canonical — it has the most history
+        realProfile = profiles[0];
+        // Silently delete any newer duplicates
         if (profiles.length > 1) {
-          profiles.slice(0, profiles.length - 1).forEach(p =>
+          profiles.slice(1).forEach(p =>
             B44.delete("PlayerProfile", p.id).catch(() => {})
           );
         }
+        // If extra fields provided (new registration), update the canonical profile
+        if (Object.keys(extraFields).length > 0) {
+          B44.update("PlayerProfile", realProfile.id, extraFields).catch(() => {});
+          realProfile = { ...realProfile, ...extraFields };
+        }
       } else {
-        // Create profile in B44 — get back real id
+        // No profile exists — create one now
         realProfile = await B44.create("PlayerProfile", {
           email: u.email,
-          display_name: u.displayName || u.email.split("@")[0],
+          display_name: extraFields.display_name || u.displayName || u.email.split("@")[0],
+          phone: extraFields.phone || "",
+          sms_enabled: extraFields.sms_enabled || false,
           total_score: 0, games_played: 0, games_won: 0,
         });
       }
@@ -1809,7 +1816,7 @@ function Auth({ onIn }) {
     // Fall back to local stub only if B44 is completely unreachable
     const profile = realProfile || {
       email: u.email,
-      display_name: u.displayName || u.email.split("@")[0],
+      display_name: extraFields.display_name || u.displayName || u.email.split("@")[0],
       total_score: 0, games_played: 0, games_won: 0,
     };
     onIn(u, profile);
@@ -1824,26 +1831,16 @@ function Auth({ onIn }) {
     if (pass.length < 6) return setErr("Password must be at least 6 characters.");
     setErr(""); setBusy(true);
     try {
-      // Local account creation — this is the source of truth
+      // Create local auth account
       const user = LocalAuth.create(email.trim(), pass, name.trim());
-      const localProfile = {
-        email: user.email, display_name: name.trim(),
-        phone: phone.trim() || "", sms_enabled: !!(phone.trim() && smsConsent),
-        total_score: 0, games_played: 0, games_won: 0,
-      };
-      // Let user in immediately
-      onIn(user, localProfile);
-      // Sync to B44 in background — check for existing profile first to prevent duplicates
-      B44.list("PlayerProfile", { email: user.email }).then(existing => {
-        if (existing && existing.length > 0) {
-          // Profile already exists — update it instead
-          return B44.update("PlayerProfile", existing[0].id, localProfile);
-        } else {
-          return B44.create("PlayerProfile", localProfile);
-        }
-      }).catch(e => console.warn("[B44] Profile sync failed (will retry later):", e.message));
+      // Route through loadAndEnter — this fetches/creates the B44 profile synchronously
+      // so the user enters the lobby with a real profile.id, never a stub
+      await loadAndEnter(user, {
+        display_name: name.trim(),
+        phone: phone.trim() || "",
+        sms_enabled: !!(phone.trim() && smsConsent),
+      });
     } catch (e2) {
-      // Only show error if LOCAL auth failed (e.g. account already exists)
       setErr(parseError(e2));
       setBusy(false);
     }
