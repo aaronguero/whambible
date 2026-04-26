@@ -2707,9 +2707,13 @@ function Waiting({ user, profile, game, role, onUpdate, onOut, onSmsToggle }) {
         const updated = await B44.get("GameSession", game.id);
         if (!mounted) return;
         setG(updated);
+        // Always call onUpdate — parent handles routing logic
         onUpdate(updated);
       } catch {}
     }
+
+    // ── Check immediately on mount in case status already changed ──
+    doPoll();
 
     // ── Fast poll for first 10s after mount, then settle to steady ──
     pollRef.current = setInterval(doPoll, POLL_FAST_MS);
@@ -3825,6 +3829,19 @@ function SelectLevel({ user, profile, game, role, pendingOpponent, onPick, onOut
   // oppName: for new challenge = pendingOpponent.display_name; for round 2+ = game field
   const oppName = pendingOpponent?.display_name || (role === "challenger" ? game?.answerer_name : game?.challenger_name);
 
+  // Guard: if an existing game is NOT in pick_level state or it's not our turn, don't allow re-entry
+  const myId = profile?.id;
+  if (game && game.status && game.status !== "pick_level") {
+    // Silently redirect — wrong screen for this game state
+    setTimeout(() => onOut && onOut("active"), 0);
+    return null;
+  }
+  if (game && game.status === "pick_level" && myId && game.current_turn !== myId) {
+    // Not our turn to pick
+    setTimeout(() => onOut && onOut("waiting"), 0);
+    return null;
+  }
+
   function pickLevel(lv) {
     // Just bubble up the level — VersePick will finalize creation/update
     onPick(lv);
@@ -4428,7 +4445,7 @@ function ActiveBattles({ user, profile, onEnter, onOut, onSmsToggle }) {
         B44.list("GameSession", {}).then(all => (Array.isArray(all)?all:[]).filter(s=>s.answerer_id===myId)),
       ]);
       const all = [...(Array.isArray(r1)?r1:[]), ...(Array.isArray(r2)?r2:[])]
-        .filter(g => g.status !== "cancelled" && g.status !== "pending")
+        .filter(g => g.status !== "cancelled" && g.status !== "pending" && g.status !== "complete")
         .sort((a,b) => new Date(b.updated_date||0) - new Date(a.updated_date||0));
       setGames(all);
     } catch(e) {
@@ -4648,10 +4665,15 @@ export default function Challenge() {
   function routeGame(g, r) {
     if (!g) return setScreen("lobby");
     if (g.status === "complete")             return setScreen("gameover");
+    if (g.status === "cancelled")            return setScreen("active");
     const myId = profile?.id || user?.email;
     const isMyTurn = g.current_turn === myId;
+    // Only go to level select if status is explicitly pick_level AND it is this player's turn
     if (g.status === "pick_level"          && isMyTurn) return setScreen("level");
+    // Only go to answer screen if status is waiting_for_answer AND it is this player's turn
     if (g.status === "waiting_for_answer"  && isMyTurn) return setScreen("answer");
+    // Pending = challenger just created, answerer hasn't accepted — go to waiting
+    if (g.status === "pending" && r === "challenger") return setScreen("waiting");
     return setScreen("waiting");
   }
 
