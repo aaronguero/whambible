@@ -3119,16 +3119,16 @@ function MPRecovery({ verse, lv, onDone }) {
       <div style={{position:"relative",zIndex:10,maxWidth:480,margin:"0 auto",padding:"0 16px 50px",
         display:"flex",flexDirection:"column",alignItems:"center"}}>
 
-        {/* Hero spacer */}
-        <div style={{height:"36vh",minHeight:180}}/>
+        {/* Hero spacer — smaller so wheels land in thumb zone */}
+        <div style={{height:"22vh",minHeight:100}}/>
 
         {/* Panel */}
         <div style={{width:"100%",
-          background:"linear-gradient(180deg,rgba(10,5,0,0) 0%,rgba(10,5,0,0.85) 10%,rgba(10,5,0,0.97) 20%,rgba(10,5,0,0.97) 100%)",
-          borderRadius:"20px 20px 0 0",padding:"20px 18px 0",marginTop:"-28px",
+          background:"linear-gradient(180deg,rgba(10,5,0,0) 0%,rgba(10,5,0,0.85) 8%,rgba(10,5,0,0.97) 18%,rgba(10,5,0,0.97) 100%)",
+          borderRadius:"20px 20px 0 0",padding:"18px 18px 0",marginTop:"-28px",
         }}>
           {/* Scroll curl */}
-          <div style={{width:"70%",height:4,margin:"0 auto 14px",borderRadius:2,
+          <div style={{width:"70%",height:4,margin:"0 auto 12px",borderRadius:2,
             background:"linear-gradient(90deg,transparent,rgba(212,146,26,0.7),rgba(58,189,212,0.5),rgba(212,146,26,0.7),transparent)"}}/>
 
           {/* Badge */}
@@ -3142,25 +3142,30 @@ function MPRecovery({ verse, lv, onDone }) {
             📜 Scroll Recovery · {lv?.icon} {lv?.name} · Recover +{MP_RECOVERY_PTS}
           </div>
 
-          {/* Verse card */}
+          {/* Verse — pinned directly above the wheels */}
           <div style={{
-            width:"100%",background:"rgba(201,162,39,0.06)",
-            border:"1px solid rgba(201,162,39,0.22)",borderRadius:12,padding:"14px 18px",marginBottom:14,
+            width:"100%",background:"rgba(201,162,39,0.08)",
+            border:"1px solid rgba(201,162,39,0.28)",borderRadius:12,
+            padding:"12px 16px",marginBottom:10,
           }}>
             <div style={{fontFamily:"'Cinzel',serif",fontSize:9,letterSpacing:2,
-              color:"rgba(201,162,26,0.5)",textTransform:"uppercase",marginBottom:8}}>
-              THE VERSE YOU MISSED
+              color:"rgba(201,162,26,0.55)",textTransform:"uppercase",marginBottom:6}}>
+              The Verse You Missed
             </div>
-            <div style={{fontSize:13,lineHeight:1.7,color:"rgba(240,228,192,0.85)",fontStyle:"italic",margin:"0 0 8px"}}>
+            <div style={{fontSize:14,lineHeight:1.65,color:"rgba(240,228,192,0.92)",fontStyle:"italic"}}>
               "{verse.text}"
+            </div>
+            <div style={{fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:1,
+              color:"rgba(58,189,212,0.6)",marginTop:6,textAlign:"right"}}>
+              — {verse.book} {verse.chapter}:{verse.verse}
             </div>
           </div>
 
-          {/* Instruction */}
+          {/* Instruction — tight, right above the wheels */}
           <div style={{fontFamily:"'Cinzel',serif",fontSize:10,letterSpacing:1,
-            color:"rgba(201,162,39,0.45)",textAlign:"center",textTransform:"uppercase",
-            lineHeight:1.8,marginBottom:12}}>
-            Spin the scroll to the correct<br/>Book · Chapter · Verse
+            color:"rgba(201,162,39,0.5)",textAlign:"center",textTransform:"uppercase",
+            lineHeight:1.7,marginBottom:10}}>
+            Spin to the correct Book · Chapter · Verse
           </div>
 
           {/* Timer + wheels row */}
