@@ -3358,14 +3358,18 @@ function Answer({ user, game, role, onDone, onOut, onSmsToggle }) {
       updateData.current_turn = nextPicker;
     }
 
-    // ── Navigate immediately with optimistic data — don't make user wait for DB ──
-    const optimisticGame = { ...game, ...updateData };
-    onDone({ correct, pts: earnedPts, game: optimisticGame });
-
-    // ── Save to DB in background ──
-    B44.update("GameSession", game.id, updateData).catch(e => {
-      console.error("commitResult background save failed:", e);
-    });
+    // ── Save to DB first — then navigate with confirmed data ──
+    // Do NOT fire-and-forget. onResultNext fetches from DB and a stale record causes routing loops.
+    let confirmedGame = { ...game, ...updateData };
+    try {
+      await B44.update("GameSession", game.id, updateData);
+      // Fetch confirmed state from DB so onResultNext gets the real record
+      confirmedGame = await B44.get("GameSession", game.id);
+    } catch(e) {
+      console.error("commitResult DB save failed:", e);
+      // Continue with optimistic data so player isn't stranded
+    }
+    onDone({ correct, pts: earnedPts, game: confirmedGame });
   }
 
   const pct = tLeft / TIME_LIMIT * 100;
@@ -4717,13 +4721,10 @@ export default function Challenge() {
 
   async function onResultNext() {
     if (!game) return setScreen("lobby");
-    // Re-fetch fresh game state — React state may be stale after commitResult
-    let fresh = game;
-    try { fresh = await B44.get("GameSession", game.id); } catch {}
-    if (!fresh || fresh.status === "complete") return setScreen("gameover");
-    setGame(fresh);
-    freshGameRef.current = fresh; // store so onVerseReviewDone can read it without stale closure
-    // Always go to VerseReview first — 3s hold lets DB write land, shows verse
+    // game is now confirmed DB state from commitResult (no longer optimistic)
+    // Use it directly — no re-fetch race condition
+    if (game.status === "complete") return setScreen("gameover");
+    freshGameRef.current = game;
     setScreen("verse_review");
   }
 
