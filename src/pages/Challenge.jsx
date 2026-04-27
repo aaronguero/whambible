@@ -2759,17 +2759,18 @@ function Waiting({ user, profile, game, role, onUpdate, onOut, onSmsToggle }) {
       <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
 
       {/* ── Hero space — character breathes here ── */}
-      <div style={{height:"44vh",minHeight:220}}/>
+      {/* (space handled by fixed panel top position) */}
 
-      {/* ── Scroll panel ── */}
+      {/* ── Scroll panel — fixed, pinned to bottom, scrolls internally ── */}
       <div style={{
-        position:"relative",zIndex:10,
-        margin:"0 0 0 0",
+        position:"fixed",
+        left:0,right:0,bottom:0,
+        top:"44vh",
+        zIndex:10,
         borderRadius:"22px 22px 0 0",
         background:"rgba(13,31,53,0.94)",
         borderTop:`2px solid rgba(245,200,66,0.22)`,
         boxShadow:"0 -8px 40px rgba(0,0,0,0.55)",
-        minHeight:"56vh",
         overflowY:"auto",
         WebkitOverflowScrolling:"touch",
       }}>
