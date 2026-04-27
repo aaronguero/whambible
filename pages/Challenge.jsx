@@ -4523,7 +4523,12 @@ export default function Challenge() {
       .then(all => {
         const arr = Array.isArray(all) ? all : (all?.records || []);
         const match = arr.find(p => p.email === targetEmail);
-        if (match) setProfile(p => ({ ...p, ...match }));
+        if (match) {
+          setProfile(p => ({ ...p, ...match }));
+          // Persist to sessionStorage so next page load has profile.id immediately
+          // (critical for inbox filter — loadGames needs profile.id on mount)
+          try { sessionStorage.setItem("wb_profile_cache", JSON.stringify({ ...match })); } catch {}
+        }
       })
       .catch(() => {}); // silent — local profile is fine
   }, []);
