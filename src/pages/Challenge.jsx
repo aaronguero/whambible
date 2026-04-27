@@ -4713,25 +4713,30 @@ export default function Challenge() {
     setScreen("result");
   }
 
+  const freshGameRef = useRef(null);
+
   async function onResultNext() {
     if (!game) return setScreen("lobby");
-    // Re-fetch fresh game state — React state may be stale
+    // Re-fetch fresh game state — React state may be stale after commitResult
     let fresh = game;
     try { fresh = await B44.get("GameSession", game.id); } catch {}
     if (!fresh || fresh.status === "complete") return setScreen("gameover");
     setGame(fresh);
+    freshGameRef.current = fresh; // store so onVerseReviewDone can read it without stale closure
     // Always go to VerseReview first — 3s hold lets DB write land, shows verse
     setScreen("verse_review");
   }
 
   function onVerseReviewDone() {
-    // Called after the 3s VerseReview hold — now route based on fresh game state
-    if (!game) return setScreen("lobby");
-    if (game.status === "complete") return setScreen("gameover");
+    // Use freshGameRef to avoid stale closure — game state from setState may not have updated yet
+    const g = freshGameRef.current || game;
+    if (!g) return setScreen("lobby");
+    if (g.status === "complete") return setScreen("gameover");
     const myId = profile?.id || "";
-    const isMyTurn = game.current_turn === myId;
-    if (isMyTurn && game.status === "pick_level")         return setScreen("level");
-    if (isMyTurn && game.status === "waiting_for_answer") return setScreen("answer");
+    const isMyTurn = g.current_turn === myId;
+    console.log("[VerseReviewDone] status:", g.status, "current_turn:", g.current_turn, "myId:", myId, "isMyTurn:", isMyTurn);
+    if (isMyTurn && g.status === "pick_level")         return setScreen("level");
+    if (isMyTurn && g.status === "waiting_for_answer") return setScreen("answer");
     // Not my turn — back to lobby to wait
     setScreen("lobby");
   }
