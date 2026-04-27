@@ -2729,7 +2729,7 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
                           // so routeGame routes them to the Answer screen correctly.
                           const myId = profile?.id || "";
                           await B44.update("GameSession", g.id, {
-                            status: "waiting_for_answer",
+                            status: "answering",
                             current_turn: myId,
                           });
                           const fresh = await B44.get("GameSession", g.id);
@@ -4119,7 +4119,7 @@ function VersePick({ user, profile, game: existingGame, pendingOpponent, pending
         // ── Round 2+ : update the existing session with new verse/level ──
         const oppId = existingGame.challenger_id === myId ? existingGame.answerer_id : existingGame.challenger_id;
         await B44.update("GameSession", existingGame.id, {
-          status:          "waiting_for_answer",
+          status:          "answering",
           current_turn:    oppId,              // answerer's turn to answer
           pending_pts:     pendingLevel.pts,
           pending_icon:    pendingLevel.icon,
@@ -4129,7 +4129,7 @@ function VersePick({ user, profile, game: existingGame, pendingOpponent, pending
         });
         resultGame = await B44.get("GameSession", existingGame.id).catch(() => ({
           ...existingGame,
-          status: "waiting_for_answer",
+          status: "answering",
           current_turn: oppId,
           pending_pts: pendingLevel.pts,
           pending_icon: pendingLevel.icon,
@@ -4607,13 +4607,13 @@ export default function Challenge() {
     // Only go to level select if status is explicitly pick_level AND it is this player's turn
     if (g.status === "pick_level"          && isMyTurn) return setScreen("level");
     // Only go to answer screen if status is waiting_for_answer AND it is this player's turn
-    if (g.status === "waiting_for_answer"  && isMyTurn) return setScreen("answer");
+    if (g.status === "answering"  && isMyTurn) return setScreen("answer");
     // Pending = challenger just created, answerer hasn't accepted — go to waiting
     if (g.status === "pending" && r === "challenger") return setScreen("waiting");
     // Answerer with pending status — show inbox/waiting
     if (g.status === "pending" && r === "answerer") return setScreen("lobby");
     // If there's an active game in progress and it's not my turn, wait for opponent
-    if (g && (g.status === "pick_level" || g.status === "waiting_for_answer")) return setScreen("waiting");
+    if (g && (g.status === "pick_level" || g.status === "answering")) return setScreen("waiting");
     // Safe fallback
     return setScreen("lobby");
   }
@@ -4675,7 +4675,7 @@ export default function Challenge() {
     if (updated.status === "complete") { setScreen("gameover"); return; }
     if (updated.current_turn === myId) {
       if (updated.status === "pick_level")         setScreen("level");
-      if (updated.status === "waiting_for_answer") setScreen("answer");
+      if (updated.status === "answering") setScreen("answer");
     }
   }
 
@@ -4707,7 +4707,7 @@ export default function Challenge() {
     const isMyTurn = g.current_turn === myId;
     console.log("[onRoundResultDone] status:", g.status, "myTurn:", isMyTurn, "myId:", myId, "current_turn:", g.current_turn);
     if (isMyTurn && g.status === "pick_level") return setScreen("level");
-    if (isMyTurn && g.status === "waiting_for_answer") return setScreen("answer");
+    if (isMyTurn && g.status === "answering") return setScreen("answer");
     // Opponent's turn — wait for them to pick/answer, then poll will route us to answer
     setScreen("waiting");
   }
