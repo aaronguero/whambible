@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
 // ══════════════════════════════════════════════════════════════
-// WhamBible — Challenge.jsx v10.0  REAL MULTIPLAYER
+// WhamBible — Challenge.jsx v10.1 build:2026-04-27 10:59  REAL MULTIPLAYER
 // NO Firebase. NO FCM. NO @/api/* imports. NO Base44 SDK.
 //
 // Auth     → localStorage (accounts + sessions)
