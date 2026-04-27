@@ -1593,7 +1593,7 @@ function Slam({ active, pts, onDone }) {
   }, [active]);
   if (!active || ph < 0) return null;
   return (
-    <div style={{position:"fixed",inset:0,zIndex:9999,background:ph===0?"#fff":"#020617",transition:"background 0.12s"}}>
+    <div style={{position:"fixed",inset:0,zIndex:9999,background:"#020617"}}>
       {ph>=1 && <img src={WHAM_CHARS} alt="" style={{position:"absolute",bottom:0,left:"50%",transform:"translateX(-50%)",width:"100%",maxWidth:480,opacity:ph<3?1:0,transition:"opacity .25s"}}/>}
       {ph>=2 && <img src={WHAM_TEXT_IMG} alt="" style={{position:"absolute",top:"18%",left:"50%",transform:`translateX(-50%) scale(${ph===2?1.08:1})`,width:"88%",maxWidth:400,opacity:ph<3?1:0,transition:"transform .3s cubic-bezier(.34,1.56,.64,1),opacity .4s"}}/>}
       <div style={{position:"absolute",bottom:32,left:0,right:0,textAlign:"center",fontFamily:"'Cinzel',serif",fontSize:20,fontWeight:900,color:C.goldLight,opacity:ph===2?1:0,transition:"opacity .3s .2s",letterSpacing:3}}>+{pts||5}</div>
@@ -3323,6 +3323,7 @@ function Answer({ user, profile, game, role, onDone, onOut, onSmsToggle }) {
   const [tLeft,    setTLeft]    = useState(TIME_LIMIT);
   const [locked,   setLocked]   = useState(false);
   const [slam,        setSlam]        = useState(false);
+  const [transitioning, setTransitioning] = useState(false); // dark cover during DB write → screen switch
   const [recovery,    setRecovery]    = useState(false);
   const [streakCount, setStreakCount] = useState(0);
   const [streakFlash, setStreakFlash] = useState(false);
@@ -3393,6 +3394,7 @@ function Answer({ user, profile, game, role, onDone, onOut, onSmsToggle }) {
   }
 
   async function commitResult(correct, earnedPts) {
+    setTransitioning(true); // paint dark cover immediately — hides any white gap during screen swap
     console.log("[commitResult] START role:", role, "correct:", correct, "pts:", earnedPts, "gameId:", game?.id);
     const newRound = (game.round || 0) + 1;
     const isGameOver = newRound >= TOTAL_ROUNDS;
@@ -3449,6 +3451,8 @@ function Answer({ user, profile, game, role, onDone, onOut, onSmsToggle }) {
     <div className="c-screen">
       <Bg char={CHAR_MP} charPos="center 8%" charOpacity={0.55}/>
       <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
+      {/* Dark transition cover — paints instantly when commitResult fires, prevents white flash on screen swap */}
+      {transitioning && <div style={{position:"fixed",inset:0,zIndex:10000,background:"#0D1F35"}}/>}
       {streakFlash && <StreakFlash onDone={handleStreakFlashDone}/>}
       <Slam active={slam} pts={pts} onDone={()=>{
         const bonus = streakBonusPendingRef.current ? 5 : 0;
