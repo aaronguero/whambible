@@ -2288,9 +2288,10 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
     loadGames();
   }, []);
 
-  // Re-run loadGames once profile becomes available (fixes inbox missing on first render)
+  // Re-run loadGames whenever profile.id becomes available or changes.
+  // No loadedRef guard here — if profile.id just resolved, we MUST reload so inbox filters correctly.
   useEffect(() => {
-    if (profile?.id && !loadedRef.current.active) loadGames();
+    if (profile?.id) loadGames();
   }, [profile?.id]);
 
   // search filter — client-side filter on cached players
