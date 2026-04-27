@@ -163,6 +163,38 @@ const MP_VISIBLE  = 5;
 const MP_CENTER   = 2;
 const MP_COPIES   = 5;
 
+// ── Language / translation helpers (mirrored from SoloGame.jsx) ──
+const BIBLE_TRANSLATIONS = {
+  en:"kjv", es:"rvr1960", fr:"lsg", de:"luther1912",
+  pt:"almeida", it:"diodati", zh:"cunpss", ru:"synodal",
+  ar:"arabsvd", ko:"korean", hi:"hindi", ja:"kjv",
+};
+function getActiveLang() {
+  try { return localStorage.getItem("wb_language") || "en"; } catch { return "en"; }
+}
+async function fetchVerse(book, ch, vs, lang, fallbackText) {
+  if (!lang || lang === "en") return { text: fallbackText };
+  const cacheKey = `wb_v_${book}_${ch}_${vs}_${lang}`;
+  const cached = localStorage.getItem(cacheKey);
+  if (cached) { try { return JSON.parse(cached); } catch {} }
+  const translation = BIBLE_TRANSLATIONS[lang] || "kjv";
+  const url = `https://bible-api.com/${encodeURIComponent(book)}+${ch}:${vs}?translation=${translation}`;
+  try {
+    const res  = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const text = (data.verses?.[0]?.text || data.text || "").trim().replace(/\n/g, " ");
+    if (!text) throw new Error("empty");
+    const result = { text };
+    localStorage.setItem(cacheKey, JSON.stringify(result));
+    return result;
+  } catch (err) {
+    console.warn("[WhamBible] fetchVerse fallback:", err.message);
+    return { text: fallbackText };
+  }
+}
+
+
 const VERSES = [
   { book:"John",        chapter:3,  verse:16, text:"For God so loved the world that he gave his one and only Son, that whoever believes in him shall not perish but have eternal life." },
   { book:"Psalms",      chapter:23, verse:1,  text:"The Lord is my shepherd; I shall not want." },
