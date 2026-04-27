@@ -4154,7 +4154,7 @@ function VersePick({ user, profile, game: existingGame, pendingOpponent, pending
           answerer_id:      oppId,
           answerer_name:    pendingOpponent.display_name,
           status:           "pending",
-          current_turn:     myId,
+          current_turn:     oppId,
           round:            0,
           challenger_score: 0,
           answerer_score:   0,
