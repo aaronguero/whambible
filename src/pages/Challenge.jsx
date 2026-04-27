@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
 // ══════════════════════════════════════════════════════════════
-// WhamBible — Challenge.jsx v10.1 build:2026-04-27 10:59  REAL MULTIPLAYER
+// WhamBible — Challenge.jsx v10.2 build:2026-04-27 07:50  REAL MULTIPLAYER
 // NO Firebase. NO FCM. NO @/api/* imports. NO Base44 SDK.
 //
 // Auth     → localStorage (accounts + sessions)
@@ -4540,7 +4540,9 @@ export default function Challenge() {
     if (g.status === "pending" && r === "challenger") return setScreen("waiting");
     // Answerer with pending status — show inbox/waiting
     if (g.status === "pending" && r === "answerer") return setScreen("lobby");
-    // Safe fallback — lobby is always navigable, waiting can trap players
+    // If there's an active game in progress and it's not my turn, wait for opponent
+    if (g && (g.status === "pick_level" || g.status === "waiting_for_answer")) return setScreen("waiting");
+    // Safe fallback
     return setScreen("lobby");
   }
 
@@ -4634,7 +4636,8 @@ export default function Challenge() {
     console.log("[onRoundResultDone] status:", g.status, "myTurn:", isMyTurn, "myId:", myId, "current_turn:", g.current_turn);
     if (isMyTurn && g.status === "pick_level") return setScreen("level");
     if (isMyTurn && g.status === "waiting_for_answer") return setScreen("answer");
-    setScreen("lobby");
+    // Opponent's turn — wait for them to pick/answer, then poll will route us to answer
+    setScreen("waiting");
   }
 
   return (
