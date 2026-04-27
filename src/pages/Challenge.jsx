@@ -2660,11 +2660,10 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
                       line2Gold={true}
                       onBattle={async ()=>{
                         try {
-                          const updated = await B44.update("GameSession", g.id, {
-                            status: "waiting_for_answer",
-                            current_turn: g.answerer_id,
-                          });
-                          onResumeGame(updated, "answerer");
+                          // Don't mutate state — challenger already set verse+turn.
+                          // Fetch fresh game and route the answerer directly.
+                          const fresh = await B44.get("GameSession", g.id);
+                          onResumeGame(fresh, "answerer");
                         } catch(e){ alert("Could not accept: " + e.message); }
                       }}
                       onDecline={async ()=>{
@@ -3584,10 +3583,10 @@ function RoundResult({ user, profile, game, role, correct, pts, onNext, onOut, o
           )}
         </button>
 
-        {/* Secondary: Back to Challenge lobby */}
+        {/* Secondary: Back to Challenge lobby — no reload, preserve state */}
         <button
           className="c-btn-b"
-          onClick={()=>window.location.href="/challenge"}
+          onClick={()=>onOut("lobby")}
           style={{marginBottom:10}}
         >
           ← Back to Arena
@@ -3690,17 +3689,16 @@ function GameOver({ user, profile, game, role, onHome, onOut, onSmsToggle }) {
 
       <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
 
-      {/* ── Hero space ── */}
-      <div style={{height:"42vh",minHeight:210}}/>
-
-      {/* ── Scroll panel ── */}
+      {/* ── Scroll panel — fixed, pinned bottom, scrolls internally ── */}
       <div style={{
-        position:"relative",zIndex:10,
+        position:"fixed",
+        left:0,right:0,bottom:0,
+        top:"42vh",
+        zIndex:10,
         borderRadius:"22px 22px 0 0",
         background:"rgba(13,31,53,0.95)",
         borderTop:`2px solid ${won ? "rgba(245,200,66,0.32)" : "rgba(58,189,212,0.22)"}`,
         boxShadow:"0 -8px 40px rgba(0,0,0,0.6)",
-        minHeight:"58vh",
         overflowY:"auto",
         WebkitOverflowScrolling:"touch",
       }}>
@@ -3823,6 +3821,73 @@ function GameOver({ user, profile, game, role, onHome, onOut, onSmsToggle }) {
 }
 
 // ══════════════════════════════════════════════════════════════
+// VERSE REVIEW — 3-second hold between RoundResult and SelectLevel
+// Shows the verse that was just played. Gives DB write time to land.
+// Canonical flow: Answer → RoundResult → VerseReview → SelectLevel
+// ══════════════════════════════════════════════════════════════
+function VerseReview({ game, role, onDone }) {
+  const [countdown, setCountdown] = useState(3);
+  const verse = game?.pending_verse;
+  const pts   = game?.pending_pts || 5;
+  const lv    = LEVELS.find(l => l.pts === pts) || LEVELS[0];
+
+  useEffect(() => {
+    const tick = setInterval(() => {
+      setCountdown(n => {
+        if (n <= 1) { clearInterval(tick); onDone(); return 0; }
+        return n - 1;
+      });
+    }, 1000);
+    return () => clearInterval(tick);
+  }, []);
+
+  const oppName = role === "challenger" ? game?.answerer_name : game?.challenger_name;
+
+  return (
+    <div className="c-screen">
+      <Bg char={CHAR_KNIGHT} charPos="center 14%" charOpacity={0.72}/>
+      <Hdr/>
+      <div className="c-scroll"><div className="c-pad" style={{paddingTop:88,textAlign:"center"}}>
+
+        <div style={{fontFamily:"'Cinzel',serif",fontSize:11,letterSpacing:3,color:C.gold,opacity:0.7,marginBottom:16}}>
+          THE VERSE
+        </div>
+
+        {verse && (
+          <div className="c-card" style={{marginBottom:16}}>
+            <div className="c-curl"/>
+            <div style={{fontSize:10,color:lv.color,letterSpacing:2,marginBottom:8}}>
+              {lv.icon} {lv.name} · {pts} pts
+            </div>
+            <div style={{fontSize:14,fontStyle:"italic",color:C.offWhite,lineHeight:1.7,marginBottom:12,padding:"0 4px"}}>
+              "{verse.text}"
+            </div>
+            <div style={{
+              padding:"8px 14px",
+              background:`${lv.color}22`,border:`1px solid ${lv.color}55`,
+              borderRadius:10,
+            }}>
+              <div style={{fontSize:10,color:C.goldDim,letterSpacing:1.5,marginBottom:2}}>FOUND IN</div>
+              <div style={{fontSize:16,fontFamily:"'Cinzel',serif",fontWeight:800,color:C.goldLight}}>
+                {verse.book} {verse.chapter||verse.ch}:{verse.verse||verse.vs}
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div style={{
+          fontFamily:"'Cinzel',serif",fontSize:11,color:C.goldDim,letterSpacing:2,
+          marginTop:8,
+        }}>
+          Next round in {countdown}…
+        </div>
+
+      </div></div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════
 
 // ══════════════════════════════════════════════════════════════════
 // SelectLevel — Challenger picks the difficulty level
@@ -3857,18 +3922,19 @@ function SelectLevel({ user, profile, game, role, pendingOpponent, onPick, onOut
 
       <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
 
-      {/* Hero space */}
-      <div style={{height:"38vh",minHeight:200}}/>
-
-      {/* ── Scroll panel ── */}
+      {/* ── Scroll panel — fixed, pinned bottom, scrolls internally ── */}
       <div style={{
-        position:"relative",zIndex:10,
+        position:"fixed",
+        left:0,right:0,bottom:0,
+        top:"38vh",
+        zIndex:10,
         borderRadius:"22px 22px 0 0",
         background:"rgba(13,31,53,0.94)",
         borderTop:`2px solid rgba(245,200,66,0.22)`,
         boxShadow:"0 -8px 40px rgba(0,0,0,0.55)",
         padding:"24px 18px 48px",
-        minHeight:"56vh",
+        overflowY:"auto",
+        WebkitOverflowScrolling:"touch",
       }}>
         {/* Handle pill */}
         <div style={{width:42,height:5,borderRadius:3,background:"rgba(245,200,66,0.28)",margin:"0 auto 20px"}}/>
@@ -4283,14 +4349,11 @@ function Challenges({ user, profile, onAccept, onDecline, onOut, onSmsToggle }) 
 
   async function acceptChallenge(g) {
     try {
-      // Activate session — challenger picks first level, so it stays current_turn = challenger
-      const updated = await B44.update("GameSession", g.id, {
-        status: "waiting_for_answer",
-        current_turn: g.answerer_id,   // answerer answers the pre-set verse
-      });
-      // Remove from local list immediately (non-blocking UX)
+      // Don't mutate — challenger already set verse, level, current_turn.
+      // Fetch fresh state and route answerer directly to answer screen.
+      const fresh = await B44.get("GameSession", g.id);
       setChallenges(p => p.filter(c => c.id !== g.id));
-      onAccept(updated);
+      onAccept(fresh);
     } catch(e) {
       alert("Could not accept challenge: " + e.message);
     }
@@ -4542,18 +4605,31 @@ export default function Challenge() {
   async function resumeGameById(gid) {
     try {
       const g = await B44.get("GameSession", gid);
-      const isChallenger = g.challenger_id === (profile?.id || "");
+      // Resolve player ID — may need a fresh DB fetch if profile state is stale
+      let myId = profile?.id || "";
+      if (!myId) {
+        try {
+          const all = await B44.list("PlayerProfile", {});
+          const arr = Array.isArray(all) ? all : [];
+          const match = arr.find(p => p.email === (profile?.email || ""));
+          myId = match?.id || "";
+          if (match) setProfile(prev => ({ ...prev, ...match }));
+        } catch(_) {}
+      }
+      const isChallenger = g.challenger_id === myId;
+      const r = isChallenger ? "challenger" : "answerer";
       setGame(g);
-      setRole(isChallenger ? "challenger" : "answerer");
-      routeGame(g, isChallenger ? "challenger" : "answerer");
+      setRole(r);
+      routeGame(g, r, myId);
     } catch {}
   }
 
-  function routeGame(g, r) {
+  function routeGame(g, r, resolvedId) {
     if (!g) return setScreen("lobby");
     if (g.status === "complete")             return setScreen("gameover");
     if (g.status === "cancelled")            return setScreen("lobby");
-    const myId = profile?.id || "";
+    // Use resolvedId when passed (avoids stale profile closure); fall back to profile state
+    const myId = resolvedId || profile?.id || "";
     const isMyTurn = g.current_turn === myId;
     // Only go to level select if status is explicitly pick_level AND it is this player's turn
     if (g.status === "pick_level"          && isMyTurn) return setScreen("level");
@@ -4561,6 +4637,8 @@ export default function Challenge() {
     if (g.status === "waiting_for_answer"  && isMyTurn) return setScreen("answer");
     // Pending = challenger just created, answerer hasn't accepted — go to waiting
     if (g.status === "pending" && r === "challenger") return setScreen("waiting");
+    // Answerer with pending status — show inbox/waiting
+    if (g.status === "pending" && r === "answerer") return setScreen("lobby");
     return setScreen("waiting");
   }
 
@@ -4606,7 +4684,7 @@ export default function Challenge() {
 
   function onResumeGame(g, r) {
     setGame(g); setRole(r);
-    routeGame(g, r);
+    routeGame(g, r, profile?.id || "");
   }
 
   function onLevelPicked(lv) {
@@ -4636,12 +4714,20 @@ export default function Challenge() {
     let fresh = game;
     try { fresh = await B44.get("GameSession", game.id); } catch {}
     if (!fresh || fresh.status === "complete") return setScreen("gameover");
-    const myId = profile?.id || "";
-    const isMyTurn = fresh.current_turn === myId;
-    if (isMyTurn && fresh.status === "pick_level") return setScreen("level");
-    if (isMyTurn && fresh.status === "waiting_for_answer") return setScreen("answer");
-    // Not my turn — back to lobby
     setGame(fresh);
+    // Always go to VerseReview first — 3s hold lets DB write land, shows verse
+    setScreen("verse_review");
+  }
+
+  function onVerseReviewDone() {
+    // Called after the 3s VerseReview hold — now route based on fresh game state
+    if (!game) return setScreen("lobby");
+    if (game.status === "complete") return setScreen("gameover");
+    const myId = profile?.id || "";
+    const isMyTurn = game.current_turn === myId;
+    if (isMyTurn && game.status === "pick_level")         return setScreen("level");
+    if (isMyTurn && game.status === "waiting_for_answer") return setScreen("answer");
+    // Not my turn — back to lobby to wait
     setScreen("lobby");
   }
 
@@ -4652,11 +4738,12 @@ export default function Challenge() {
       {screen==="level"      && <SelectLevel user={user} profile={profile} game={game} role={role} pendingOpponent={pendingOpponent} onPick={onLevelPicked} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
       {screen==="verse_pick" && <VersePick user={user} profile={profile} game={game} pendingOpponent={pendingOpponent} pendingLevel={pendingLevel} onDone={(g, oppName)=>{ setGame(g); setSentOpponent(oppName); setScreen("lobby"); }} onOut={(dest)=>setScreen(dest||"level")} onSmsToggle={handleSmsToggle}/>}
       {screen==="sent"       && <BattleSent user={user} profile={profile} opponentName={sentOpponent} game={game} onProceed={()=>setScreen("lobby")} onLobby={()=>setScreen("lobby")} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
-      {screen==="challenges" && <Challenges user={user} profile={profile} onAccept={(g)=>{ setGame(g); setRole("answerer"); routeGame(g,"answerer"); }} onDecline={()=>{}} onOut={(dest)=>setScreen(dest||"lobby")} onSmsToggle={handleSmsToggle}/>}
+      {/* screen="challenges" intentionally removed — inbox now lives inside Lobby column 3 */}
       {screen==="waiting"    && <Waiting user={user} profile={profile} game={game} role={role} onUpdate={onWaitingUpdate} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
       {screen==="answer"     && <Answer user={user} game={game} role={role} onDone={onAnswered} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
-      {screen==="result"     && <RoundResult user={user} profile={profile} game={game} role={role} correct={lastResult?.correct} pts={lastResult?.pts} onNext={onResultNext} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
-      {screen==="gameover"   && <GameOver user={user} profile={profile} game={game} role={role} onHome={()=>setScreen("lobby")} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
+      {screen==="result"       && <RoundResult user={user} profile={profile} game={game} role={role} correct={lastResult?.correct} pts={lastResult?.pts} onNext={onResultNext} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
+      {screen==="verse_review" && <VerseReview game={game} role={role} onDone={onVerseReviewDone}/>}
+      {screen==="gameover"     && <GameOver user={user} profile={profile} game={game} role={role} onHome={()=>setScreen("lobby")} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
     </>
   );
 }
