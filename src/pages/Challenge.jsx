@@ -4720,26 +4720,23 @@ export default function Challenge() {
 
   const freshGameRef = useRef(null);
 
-  async function onResultNext() {
+  function onResultNext() {
+    // Navigate to VerseReview immediately — NO async wait, no blank screen.
+    // VerseReview's 3-second timer IS the DB buffer. Fresh fetch happens inside it.
     if (!game) return setScreen("lobby");
-    // Fetch confirmed DB state — background save from commitResult has had time to land
-    // (player had to see result + tap Continue, so plenty of time)
-    let fresh = game;
-    try {
-      fresh = await B44.get("GameSession", game.id);
-      console.log("[onResultNext] fresh from DB status:", fresh.status, "current_turn:", fresh.current_turn);
-    } catch(e) {
-      console.warn("[onResultNext] DB fetch failed, using optimistic game:", e.message);
-    }
-    if (!fresh || fresh.status === "complete") return setScreen("gameover");
-    setGame(fresh);
-    freshGameRef.current = fresh;
+    if (game.status === "complete") return setScreen("gameover");
     setScreen("verse_review");
   }
 
-  function onVerseReviewDone() {
-    // Use freshGameRef to avoid stale closure — game state from setState may not have updated yet
-    const g = freshGameRef.current || game;
+  async function onVerseReviewDone() {
+    // VerseReview held 3 seconds — DB write has landed. Now fetch and route.
+    let g = freshGameRef.current || game;
+    try {
+      const fetched = await B44.get("GameSession", g.id);
+      if (fetched) { g = fetched; setGame(fetched); freshGameRef.current = fetched; }
+    } catch(e) {
+      console.warn("[VerseReviewDone] fetch failed, using cached game:", e.message);
+    }
     if (!g) return setScreen("lobby");
     if (g.status === "complete") return setScreen("gameover");
     const myId = profile?.id || "";
@@ -4747,7 +4744,6 @@ export default function Challenge() {
     console.log("[VerseReviewDone] status:", g.status, "current_turn:", g.current_turn, "myId:", myId, "isMyTurn:", isMyTurn);
     if (isMyTurn && g.status === "pick_level")         return setScreen("level");
     if (isMyTurn && g.status === "waiting_for_answer") return setScreen("answer");
-    // Not my turn — back to lobby to wait
     setScreen("lobby");
   }
 
