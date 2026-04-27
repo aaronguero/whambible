@@ -252,8 +252,8 @@ const LocalAuth = {
 const S = `
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&display=swap');
 *,*::before,*::after{box-sizing:border-box;}
-html,body,#root{height:100%;margin:0;padding:0;overflow:hidden;}
-.c-screen{position:fixed;inset:0;font-family:'Cinzel',serif;}
+html,body,#root{height:100%;margin:0;padding:0;overflow:hidden;background:#0D1F35;}
+.c-screen{position:fixed;inset:0;font-family:'Cinzel',serif;background:#0D1F35;}
 .c-scroll{position:absolute;inset:0;overflow-y:auto;-webkit-overflow-scrolling:touch;z-index:10;background:transparent;}
 .c-pad{padding:80px 16px 56px;}
 .c-hdr{position:fixed;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:14px 18px 10px;background:linear-gradient(180deg,rgba(13,31,53,0.97) 0%,transparent 100%);}
