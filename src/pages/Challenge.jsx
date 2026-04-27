@@ -3358,7 +3358,6 @@ function Answer({ user, game, role, onDone, onOut, onSmsToggle }) {
     console.log("[commitResult] updateData:", JSON.stringify(updateData));
 
     // Save optimistic game immediately — navigate right away, no DB wait
-    // DB save happens in background. onVerseReviewDone uses freshGameRef which
     // we populate after the save completes, so routing is always based on DB truth.
     const optimisticGame = { ...game, ...updateData };
     console.log("[commitResult] calling onDone with optimistic game, status:", optimisticGame.status);
@@ -3441,50 +3440,45 @@ function Answer({ user, game, role, onDone, onOut, onSmsToggle }) {
 // ══════════════════════════════════════════════════════════════
 // ROUND RESULT — verse reveal + read lock + nav
 // ══════════════════════════════════════════════════════════════
-const RESULT_LOCK_MS = 3000; // player must read for 3s before Continue unlocks
-
 function RoundResult({ user, profile, game, role, correct, pts, onNext, onOut, onSmsToggle }) {
+  // Merged screen: result badge + verse reveal + 3-second auto-advance.
+  // No Continue button. Timer fires onNext() at 0 → SelectLevel (or GameOver).
+  const [countdown, setCountdown] = useState(3);
   const [revealed,  setRevealed]  = useState(false);
-  const [readLock,  setReadLock]  = useState(true);   // locked until 3s elapsed
-  const [countdown, setCountdown] = useState(3);      // visual 3→2→1
 
   const myScore  = role === "challenger" ? game?.challenger_score||0 : game?.answerer_score||0;
   const oppScore = role === "challenger" ? game?.answerer_score||0   : game?.challenger_score||0;
   const oppName  = role === "challenger" ? game?.answerer_name       : game?.challenger_name;
 
   const verse = game?.pending_verse;
-  const [txVerseRR, setTxVerseRR] = useState(verse?.text || "");
+  const lv    = LEVELS.find(l => l.pts === (game?.pending_pts || pts)) || LEVELS[0];
+  const ref   = verse ? `${verse.book} ${verse.chapter||verse.ch}:${verse.verse||verse.vs}` : null;
+  const isGameOver = game?.status === "complete";
+
+  const [txVerse, setTxVerse] = useState(verse?.text || "");
   useEffect(() => {
     const base = verse?.text || "";
-    setTxVerseRR(base);
+    setTxVerse(base);
     const lang = getActiveLang();
     if (lang !== "en" && verse?.book) {
       const ch = verse.chapter || verse.ch;
-      const vs = verse.verse || verse.vs;
-      fetchVerse(verse.book, ch, vs, lang, base).then(r => setTxVerseRR(r.text));
+      const vs = verse.verse   || verse.vs;
+      fetchVerse(verse.book, ch, vs, lang, base).then(r => setTxVerse(r.text));
     }
   }, []);
-  const lv    = LEVELS.find(l => l.pts === (game?.pending_pts || pts)) || LEVELS[0];
-  const ref   = verse ? `${verse.book} ${verse.chapter||verse.ch}:${verse.verse||verse.vs}` : null;
 
-  const isGameOver = game?.status === "complete";
-
-  // Verse fade-in
+  // Verse fade-in after brief delay
   useEffect(() => {
-    const t = setTimeout(() => setRevealed(true), 380);
+    const t = setTimeout(() => setRevealed(true), 300);
     return () => clearTimeout(t);
   }, []);
 
-  // Read lock — 3s countdown then unlock Continue
+  // 3-second auto-advance — calls onNext when done
   useEffect(() => {
     const tick = setInterval(() => {
-      setCountdown(c => {
-        if (c <= 1) {
-          clearInterval(tick);
-          setReadLock(false);
-          return 0;
-        }
-        return c - 1;
+      setCountdown(n => {
+        if (n <= 1) { clearInterval(tick); onNext(); return 0; }
+        return n - 1;
       });
     }, 1000);
     return () => clearInterval(tick);
@@ -3499,11 +3493,7 @@ function RoundResult({ user, profile, game, role, correct, pts, onNext, onOut, o
         {/* Result badge */}
         <div className="c-card" style={{textAlign:"center",marginBottom:12}}>
           <div className="c-curl"/>
-          <div style={{
-            fontSize:52,marginBottom:8,
-            filter:correct?"drop-shadow(0 0 18px #F5C84288)":"none",
-            transition:"filter 0.4s",
-          }}>
+          <div style={{fontSize:52,marginBottom:8,filter:correct?"drop-shadow(0 0 18px #F5C84288)":"none"}}>
             {correct ? "✅" : "❌"}
           </div>
           <h1 className="c-h1" style={{fontSize:20,marginBottom:4}}>
@@ -3514,29 +3504,18 @@ function RoundResult({ user, profile, game, role, correct, pts, onNext, onOut, o
           </p>
         </div>
 
-        {/* Verse reveal — THE LEARNING MOMENT */}
+        {/* Verse reveal */}
         {verse && (
-          <div style={{
-            opacity: revealed ? 1 : 0,
-            transform: revealed ? "translateY(0)" : "translateY(14px)",
-            transition: "opacity 0.55s ease, transform 0.55s ease",
-          }}>
+          <div style={{opacity:revealed?1:0,transform:revealed?"translateY(0)":"translateY(14px)",transition:"opacity 0.5s ease,transform 0.5s ease"}}>
             <div className="c-card" style={{marginBottom:12}}>
               <div className="c-curl"/>
               <div style={{fontSize:10,color:lv.color,letterSpacing:2,marginBottom:10,textAlign:"center"}}>
                 {lv.icon} {lv.name} · {pts} pts
               </div>
-              <div style={{
-                fontSize:15,fontStyle:"italic",color:C.offWhite,lineHeight:1.7,
-                textAlign:"center",marginBottom:14,padding:"0 4px",
-              }}>
-                "{txVerseRR}"
+              <div style={{fontSize:15,fontStyle:"italic",color:C.offWhite,lineHeight:1.7,textAlign:"center",marginBottom:14,padding:"0 4px"}}>
+                "{txVerse}"
               </div>
-              <div style={{
-                textAlign:"center",padding:"10px 16px",
-                background:`${lv.color}22`,border:`1px solid ${lv.color}55`,
-                borderRadius:10,
-              }}>
+              <div style={{textAlign:"center",padding:"10px 16px",background:`${lv.color}22`,border:`1px solid ${lv.color}55`,borderRadius:10}}>
                 <div style={{fontSize:11,color:C.goldDim,letterSpacing:1.5,marginBottom:3}}>FOUND IN</div>
                 <div style={{fontSize:17,fontFamily:"'Cinzel',serif",fontWeight:800,color:C.goldLight,letterSpacing:1}}>
                   {ref}
@@ -3546,7 +3525,7 @@ function RoundResult({ user, profile, game, role, correct, pts, onNext, onOut, o
           </div>
         )}
 
-        {/* Score board */}
+        {/* Scoreboard */}
         <div className="c-card" style={{marginBottom:16}}>
           <div className="c-curl"/>
           <div style={{display:"flex",justifyContent:"space-around",padding:"4px 0"}}>
@@ -3564,52 +3543,10 @@ function RoundResult({ user, profile, game, role, correct, pts, onNext, onOut, o
           </div>
         </div>
 
-        {/* ── ACTION BUTTONS ── */}
-
-        {/* Primary: Continue / Final Results — locked during read window */}
-        <button
-          className="c-btn-a"
-          onClick={readLock ? undefined : onNext}
-          style={{
-            marginBottom:10,
-            opacity: readLock ? 0.45 : 1,
-            cursor:  readLock ? "not-allowed" : "pointer",
-            transition:"opacity 0.4s",
-            position:"relative",overflow:"hidden",
-          }}
-        >
-          {readLock
-            ? `Read the verse… (${countdown})`
-            : isGameOver ? "⚔️ See Final Results" : "Continue ▶"}
-          {/* Progress bar that drains while locked */}
-          {readLock && (
-            <div style={{
-              position:"absolute",bottom:0,left:0,
-              height:3,
-              background:`${C.teal}`,
-              animation:`rr-lock-drain ${RESULT_LOCK_MS}ms linear forwards`,
-              borderRadius:"0 0 12px 12px",
-            }}/>
-          )}
-        </button>
-
-        {/* Secondary: Back to Challenge lobby — no reload, preserve state */}
-        <button
-          className="c-btn-b"
-          onClick={()=>onOut("lobby")}
-          style={{marginBottom:10}}
-        >
-          ← Back to Arena
-        </button>
-
-        {/* Tertiary: Play Solo */}
-        <button
-          className="c-btn-c"
-          onClick={()=>window.location.href="/"}
-          style={{marginBottom:4}}
-        >
-          🗡️ Play Solo
-        </button>
+        {/* Auto-advance timer */}
+        <div style={{textAlign:"center",fontFamily:"'Cinzel',serif",fontSize:11,color:C.goldDim,letterSpacing:2,marginBottom:24}}>
+          {isGameOver ? `Final results in ${countdown}…` : `Next round in ${countdown}…`}
+        </div>
 
         <div style={{height:24}}/>
       </div></div>
@@ -3833,69 +3770,8 @@ function GameOver({ user, profile, game, role, onHome, onOut, onSmsToggle }) {
 // ══════════════════════════════════════════════════════════════
 // VERSE REVIEW — 3-second hold between RoundResult and SelectLevel
 // Shows the verse that was just played. Gives DB write time to land.
-// Canonical flow: Answer → RoundResult → VerseReview → SelectLevel
 // ══════════════════════════════════════════════════════════════
-function VerseReview({ game, role, onDone }) {
-  const [countdown, setCountdown] = useState(3);
-  const verse = game?.pending_verse;
-  const pts   = game?.pending_pts || 5;
-  const lv    = LEVELS.find(l => l.pts === pts) || LEVELS[0];
 
-  useEffect(() => {
-    const tick = setInterval(() => {
-      setCountdown(n => {
-        if (n <= 1) { clearInterval(tick); onDone(); return 0; }
-        return n - 1;
-      });
-    }, 1000);
-    return () => clearInterval(tick);
-  }, []);
-
-  const oppName = role === "challenger" ? game?.answerer_name : game?.challenger_name;
-
-  return (
-    <div className="c-screen">
-      <Bg char={CHAR_KNIGHT} charPos="center 14%" charOpacity={0.72}/>
-      <Hdr/>
-      <div className="c-scroll"><div className="c-pad" style={{paddingTop:88,textAlign:"center"}}>
-
-        <div style={{fontFamily:"'Cinzel',serif",fontSize:11,letterSpacing:3,color:C.gold,opacity:0.7,marginBottom:16}}>
-          THE VERSE
-        </div>
-
-        {verse && (
-          <div className="c-card" style={{marginBottom:16}}>
-            <div className="c-curl"/>
-            <div style={{fontSize:10,color:lv.color,letterSpacing:2,marginBottom:8}}>
-              {lv.icon} {lv.name} · {pts} pts
-            </div>
-            <div style={{fontSize:14,fontStyle:"italic",color:C.offWhite,lineHeight:1.7,marginBottom:12,padding:"0 4px"}}>
-              "{verse.text}"
-            </div>
-            <div style={{
-              padding:"8px 14px",
-              background:`${lv.color}22`,border:`1px solid ${lv.color}55`,
-              borderRadius:10,
-            }}>
-              <div style={{fontSize:10,color:C.goldDim,letterSpacing:1.5,marginBottom:2}}>FOUND IN</div>
-              <div style={{fontSize:16,fontFamily:"'Cinzel',serif",fontWeight:800,color:C.goldLight}}>
-                {verse.book} {verse.chapter||verse.ch}:{verse.verse||verse.vs}
-              </div>
-            </div>
-          </div>
-        )}
-
-        <div style={{
-          fontFamily:"'Cinzel',serif",fontSize:11,color:C.goldDim,letterSpacing:2,
-          marginTop:8,
-        }}>
-          Next round in {countdown}…
-        </div>
-
-      </div></div>
-    </div>
-  );
-}
 
 // ══════════════════════════════════════════════════════════════
 
@@ -4718,32 +4594,26 @@ export default function Challenge() {
     setScreen("result");
   }
 
-  const freshGameRef = useRef(null);
-
-  function onResultNext() {
-    // Navigate to VerseReview immediately — NO async wait, no blank screen.
-    // VerseReview's 3-second timer IS the DB buffer. Fresh fetch happens inside it.
+  // Called by RoundResult when its 3-second auto-timer fires.
+  // By this point the background DB save from commitResult has long landed.
+  async function onRoundResultDone() {
     if (!game) return setScreen("lobby");
     if (game.status === "complete") return setScreen("gameover");
-    setScreen("verse_review");
-  }
-
-  async function onVerseReviewDone() {
-    // VerseReview held 3 seconds — DB write has landed. Now fetch and route.
-    let g = freshGameRef.current || game;
+    // Fetch confirmed DB state — plenty of time has passed (3s verse display + any animation)
+    let g = game;
     try {
-      const fetched = await B44.get("GameSession", g.id);
-      if (fetched) { g = fetched; setGame(fetched); freshGameRef.current = fetched; }
+      const fetched = await B44.get("GameSession", game.id);
+      if (fetched) { g = fetched; setGame(fetched); }
     } catch(e) {
-      console.warn("[VerseReviewDone] fetch failed, using cached game:", e.message);
+      console.warn("[onRoundResultDone] fetch failed, routing from optimistic game:", e.message);
     }
-    if (!g) return setScreen("lobby");
-    if (g.status === "complete") return setScreen("gameover");
+    if (!g || g.status === "complete") return setScreen("gameover");
     const myId = profile?.id || "";
     const isMyTurn = g.current_turn === myId;
-    console.log("[VerseReviewDone] status:", g.status, "current_turn:", g.current_turn, "myId:", myId, "isMyTurn:", isMyTurn);
-    if (isMyTurn && g.status === "pick_level")         return setScreen("level");
+    console.log("[onRoundResultDone] status:", g.status, "myTurn:", isMyTurn, "myId:", myId);
+    if (isMyTurn && g.status === "pick_level") return setScreen("level");
     if (isMyTurn && g.status === "waiting_for_answer") return setScreen("answer");
+    // Not my turn — go to lobby and wait for opponent
     setScreen("lobby");
   }
 
@@ -4757,8 +4627,7 @@ export default function Challenge() {
       {/* screen="challenges" intentionally removed — inbox now lives inside Lobby column 3 */}
       {screen==="waiting"    && <Waiting user={user} profile={profile} game={game} role={role} onUpdate={onWaitingUpdate} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
       {screen==="answer"     && <Answer user={user} game={game} role={role} onDone={onAnswered} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
-      {screen==="result"       && <RoundResult user={user} profile={profile} game={game} role={role} correct={lastResult?.correct} pts={lastResult?.pts} onNext={onResultNext} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
-      {screen==="verse_review" && <VerseReview game={game} role={role} onDone={onVerseReviewDone}/>}
+      {screen==="result" && <RoundResult user={user} profile={profile} game={game} role={role} correct={lastResult?.correct} pts={lastResult?.pts} onNext={onRoundResultDone} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
       {screen==="gameover"     && <GameOver user={user} profile={profile} game={game} role={role} onHome={()=>setScreen("lobby")} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
     </>
   );
