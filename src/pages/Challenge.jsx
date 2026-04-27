@@ -3328,10 +3328,10 @@ function Answer({ user, game, role, onDone, onOut, onSmsToggle }) {
   }
 
   async function commitResult(correct, earnedPts) {
+    console.log("[commitResult] START role:", role, "correct:", correct, "pts:", earnedPts, "gameId:", game?.id);
     const newRound = (game.round || 0) + 1;
     const isGameOver = newRound >= TOTAL_ROUNDS;
 
-    // Build optimistic update locally
     const myNewScore = myScore + earnedPts;
     const updateData = {
       round:            newRound,
@@ -3351,25 +3351,26 @@ function Answer({ user, game, role, onDone, onOut, onSmsToggle }) {
       updateData.winner_id   = challengerFinal >= answererFinal ? game.challenger_id : game.answerer_id;
       updateData.winner_name = challengerFinal >= answererFinal ? game.challenger_name : game.answerer_name;
     } else {
-      // Next it's the CHALLENGER's turn to pick a level — no SMS here.
-      // SMS fires in VersePick when the verse is actually submitted.
       const nextPicker = role === "challenger" ? game.answerer_id : game.challenger_id;
       updateData.status       = "pick_level";
       updateData.current_turn = nextPicker;
     }
+    console.log("[commitResult] updateData:", JSON.stringify(updateData));
 
-    // ── Save to DB first — then navigate with confirmed data ──
-    // Do NOT fire-and-forget. onResultNext fetches from DB and a stale record causes routing loops.
-    let confirmedGame = { ...game, ...updateData };
+    // Save optimistic game immediately — navigate right away, no DB wait
+    // DB save happens in background. onVerseReviewDone uses freshGameRef which
+    // we populate after the save completes, so routing is always based on DB truth.
+    const optimisticGame = { ...game, ...updateData };
+    console.log("[commitResult] calling onDone with optimistic game, status:", optimisticGame.status);
+    onDone({ correct, pts: earnedPts, game: optimisticGame });
+
+    // Save to DB in background — then update freshGameRef with confirmed state
     try {
       await B44.update("GameSession", game.id, updateData);
-      // Fetch confirmed state from DB so onResultNext gets the real record
-      confirmedGame = await B44.get("GameSession", game.id);
+      console.log("[commitResult] DB update OK");
     } catch(e) {
-      console.error("commitResult DB save failed:", e);
-      // Continue with optimistic data so player isn't stranded
+      console.error("[commitResult] DB save failed:", e.message);
     }
-    onDone({ correct, pts: earnedPts, game: confirmedGame });
   }
 
   const pct = tLeft / TIME_LIMIT * 100;
@@ -4721,10 +4722,18 @@ export default function Challenge() {
 
   async function onResultNext() {
     if (!game) return setScreen("lobby");
-    // game is now confirmed DB state from commitResult (no longer optimistic)
-    // Use it directly — no re-fetch race condition
-    if (game.status === "complete") return setScreen("gameover");
-    freshGameRef.current = game;
+    // Fetch confirmed DB state — background save from commitResult has had time to land
+    // (player had to see result + tap Continue, so plenty of time)
+    let fresh = game;
+    try {
+      fresh = await B44.get("GameSession", game.id);
+      console.log("[onResultNext] fresh from DB status:", fresh.status, "current_turn:", fresh.current_turn);
+    } catch(e) {
+      console.warn("[onResultNext] DB fetch failed, using optimistic game:", e.message);
+    }
+    if (!fresh || fresh.status === "complete") return setScreen("gameover");
+    setGame(fresh);
+    freshGameRef.current = fresh;
     setScreen("verse_review");
   }
 
