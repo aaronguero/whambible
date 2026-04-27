@@ -1836,10 +1836,14 @@ function Auth({ onIn }) {
       const user = LocalAuth.create(email.trim(), pass, name.trim());
       // Route through loadAndEnter — this fetches/creates the B44 profile synchronously
       // so the user enters the lobby with a real profile.id, never a stub
+      // Hash the password before storing in DB
+      const hashBuf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pass));
+      const hashHex = Array.from(new Uint8Array(hashBuf)).map(b=>b.toString(16).padStart(2,"0")).join("");
       await loadAndEnter(user, {
         display_name: name.trim(),
         phone: phone.trim() || "",
         sms_enabled: !!(phone.trim() && smsConsent),
+        password_hash: hashHex,
       });
     } catch (e2) {
       setErr(parseError(e2));
@@ -1853,8 +1857,36 @@ function Auth({ onIn }) {
     if (!pass.trim())  return setErr("Password is required.");
     setErr(""); setBusy(true);
     try {
-      const user = LocalAuth.signIn(email.trim(), pass);
-      await loadAndEnter(user);
+      const emailKey = email.trim().toLowerCase();
+      // Always check DB first — localStorage may have been cleared
+      let profile = null;
+      try {
+        const all = await B44.list("PlayerProfile", {});
+        const match = (all || []).find(p => p.email === emailKey);
+        if (match) profile = match;
+      } catch(dbErr) { console.warn("[signIn] DB lookup failed:", dbErr.message); }
+
+      if (profile) {
+        // DB record found — verify password_hash
+        const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(pass));
+        const hashHex = Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,"0")).join("");
+        if (profile.password_hash && profile.password_hash !== hashHex) {
+          setErr("Incorrect password."); setBusy(false); return;
+        }
+        // No hash stored yet (legacy) — accept and store it now
+        if (!profile.password_hash) {
+          await B44.update("PlayerProfile", profile.id, { password_hash: hashHex }).catch(()=>{});
+        }
+        // Restore localStorage session so future sign-ins work offline too
+        const user = { email: emailKey, displayName: profile.display_name };
+        LocalAuth._save({ ...LocalAuth._accounts(), [emailKey]: { ...user, password: pass } });
+        localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+        onIn(user, profile);
+      } else {
+        // Fall back to localStorage (offline / no DB connection)
+        const user = LocalAuth.signIn(emailKey, pass);
+        await loadAndEnter(user);
+      }
     } catch (e2) { setErr(parseError(e2)); setBusy(false); }
   }
 
