@@ -3417,10 +3417,9 @@ function Answer({ user, profile, game, role, onDone, onOut, onSmsToggle }) {
       updateData.winner_name = challengerFinal >= answererFinal ? game.challenger_name : game.answerer_name;
     } else {
       // THE GOLDEN RULE: The player who just answered becomes the picker for the next round.
-      // CRITICAL: Do NOT use stale `role` prop — derive answerer from live game.current_turn.
-      // current_turn at answer time = the person answering = the next picker.
-      // Fallback to role-based logic only if current_turn is missing.
-      const answererId = game.current_turn || (role === "answerer" ? game.answerer_id : game.challenger_id);
+      // answererId = the person who just answered = current user (profile.id).
+      // game.current_turn at answer time = the PICKER (opponent) — do NOT use it here.
+      const answererId = profile?.id || (role === "answerer" ? game.answerer_id : game.challenger_id);
       updateData.status       = "pick_level";
       updateData.current_turn = answererId;
     }
