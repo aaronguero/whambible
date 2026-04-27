@@ -2660,8 +2660,13 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
                       line2Gold={true}
                       onBattle={async ()=>{
                         try {
-                          // Don't mutate state — challenger already set verse+turn.
-                          // Fetch fresh game and route the answerer directly.
+                          // Accept the challenge — flip status + set current_turn to answerer
+                          // so routeGame routes them to the Answer screen correctly.
+                          const myId = profile?.id || "";
+                          await B44.update("GameSession", g.id, {
+                            status: "waiting_for_answer",
+                            current_turn: myId,
+                          });
                           const fresh = await B44.get("GameSession", g.id);
                           onResumeGame(fresh, "answerer");
                         } catch(e){ alert("Could not accept: " + e.message); }
