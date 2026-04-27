@@ -2063,25 +2063,20 @@ function ColRow({ initial, initColor, line1, line2, line2Gold, onBattle, onDecli
     <div style={{marginBottom:5}}>
       <div onClick={()=>setOpen(o=>!o)} style={{
         display:"flex",alignItems:"center",gap:6,
-        padding:"7px 5px",borderRadius:9,cursor:"pointer",
+        padding:"7px 8px",borderRadius:9,cursor:"pointer",
         background: open ? "rgba(212,146,26,0.12)" : "rgba(20,46,78,0.55)",
         border:`1px solid ${open?"rgba(245,200,66,0.38)":"rgba(245,200,66,0.14)"}`,
         transition:"background 0.15s,border 0.15s",
       }}>
-        <div style={{
-          width:24,height:24,borderRadius:"50%",flexShrink:0,
-          background:initColor,
-          display:"flex",alignItems:"center",justifyContent:"center",
-          fontSize:11,fontWeight:900,color:"#fff",
-        }}>{initial}</div>
         <div style={{flex:1,minWidth:0}}>
           <div style={{
-            fontSize:10,fontWeight:700,fontFamily:"'Cinzel',serif",
-            color:"#f4f0e8",overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
+            fontSize:11,fontWeight:700,fontFamily:"'Cinzel',serif",
+            color: line2Gold ? "#F5C842" : "#f4f0e8",
+            overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap",
             lineHeight:1.2,
           }}>{line1}</div>
           <div style={{
-            fontSize:8,letterSpacing:0.6,marginTop:1,
+            fontSize:8,letterSpacing:0.6,marginTop:2,
             color: line2Gold ? "rgba(245,200,66,0.80)" : "rgba(245,200,66,0.45)",
             fontFamily:"'Cinzel',serif",
           }}>{line2}</div>
