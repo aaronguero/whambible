@@ -3284,7 +3284,7 @@ function MPRecovery({ verse, lv, onDone }) {
 // ══════════════════════════════════════════════════════════════
 // ANSWER SCREEN — Answerer only. Wrong answer triggers MPRecovery.
 // ══════════════════════════════════════════════════════════════
-function Answer({ user, game, role, onDone, onOut, onSmsToggle }) {
+function Answer({ user, profile, game, role, onDone, onOut, onSmsToggle }) {
   const [opts,     setOpts]     = useState([]);
   const [sel,      setSel]      = useState(null);
   const [tLeft,    setTLeft]    = useState(TIME_LIMIT);
@@ -3393,19 +3393,20 @@ function Answer({ user, game, role, onDone, onOut, onSmsToggle }) {
     }
     console.log("[commitResult] updateData:", JSON.stringify(updateData));
 
-    // Save optimistic game immediately — navigate right away, no DB wait
-    // we populate after the save completes, so routing is always based on DB truth.
+    // CRITICAL: Save to DB FIRST, then call onDone.
+    // If we call onDone first, the Answer component unmounts and the DB write
+    // runs in a detached context — it may fail silently, leaving stale DB state.
+    // onRoundResultDone then fetches the old state and re-routes to Answer (white screen).
     const optimisticGame = { ...game, ...updateData };
-    console.log("[commitResult] calling onDone with optimistic game, status:", optimisticGame.status);
-    onDone({ correct, pts: earnedPts, game: optimisticGame });
-
-    // Save to DB in background — then update freshGameRef with confirmed state
     try {
       await B44.update("GameSession", game.id, updateData);
-      console.log("[commitResult] DB update OK");
+      console.log("[commitResult] DB update OK — calling onDone");
     } catch(e) {
       console.error("[commitResult] DB save failed:", e.message);
+      // Still call onDone with optimistic state so player isn't stuck
     }
+    console.log("[commitResult] calling onDone with game status:", optimisticGame.status);
+    onDone({ correct, pts: earnedPts, game: optimisticGame });
   }
 
   const pct = tLeft / TIME_LIMIT * 100;
@@ -3414,7 +3415,7 @@ function Answer({ user, game, role, onDone, onOut, onSmsToggle }) {
   return (
     <div className="c-screen">
       <Bg char={CHAR_MP} charPos="center 8%" charOpacity={0.55}/>
-      <Hdr user={user} onOut={onOut} onSmsToggle={onSmsToggle}/>
+      <Hdr user={user} profile={profile} onOut={onOut} onSmsToggle={onSmsToggle}/>
       {streakFlash && <StreakFlash onDone={handleStreakFlashDone}/>}
       <Slam active={slam} pts={pts} onDone={()=>{
         const bonus = streakBonusPendingRef.current ? 5 : 0;
@@ -4688,7 +4689,7 @@ export default function Challenge() {
       {screen==="sent"       && <BattleSent user={user} profile={profile} opponentName={sentOpponent} game={game} onProceed={()=>setScreen("lobby")} onLobby={()=>setScreen("lobby")} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
       {/* screen="challenges" intentionally removed — inbox now lives inside Lobby column 3 */}
       {screen==="waiting"    && <Waiting user={user} profile={profile} game={game} role={role} onUpdate={onWaitingUpdate} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
-      {screen==="answer"     && <Answer user={user} game={game} role={role} onDone={onAnswered} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
+      {screen==="answer"     && <Answer user={user} profile={profile} game={game} role={role} onDone={onAnswered} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
       {screen==="result" && <RoundResult user={user} profile={profile} game={game} role={role} correct={lastResult?.correct} pts={lastResult?.pts} onNext={onRoundResultDone} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
       {screen==="gameover"     && <GameOver user={user} profile={profile} game={game} role={role} onHome={()=>setScreen("lobby")} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
     </>
