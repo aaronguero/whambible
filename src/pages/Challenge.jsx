@@ -3446,6 +3446,10 @@ function RoundResult({ user, profile, game, role, correct, pts, onNext, onOut, o
   const [countdown, setCountdown] = useState(3);
   const [revealed,  setRevealed]  = useState(false);
 
+  // useRef for onNext so the timer always calls the LATEST version — prevents stale closure bug
+  const onNextRef = useRef(onNext);
+  useEffect(() => { onNextRef.current = onNext; }, [onNext]);
+
   const myScore  = role === "challenger" ? game?.challenger_score||0 : game?.answerer_score||0;
   const oppScore = role === "challenger" ? game?.answerer_score||0   : game?.challenger_score||0;
   const oppName  = role === "challenger" ? game?.answerer_name       : game?.challenger_name;
@@ -3473,11 +3477,11 @@ function RoundResult({ user, profile, game, role, correct, pts, onNext, onOut, o
     return () => clearTimeout(t);
   }, []);
 
-  // 3-second auto-advance — calls onNext when done
+  // 3-second auto-advance — calls onNextRef.current so it always has fresh game/profile state
   useEffect(() => {
     const tick = setInterval(() => {
       setCountdown(n => {
-        if (n <= 1) { clearInterval(tick); onNext(); return 0; }
+        if (n <= 1) { clearInterval(tick); onNextRef.current(); return 0; }
         return n - 1;
       });
     }, 1000);
@@ -4427,6 +4431,12 @@ export default function Challenge() {
   const [game,    setGame]    = useState(null);
   const [role,    setRole]    = useState(null);   // "challenger" | "answerer"
   const [lastResult, setLastResult] = useState(null);
+
+  // Refs so async callbacks (timers, onRoundResultDone) always read latest state
+  const gameRef    = useRef(null);
+  const profileRef = useRef(_initProfile);
+  useEffect(() => { gameRef.current    = game;    }, [game]);
+  useEffect(() => { profileRef.current = profile; }, [profile]);
   const [sentOpponent,   setSentOpponent]   = useState(null);  // display name of opponent just challenged
   const [pendingOpponent, setPendingOpponent] = useState(null); // full PlayerProfile of opponent (before session created)
   const [pendingLevel,    setPendingLevel]    = useState(null); // selected level (before session created)
@@ -4594,26 +4604,28 @@ export default function Challenge() {
     setScreen("result");
   }
 
-  // Called by RoundResult when its 3-second auto-timer fires.
-  // By this point the background DB save from commitResult has long landed.
+  // Called by RoundResult timer (via ref) after 3 seconds.
+  // Uses gameRef/profileRef to guarantee we read current state — not stale closure values.
   async function onRoundResultDone() {
-    if (!game) return setScreen("lobby");
-    if (game.status === "complete") return setScreen("gameover");
-    // Fetch confirmed DB state — plenty of time has passed (3s verse display + any animation)
-    let g = game;
+    const currentGame    = gameRef.current;
+    const currentProfile = profileRef.current;
+    if (!currentGame) return setScreen("lobby");
+    if (currentGame.status === "complete") return setScreen("gameover");
+
+    // Fetch confirmed DB state — 3s has elapsed, the background DB write has landed
+    let g = currentGame;
     try {
-      const fetched = await B44.get("GameSession", game.id);
-      if (fetched) { g = fetched; setGame(fetched); }
+      const fetched = await B44.get("GameSession", currentGame.id);
+      if (fetched) { g = fetched; setGame(fetched); gameRef.current = fetched; }
     } catch(e) {
       console.warn("[onRoundResultDone] fetch failed, routing from optimistic game:", e.message);
     }
     if (!g || g.status === "complete") return setScreen("gameover");
-    const myId = profile?.id || "";
+    const myId = currentProfile?.id || "";
     const isMyTurn = g.current_turn === myId;
-    console.log("[onRoundResultDone] status:", g.status, "myTurn:", isMyTurn, "myId:", myId);
+    console.log("[onRoundResultDone] status:", g.status, "myTurn:", isMyTurn, "myId:", myId, "current_turn:", g.current_turn);
     if (isMyTurn && g.status === "pick_level") return setScreen("level");
     if (isMyTurn && g.status === "waiting_for_answer") return setScreen("answer");
-    // Not my turn — go to lobby and wait for opponent
     setScreen("lobby");
   }
 
