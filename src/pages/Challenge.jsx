@@ -3351,7 +3351,9 @@ function Answer({ user, game, role, onDone, onOut, onSmsToggle }) {
       updateData.winner_id   = challengerFinal >= answererFinal ? game.challenger_id : game.answerer_id;
       updateData.winner_name = challengerFinal >= answererFinal ? game.challenger_name : game.answerer_name;
     } else {
-      const nextPicker = role === "challenger" ? game.answerer_id : game.challenger_id;
+      // THE GOLDEN RULE: The player who just answered becomes the picker for the next round.
+      // nextPicker = MY OWN ID (the answerer calling this function), NOT the opponent.
+      const nextPicker = role === "answerer" ? game.answerer_id : game.challenger_id;
       updateData.status       = "pick_level";
       updateData.current_turn = nextPicker;
     }
@@ -3788,17 +3790,20 @@ function SelectLevel({ user, profile, game, role, pendingOpponent, onPick, onOut
   // oppName: for new challenge = pendingOpponent.display_name; for round 2+ = game field
   const oppName = pendingOpponent?.display_name || (role === "challenger" ? game?.answerer_name : game?.challenger_name);
 
-  // Guard: if an existing game is NOT in pick_level state or it's not our turn, don't allow re-entry
+  // Guard: prevent wrong-state re-entry. Bypass entirely for new challenges (pendingOpponent set, no game yet).
   const myId = profile?.id;
-  if (game && game.status && game.status !== "pick_level") {
-    // Silently redirect — wrong screen for this game state
-    setTimeout(() => onOut && onOut("lobby"), 0);
-    return null;
-  }
-  if (game && game.status === "pick_level" && myId && game.current_turn !== myId) {
-    // Not our turn to pick
-    setTimeout(() => onOut && onOut("waiting"), 0);
-    return null;
+  const isNewChallenge = !game && !!pendingOpponent;
+  if (!isNewChallenge) {
+    if (game && game.status && game.status !== "pick_level") {
+      // Silently redirect — wrong screen for this game state
+      setTimeout(() => onOut && onOut("lobby"), 0);
+      return null;
+    }
+    if (game && game.status === "pick_level" && myId && game.current_turn !== myId) {
+      // Not our turn to pick
+      setTimeout(() => onOut && onOut("lobby"), 0);
+      return null;
+    }
   }
 
   function pickLevel(lv) {
@@ -4535,7 +4540,8 @@ export default function Challenge() {
     if (g.status === "pending" && r === "challenger") return setScreen("waiting");
     // Answerer with pending status — show inbox/waiting
     if (g.status === "pending" && r === "answerer") return setScreen("lobby");
-    return setScreen("waiting");
+    // Safe fallback — lobby is always navigable, waiting can trap players
+    return setScreen("lobby");
   }
 
   function onIn(u, p) {
@@ -4590,7 +4596,8 @@ export default function Challenge() {
 
   function onWaitingUpdate(updated) {
     setGame(updated);
-    const myId = profile?.id || "";
+    gameRef.current = updated;
+    const myId = profileRef.current?.id || profile?.id || ""; // use ref to avoid stale closure
     if (updated.status === "complete") { setScreen("gameover"); return; }
     if (updated.current_turn === myId) {
       if (updated.status === "pick_level")         setScreen("level");
@@ -4600,6 +4607,7 @@ export default function Challenge() {
 
   function onAnswered({ correct, pts, game: updated }) {
     setGame(updated);
+    gameRef.current = updated; // sync immediately — don't wait for useEffect to fire
     setLastResult({ correct, pts });
     setScreen("result");
   }
@@ -4634,7 +4642,12 @@ export default function Challenge() {
       {screen==="auth"       && <Auth onIn={onIn}/>}
       {screen==="lobby"      && <Lobby user={user} profile={profile} onChallenge={onChallenge} onResumeGame={onResumeGame} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
       {screen==="level"      && <SelectLevel user={user} profile={profile} game={game} role={role} pendingOpponent={pendingOpponent} onPick={onLevelPicked} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
-      {screen==="verse_pick" && <VersePick user={user} profile={profile} game={game} pendingOpponent={pendingOpponent} pendingLevel={pendingLevel} onDone={(g, oppName)=>{ setGame(g); setSentOpponent(oppName); setScreen("lobby"); }} onOut={(dest)=>setScreen(dest||"level")} onSmsToggle={handleSmsToggle}/>}
+      {screen==="verse_pick" && <VersePick user={user} profile={profile} game={game} pendingOpponent={pendingOpponent} pendingLevel={pendingLevel} onDone={(g, oppName)=>{
+        setGame(g); gameRef.current = g; setSentOpponent(oppName);
+        // Round 1 (status=pending) → lobby. Round 2+ (status=waiting_for_answer) → waiting screen.
+        if (!game) { setScreen("lobby"); } // brand new challenge — go to lobby, Lobby handles waiting display
+        else { setScreen("waiting"); } // round 2+ — show waiting for opponent to answer
+      }} onOut={(dest)=>setScreen(dest||"level")} onSmsToggle={handleSmsToggle}/>}
       {screen==="sent"       && <BattleSent user={user} profile={profile} opponentName={sentOpponent} game={game} onProceed={()=>setScreen("lobby")} onLobby={()=>setScreen("lobby")} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
       {/* screen="challenges" intentionally removed — inbox now lives inside Lobby column 3 */}
       {screen==="waiting"    && <Waiting user={user} profile={profile} game={game} role={role} onUpdate={onWaitingUpdate} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
