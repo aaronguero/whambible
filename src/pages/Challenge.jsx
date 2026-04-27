@@ -2585,7 +2585,7 @@ function Lobby({ user, profile, onChallenge, onResumeGame, onOut, onSmsToggle })
                   No active<br/>battles yet
                 </div>
               )}
-              {!loading && games.map(g => {
+              {!loading && games.filter(g => g.status !== "pending").map(g => {
                 const isChallenger = g.challenger_id === (profile?.id || "");
                 const oppName  = isChallenger ? g.answerer_name : g.challenger_name;
                 const myScore  = isChallenger ? (g.challenger_score||0) : (g.answerer_score||0);
