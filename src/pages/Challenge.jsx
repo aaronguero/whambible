@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 
 // ══════════════════════════════════════════════════════════════
-// WhamBible — Challenge.jsx v10.2 build:2026-04-27 07:50  REAL MULTIPLAYER
+// WhamBible — Challenge.jsx v10.2b bust:20260427-1152 build:2026-04-27 07:50  REAL MULTIPLAYER
 // NO Firebase. NO FCM. NO @/api/* imports. NO Base44 SDK.
 //
 // Auth     → localStorage (accounts + sessions)
@@ -4647,9 +4647,9 @@ export default function Challenge() {
       {screen==="level"      && <SelectLevel user={user} profile={profile} game={game} role={role} pendingOpponent={pendingOpponent} onPick={onLevelPicked} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
       {screen==="verse_pick" && <VersePick user={user} profile={profile} game={game} pendingOpponent={pendingOpponent} pendingLevel={pendingLevel} onDone={(g, oppName)=>{
         setGame(g); gameRef.current = g; setSentOpponent(oppName);
-        // Round 1 (status=pending) → lobby. Round 2+ (status=waiting_for_answer) → waiting screen.
-        if (!game) { setScreen("lobby"); } // brand new challenge — go to lobby, Lobby handles waiting display
-        else { setScreen("waiting"); } // round 2+ — show waiting for opponent to answer
+        // Use g.status (fresh result) NOT stale `game` closure — avoids blank screen bug.
+        // pending = brand new challenge → lobby. waiting_for_answer = round 2+ → waiting screen.
+        setScreen(g.status === "pending" ? "lobby" : "waiting");
       }} onOut={(dest)=>setScreen(dest||"level")} onSmsToggle={handleSmsToggle}/>}
       {screen==="sent"       && <BattleSent user={user} profile={profile} opponentName={sentOpponent} game={game} onProceed={()=>setScreen("lobby")} onLobby={()=>setScreen("lobby")} onOut={onOut} onSmsToggle={handleSmsToggle}/>}
       {/* screen="challenges" intentionally removed — inbox now lives inside Lobby column 3 */}
