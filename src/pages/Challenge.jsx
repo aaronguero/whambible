@@ -4154,7 +4154,7 @@ function VersePick({ user, profile, game: existingGame, pendingOpponent, pending
           answerer_id:      oppId,
           answerer_name:    pendingOpponent.display_name,
           status:           "pending",
-          current_turn:     oppId,
+          current_turn:     myId,
           round:            0,
           challenger_score: 0,
           answerer_score:   0,
@@ -4611,7 +4611,7 @@ export default function Challenge() {
     // Pending = challenger just created, answerer hasn't accepted — go to waiting
     if (g.status === "pending" && r === "challenger") return setScreen("waiting");
     // Answerer with pending status — show inbox/waiting
-    if (g.status === "pending" && r === "answerer") return setScreen("lobby");
+    if (g.status === "pending" && r === "answerer") return setScreen("challenges");
     // If there's an active game in progress and it's not my turn, wait for opponent
     if (g && (g.status === "pick_level" || g.status === "answering")) return setScreen("waiting");
     // Safe fallback
