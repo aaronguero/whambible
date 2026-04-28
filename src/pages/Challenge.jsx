@@ -137,10 +137,10 @@ const LETTERS      = ["A","B","C","D"];
 const SESSION_KEY  = "wb_session_v2";
 
 const LEVELS = [
-  { pts:5,  name:"Squire",   icon:"🗡️", sub:"Easiest · Common verses",   color:"#1E7A8C" },
-  { pts:10, name:"Warrior",  icon:"⚔️", sub:"Moderate · Popular verses", color:"#D4921A" },
-  { pts:15, name:"Knight",   icon:"🛡️", sub:"Hard · Deeper verses",      color:"#C05A2A" },
-  { pts:20, name:"Champion", icon:"👑", sub:"Hardest · Rare verses",      color:"#7B2D8B" },
+  { pts:5,  name:"Squire",   icon:"🗡️", sub:"Easiest · Common verses",   color:"#1E7A8C", mpHint:13   },
+  { pts:10, name:"Warrior",  icon:"⚔️", sub:"Moderate · Popular verses", color:"#D4921A", mpHint:15   },
+  { pts:15, name:"Knight",   icon:"🛡️", sub:"Hard · Deeper verses",      color:"#C05A2A", mpHint:17   },
+  { pts:20, name:"Champion", icon:"👑", sub:"Hardest · Rare verses",      color:"#7B2D8B", mpHint:null },
 ];
 
 const ALL_BOOKS = [
@@ -3546,10 +3546,12 @@ function Answer({ user, profile, game, role, onDone, onOut, onSmsToggle }) {
   const [recovery,    setRecovery]    = useState(false);
   const [streakCount, setStreakCount] = useState(0);
   const [streakFlash, setStreakFlash] = useState(false);
+  const [showHint, setShowHint] = useState(false);
   const doneRef = useRef(false);
   const streakRef = useRef(0);
   const streakBonusPendingRef = useRef(false);
   const tmrRef  = useRef(null);
+  const hintRef = useRef(null);
 
   const v    = game?.pending_verse   || VERSES_MP[0];
   const pts  = game?.pending_pts     || 5;
@@ -3569,17 +3571,22 @@ function Answer({ user, profile, game, role, onDone, onOut, onSmsToggle }) {
   }, [game?.id]);
 
   useEffect(() => {
+    setShowHint(false);
     tmrRef.current = setInterval(() => setTLeft(t => {
       if (t <= 1) { clearInterval(tmrRef.current); if (!doneRef.current) submit(null); return 0; }
       return t - 1;
     }), 1000);
-    return () => clearInterval(tmrRef.current);
+    if (lv.mpHint) {
+      hintRef.current = setTimeout(() => setShowHint(true), lv.mpHint * 1000);
+    }
+    return () => { clearInterval(tmrRef.current); clearTimeout(hintRef.current); };
   }, []);
 
   async function submit(opt) {
     if (doneRef.current) return;
     doneRef.current = true;
     clearInterval(tmrRef.current);
+    clearTimeout(hintRef.current);
     setSel(opt); setLocked(true);
     const correct = !!opt?.isCorrect;
     if (correct) {
@@ -3707,6 +3714,16 @@ function Answer({ user, profile, game, role, onDone, onOut, onSmsToggle }) {
           <div className="c-vtxt">"{v.text}"</div>
           <div className="c-vq">Where is this verse found?</div>
         </div>
+        {showHint && !locked && (
+          <div style={{
+            width:"100%", background:"rgba(26,58,92,0.06)", border:"1px solid rgba(30,122,140,0.27)",
+            borderRadius:10, padding:"10px 14px", marginBottom:10,
+            fontFamily:"'Cinzel',serif", fontSize:11, color:"#F4F0E8", letterSpacing:0.5,
+            animation:"wb-hint-in 0.4s ease",
+          }}>
+            💡 <strong>Papa says:</strong> This verse is from <em>{v.book}</em>, chapter {v.chapter}.
+          </div>
+        )}
         <div className="c-opts">
           {opts.map((opt,i) => {
             let cls = "c-opt";
